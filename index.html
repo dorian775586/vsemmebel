@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nolikby - Оранжевый Каталог</title>
+    <title>Mebel.by</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -39,7 +39,7 @@
     <!-- Верхняя навигация -->
     <header class="sticky top-0 header-bg z-20">
         <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-3xl font-black text-gray-900 tracking-tight">Nolikby</h1>
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight">Mebel.by</h1>
             <div class="flex items-center space-x-4">
                 <div class="flex items-center space-x-2 text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
                     <span id="current-city" class="font-bold text-gray-700">Гомель</span>
@@ -50,6 +50,8 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-gray-600 cursor-pointer hover:text-orange-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
+                <!-- Кнопка для входа админа -->
+                <button id="admin-login-btn" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">Админ</button>
             </div>
         </div>
     </header>
@@ -85,6 +87,20 @@
             <div id="no-offers" class="col-span-full text-center text-gray-500 hidden p-8">Предложений по вашему запросу не найдено.</div>
         </div>
     </main>
+
+    <!-- Модальное окно админа -->
+    <div id="admin-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-2xl p-6 w-80 relative">
+            <h3 class="text-xl font-bold mb-4">Вход Админа</h3>
+            <input type="email" id="admin-email" placeholder="Email" class="w-full mb-3 p-2 border rounded-lg" />
+            <input type="password" id="admin-password" placeholder="Пароль" class="w-full mb-3 p-2 border rounded-lg" />
+            <div class="flex justify-between">
+                <button id="admin-register" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">Регистрация</button>
+                <button id="admin-login" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">Войти</button>
+            </div>
+            <button id="admin-close" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">&times;</button>
+        </div>
+    </div>
 
     <!-- Нижняя мобильная навигация -->
     <nav class="mobile-nav fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 py-3 z-30">
