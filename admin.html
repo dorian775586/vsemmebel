@@ -6,31 +6,12 @@
     <title>Админ-панель</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Стиль для сообщения статуса */
-        .status-success {
-            background-color: #d1fae5; /* green-100 */
-            color: #065f46; /* green-800 */
-        }
-        .status-error {
-            background-color: #fee2e2; /* red-100 */
-            color: #991b1b; /* red-800 */
-        }
-        /* Стилизация заголовка и карточки */
-        body {
-            background-color: #f3f4f6; /* gray-100 */
-            font-family: 'Inter', sans-serif;
-        }
-        .container-card {
-            max-width: 600px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        .btn-primary {
-            background-color: #4f46e5; /* indigo-600 */
-            transition: background-color 0.2s;
-        }
-        .btn-primary:hover {
-            background-color: #4338ca; /* indigo-700 */
-        }
+        .status-success { background-color: #d1fae5; color: #065f46; }
+        .status-error { background-color: #fee2e2; color: #991b1b; }
+        body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; }
+        .container-card { max-width: 600px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); }
+        .btn-primary { background-color: #4f46e5; transition: background-color 0.2s; }
+        .btn-primary:hover { background-color: #4338ca; }
     </style>
 </head>
 <body class="p-4 sm:p-8">
@@ -38,9 +19,7 @@
     <div class="container-card mx-auto bg-white p-6 md:p-10 rounded-xl">
         <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">Админ-панель: Добавить Предложение</h1>
         
-        <!-- Форма добавления предложения -->
         <form id="addOfferForm" class="space-y-4">
-            
             <div>
                 <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Заголовок предложения</label>
                 <input type="text" id="title" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
@@ -66,75 +45,51 @@
                 </select>
             </div>
             
-            <!-- Кнопка и индикатор загрузки -->
             <button type="submit" id="submitButton" class="w-full btn-primary text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-150 ease-in-out">
                 Добавить предложение
             </button>
             
             <p id="statusMessage" class="hidden text-center py-2 rounded-lg font-medium"></p>
-            
         </form>
-
     </div>
 
     <script type="module">
-        // ИМПОРТЫ FIREBASE
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И НАСТРОЙКА FIREBASE ---
-        
-        // Получение конфигурации из переменных окружения (предоставляемых Canvas/Render)
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // --- КОНФИГУРАЦИЯ FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
+            authDomain: "vsemmebel-90d48.firebaseapp.com",
+            projectId: "vsemmebel-90d48",
+            storageBucket: "vsemmebel-90d48.firebasestorage.app",
+            messagingSenderId: "958123504041",
+            appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
+        };
+        const appId = "default-app-id"; // используем для коллекции Firestore
 
-        let db;
-        let auth;
-        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
         const form = document.getElementById('addOfferForm');
         const statusMessage = document.getElementById('statusMessage');
         const submitButton = document.getElementById('submitButton');
 
-        // Функция для инициализации Firebase
-        async function initializeFirebase() {
-            if (!firebaseConfig) {
-                console.error("FIREBASE ERROR: Configuration not found. Check Environment Variables.");
-                statusMessage.textContent = "Ошибка: Конфигурация Firebase не найдена.";
-                statusMessage.className = 'status-error py-2 px-4 rounded-lg font-medium';
-                return;
-            }
-
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                // Аутентификация
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                
-                console.log("Firebase initialized and authenticated successfully.");
-            } catch (e) {
-                console.error("FIREBASE ERROR: Initialization or Authentication failed:", e);
-                statusMessage.textContent = `Ошибка инициализации: ${e.message}`;
-                statusMessage.className = 'status-error py-2 px-4 rounded-lg font-medium';
-            }
-        }
-
-        initializeFirebase();
-
-        // --- ЛОГИКА ФОРМЫ ---
+        // Аутентификация анонимно
+        signInAnonymously(auth).then(() => {
+            console.log("Firebase authenticated anonymously.");
+        }).catch(err => {
+            console.error("Firebase auth error:", err);
+            statusMessage.textContent = `Ошибка аутентификации: ${err.message}`;
+            statusMessage.className = 'status-error py-2 px-4 rounded-lg font-medium';
+            statusMessage.classList.remove('hidden');
+        });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             if (!db) {
-                console.error("Firestore DB not available.");
                 statusMessage.textContent = "Ошибка: База данных не инициализирована.";
                 statusMessage.className = 'status-error py-2 px-4 rounded-lg font-medium';
                 statusMessage.classList.remove('hidden');
@@ -143,41 +98,32 @@
 
             submitButton.disabled = true;
             submitButton.textContent = 'Добавление...';
-            statusMessage.classList.add('hidden'); // Скрыть предыдущее сообщение
+            statusMessage.classList.add('hidden');
 
             try {
-                // 1. Сбор данных
                 const newOffer = {
                     title: document.getElementById('title').value,
                     discount: Number(document.getElementById('discount').value),
                     image: document.getElementById('image').value,
                     category: document.getElementById('category').value,
-                    createdAt: serverTimestamp(),
-                    // Используем App ID для создания корректного пути к коллекции
-                    // Публичная коллекция: /artifacts/{appId}/public/data/offers
-                    // ВАЖНО: Убедитесь, что правила Firebase позволяют запись в этот путь.
+                    createdAt: serverTimestamp()
                 };
 
-                // 2. Добавление документа
                 const offersCollectionRef = collection(db, `artifacts/${appId}/public/data/offers`);
                 await addDoc(offersCollectionRef, newOffer);
 
-                // 3. Успех
                 statusMessage.textContent = '✅ Предложение успешно добавлено!';
                 statusMessage.className = 'status-success py-2 px-4 rounded-lg font-medium';
-                form.reset(); // Очистить форму
+                form.reset();
 
             } catch (error) {
-                // 4. Ошибка
                 console.error('Ошибка добавления документа:', error);
                 statusMessage.textContent = `❌ Ошибка: ${error.message}`;
                 statusMessage.className = 'status-error py-2 px-4 rounded-lg font-medium';
-
             } finally {
-                // 5. Завершение
                 submitButton.disabled = false;
                 submitButton.textContent = 'Добавить предложение';
-                statusMessage.classList.remove('hidden'); // Показать статус
+                statusMessage.classList.remove('hidden');
             }
         });
     </script>
