@@ -55,7 +55,7 @@
     <!-- Верхняя навигация (Header) -->
     <header class="sticky top-0 bg-white shadow-sm z-10">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-            <!-- Ссылка на админ-панель (пока неактивна) -->
+            <!-- Ссылка на админ-панель -->
             <a href="admin.html" class="text-blue-500 hover:text-blue-700 text-sm">Админ</a>
             <div class="flex items-center space-x-2 border border-gray-300 rounded-full px-4 py-1 text-sm cursor-pointer">
                 <span id="current-city" class="font-medium text-gray-700">Гомель</span>
@@ -135,41 +135,24 @@
         import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 1. Инициализация глобальных переменных Canvas
+        // 1. Инициализация глобальных переменных Canvas/Render
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         // Парсим конфигурацию Firebase из глобальной строки
-        let firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // --- ВСТАВКА API КЛЮЧА ПО ЗАПРОСУ ПОЛЬЗОВАТЕЛЯ ---
-        const providedApiKey = "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70";
-        
-        if (Object.keys(firebaseConfig).length === 0) {
-            // Если глобальная конфигурация отсутствует, создаем минимальную с предоставленным ключом.
-            firebaseConfig = {
-                apiKey: providedApiKey,
-                authDomain: `${appId}.firebaseapp.com`, 
-                projectId: appId,
-                storageBucket: `${appId}.appspot.com`,
-                messagingSenderId: "123456789012",
-                appId: "1:123456789012:web:abcdef0123456789"
-            };
-            console.warn("Глобальная конфигурация Firebase отсутствовала. Использована минимальная конфигурация с предоставленным API ключом.");
-        } else {
-            // Если конфигурация есть, просто переопределяем в ней ключ, как просил пользователь.
-            firebaseConfig.apiKey = providedApiKey;
-            console.log("API ключ Firebase успешно обновлен согласно вашему запросу.");
-        }
+        let db;
+        let auth;
 
-        if (!firebaseConfig.apiKey) {
-            console.error("Ключ API Firebase отсутствует. Инициализация невозможна.");
-            document.getElementById('offers-list').innerHTML = '<div class="col-span-full text-center text-red-500 p-8">Ошибка: Ключ API Firebase отсутствует.</div>';
+        if (!firebaseConfig) {
+            console.error("FIREBASE ERROR: Configuration not found. Check Environment Variables.");
+            document.getElementById('offers-list').innerHTML = '<div class="col-span-full text-center text-red-500 p-8">Ошибка: Конфигурация Firebase не найдена. Проверьте переменные окружения.</div>';
         } else {
             // Инициализация сервисов Firebase
             const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app);
-            const auth = getAuth(app);
-            
+            db = getFirestore(app);
+            auth = getAuth(app);
+
             // 2. Аутентификация и запуск загрузки данных
             async function authenticateAndLoad() {
                 try {
@@ -195,22 +178,24 @@
                     let currentFilter = 'Все';
                     
                     // Категории для фильтра
-                    const defaultCategories = ["Модульные кухни", "Шкафы-купе", "Диваны и кресла", "Кровати и матрасы", "Столы и стулья", "Прихожие"];
-
+                    const defaultCategories = ["Мебель", "Аксессуары", "Услуги"]; 
+                    
                     // 1. Рендеринг карточки предложения
                     function createOfferCard(offer) {
                         const card = document.createElement('div');
                         card.className = "offer-card";
                         
-                        // Вычисляем новую цену
-                        const newPrice = Math.round(offer.price * (1 - offer.discount / 100));
+                        // Заменяем price на старую цену, если она есть, иначе 1000
+                        const oldPrice = offer.price || 1000;
+                        const discount = offer.discount || 0;
+                        const newPrice = Math.round(oldPrice * (1 - discount / 100));
 
                         card.innerHTML = `
                             <!-- Обработка ошибки загрузки изображения с placeholder'ом -->
-                            <img src="${offer.imageUrl}" onerror="this.onerror=null;this.src='https://placehold.co/400x200/505050/FFFFFF?text=${encodeURIComponent(offer.title)}';" alt="${offer.title}" class="w-full h-40 object-cover">
+                            <img src="${offer.image}" onerror="this.onerror=null;this.src='https://placehold.co/400x200/505050/FFFFFF?text=${encodeURIComponent(offer.title)}';" alt="${offer.title}" class="w-full h-40 object-cover">
                             <div class="p-4">
                                 <div class="flex justify-between items-center mb-2">
-                                    <span class="text-xs font-semibold px-2 py-1 bg-pink-100 text-pink-600 rounded-full">${offer.discount}% Скидка</span>
+                                    <span class="text-xs font-semibold px-2 py-1 bg-pink-100 text-pink-600 rounded-full">${discount}% Скидка</span>
                                     <span class="text-xs text-gray-500">${offer.city || 'Город не указан'}</span>
                                 </div>
                                 <h4 class="text-lg font-bold text-gray-800 truncate">${offer.title}</h4>
@@ -219,7 +204,7 @@
                                 <div class="flex items-center space-x-3">
                                     <!-- Форматирование цены для читаемости -->
                                     <span class="text-xl font-extrabold text-green-600">${newPrice.toLocaleString('ru-RU')} ₽</span>
-                                    <span class="text-sm text-gray-400 line-through">${offer.price.toLocaleString('ru-RU')} ₽</span>
+                                    <span class="text-sm text-gray-400 line-through">${oldPrice.toLocaleString('ru-RU')} ₽</span>
                                 </div>
                             </div>
                         `;
@@ -230,15 +215,13 @@
                     function renderCategoryButtons() {
                         categoryFilterElement.innerHTML = '';
 
-                        // Кнопка "Все"
-                        const allButton = document.createElement('button');
-                        allButton.className = `category-button ${currentFilter === 'Все' ? 'active' : ''}`;
-                        allButton.textContent = 'Все';
-                        allButton.dataset.category = 'Все';
-                        categoryFilterElement.appendChild(allButton);
+                        // Все доступные категории из данных + дефолтные
+                        const uniqueCategories = new Set(allOffers.map(o => o.category).filter(c => c));
+                        defaultCategories.forEach(c => uniqueCategories.add(c));
+                        
+                        const categoriesToShow = ['Все', ...Array.from(uniqueCategories).sort()];
 
-                        // Остальные кнопки
-                        defaultCategories.forEach(category => {
+                        categoriesToShow.forEach(category => {
                             const button = document.createElement('button');
                             button.className = `category-button ${currentFilter === category ? 'active' : ''}`;
                             button.textContent = category;
@@ -276,11 +259,12 @@
                     onSnapshot(offersCollection, (snapshot) => {
                         allOffers = [];
                         snapshot.forEach(doc => {
-                            allOffers.push({ id: doc.id, ...doc.data() }); 
+                            // Присваиваем price 1000 по умолчанию, если его нет (для корректного отображения скидки)
+                            allOffers.push({ id: doc.id, price: 1000, ...doc.data() }); 
                         });
 
                         // Сортировка по дате создания (самые новые сверху)
-                        allOffers.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)); 
+                        allOffers.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0)); 
 
                         // После загрузки данных обновляем кнопки и список
                         renderCategoryButtons(); 
