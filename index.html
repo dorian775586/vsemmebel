@@ -50,7 +50,7 @@
         }
     </style>
 </head>
-<body class="pb-16">
+<body class="pb-20"> <!-- Увеличил pb для нижней навигации -->
 
     <!-- Верхняя навигация (Header) -->
     <header class="sticky top-0 bg-white shadow-sm z-10">
@@ -103,7 +103,7 @@
     </main>
 
     <!-- Нижняя мобильная навигация (Footer) -->
-    <nav class="mobile-nav fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 py-3">
+    <nav class="mobile-nav fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 py-3 z-20">
         <div class="max-w-4xl mx-auto flex justify-around">
             <a href="#" class="flex flex-col items-center text-blue-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
@@ -132,176 +132,226 @@
     <!-- Скрипт для работы с Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // Добавлен onAuthStateChanged для корректного запуска логики после аутентификации
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // Добавлен setLogLevel для отладки
+        import { getFirestore, collection, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 1. Инициализация глобальных переменных Canvas/Render
+        // === Инициализация DOM элементов ===
+        const offersListElement = document.getElementById('offers-list');
+        const categoryFilterElement = document.getElementById('category-filter');
+        const searchInput = document.getElementById('search-input');
+        const loadingElement = document.getElementById('loading');
+        const noOffersElement = document.getElementById('no-offers');
+
+        // Глобальные переменные для данных и фильтров
+        let db = null;
+        let auth = null;
+        let allOffers = [];
+        let currentFilter = 'Все';
+        // Добавление "Электроника" для более полного каталога
+        const defaultCategories = ["Мебель", "Аксессуары", "Услуги", "Электроника"]; 
+
+        // 1. Инициализация глобальных переменных Canvas/Render и проверка конфигурации
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        // Парсим конфигурацию Firebase из глобальной строки
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        let firebaseConfig = null;
+        try {
+            // Главная причина ошибки — парсинг или отсутствие __firebase_config
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                firebaseConfig = JSON.parse(__firebase_config);
+            }
+        } catch (e) {
+            console.error("FIREBASE CRITICAL ERROR: Failed to parse __firebase_config.", e);
+            firebaseConfig = null; // Устанавливаем в null в случае ошибки парсинга
+        }
+        
+        // Вспомогательная функция для обновления UI
+        function updateLoadState(message, isError = false) {
+            loadingElement.textContent = message;
+            loadingElement.classList.remove('hidden');
+            if (isError) {
+                loadingElement.className = "col-span-full text-center text-red-600 p-8";
+            } else {
+                loadingElement.className = "col-span-full text-center text-gray-500 p-8";
+            }
+        }
 
-        let db;
-        let auth;
 
+        // 2. Рендеринг карточки предложения
+        function createOfferCard(offer) {
+            const card = document.createElement('div');
+            card.className = "offer-card";
+            
+            // Замена price на старую цену, если она есть, иначе 1000
+            const oldPrice = offer.price || 1000;
+            const discount = offer.discount || 0;
+            const newPrice = Math.round(oldPrice * (1 - discount / 100));
+
+            card.innerHTML = `
+                <!-- Обработка ошибки загрузки изображения с placeholder'ом -->
+                <img src="${offer.image}" onerror="this.onerror=null;this.src='https://placehold.co/400x200/505050/FFFFFF?text=${encodeURIComponent(offer.title)}';" alt="${offer.title}" class="w-full h-40 object-cover">
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold px-2 py-1 bg-pink-100 text-pink-600 rounded-full">${discount}% Скидка</span>
+                        <span class="text-xs text-gray-500">${offer.city || 'Город не указан'}</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-gray-800 truncate">${offer.title}</h4>
+                    <p class="text-sm text-blue-600 font-medium mb-3">${offer.category || 'Без категории'}</p>
+                    
+                    <div class="flex items-center space-x-3">
+                        <!-- Форматирование цены для читаемости -->
+                        <span class="text-xl font-extrabold text-green-600">${newPrice.toLocaleString('ru-RU')} ₽</span>
+                        <span class="text-sm text-gray-400 line-through">${oldPrice.toLocaleString('ru-RU')} ₽</span>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        // 3. Рендеринг кнопок категорий
+        function renderCategoryButtons() {
+            categoryFilterElement.innerHTML = '';
+
+            // Все доступные категории из данных + дефолтные
+            const uniqueCategories = new Set(allOffers.map(o => o.category).filter(c => c));
+            defaultCategories.forEach(c => uniqueCategories.add(c));
+            
+            const categoriesToShow = ['Все', ...Array.from(uniqueCategories).sort()];
+
+            categoriesToShow.forEach(category => {
+                const button = document.createElement('button');
+                button.className = `category-button ${currentFilter === category ? 'active' : ''}`;
+                button.textContent = category;
+                button.dataset.category = category;
+                categoryFilterElement.appendChild(button);
+            });
+        }
+
+        // 4. Фильтрация и рендеринг предложений
+        function filterAndRenderOffers() {
+            offersListElement.innerHTML = '';
+            noOffersElement.classList.add('hidden'); // Скрываем сообщение "нет предложений"
+            
+            const searchTerm = searchInput.value.toLowerCase().trim();
+
+            const filteredOffers = allOffers.filter(offer => {
+                const categoryMatch = currentFilter === 'Все' || offer.category === currentFilter;
+                // Поиск по названию ИЛИ категории
+                const searchMatch = offer.title.toLowerCase().includes(searchTerm) || (offer.category && offer.category.toLowerCase().includes(searchTerm));
+                
+                return categoryMatch && searchMatch;
+            });
+
+            if (filteredOffers.length === 0) {
+                noOffersElement.classList.remove('hidden');
+            } else {
+                filteredOffers.forEach(offer => {
+                    offersListElement.appendChild(createOfferCard(offer));
+                });
+            }
+        }
+
+
+        // ==========================================================
+        // ГЛАВНАЯ ЛОГИКА: ИНИЦИАЛИЗАЦИЯ И ПОДПИСКА
+        // ==========================================================
         if (!firebaseConfig) {
-            console.error("FIREBASE ERROR: Configuration not found. Check Environment Variables.");
-            document.getElementById('offers-list').innerHTML = '<div class="col-span-full text-center text-red-500 p-8">Ошибка: Конфигурация Firebase не найдена. Проверьте переменные окружения.</div>';
+            // Если конфигурация не найдена, выводим ошибку и останавливаемся.
+            console.error("FIREBASE ERROR: Configuration not found or invalid.");
+            offersListElement.innerHTML = '<div class="col-span-full text-center text-red-600 p-8 border-2 border-red-200 rounded-xl bg-red-50">❌ ОШИБКА: Конфигурация Firebase не найдена. Проверьте переменные окружения.</div>';
+            loadingElement.classList.add('hidden');
         } else {
             // Инициализация сервисов Firebase
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
+            setLogLevel('debug'); // Включаем логирование для отладки
+            
+            updateLoadState("Инициализация Firebase завершена. Ожидание аутентификации...");
 
-            // 2. Аутентификация и запуск загрузки данных
-            async function authenticateAndLoad() {
-                try {
-                    // Используем предоставленный токен или входим анонимно
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                        console.log("Успешный вход с кастомным токеном.");
-                    } else {
-                        await signInAnonymously(auth);
-                        console.log("Успешный анонимный вход.");
-                    }
-                    
-                    // Устанавливаем пути к коллекции после успешной аутентификации
-                    // Используем путь для общедоступных данных: /artifacts/{appId}/public/data/offers
+
+            // 5. Аутентификация и запуск загрузки данных через onAuthStateChanged
+            // onAuthStateChanged запускается сразу после регистрации слушателя и при каждом изменении статуса
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    console.log(`Пользователь аутентифицирован (UID: ${user.uid}). Запуск загрузки данных.`);
+                    updateLoadState(`Пользователь (UID: ${user.uid}). Загрузка данных...`);
+
+                    // Путь для общедоступных данных: /artifacts/{appId}/public/data/offers
                     const offersPath = `artifacts/${appId}/public/data/offers`;
                     const offersCollection = collection(db, offersPath);
-                    
-                    const offersListElement = document.getElementById('offers-list');
-                    const categoryFilterElement = document.getElementById('category-filter');
-                    const searchInput = document.getElementById('search-input');
-                    
-                    let allOffers = [];
-                    let currentFilter = 'Все';
-                    
-                    // Категории для фильтра
-                    const defaultCategories = ["Мебель", "Аксессуары", "Услуги"]; 
-                    
-                    // 1. Рендеринг карточки предложения
-                    function createOfferCard(offer) {
-                        const card = document.createElement('div');
-                        card.className = "offer-card";
-                        
-                        // Заменяем price на старую цену, если она есть, иначе 1000
-                        const oldPrice = offer.price || 1000;
-                        const discount = offer.discount || 0;
-                        const newPrice = Math.round(oldPrice * (1 - discount / 100));
 
-                        card.innerHTML = `
-                            <!-- Обработка ошибки загрузки изображения с placeholder'ом -->
-                            <img src="${offer.image}" onerror="this.onerror=null;this.src='https://placehold.co/400x200/505050/FFFFFF?text=${encodeURIComponent(offer.title)}';" alt="${offer.title}" class="w-full h-40 object-cover">
-                            <div class="p-4">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-xs font-semibold px-2 py-1 bg-pink-100 text-pink-600 rounded-full">${discount}% Скидка</span>
-                                    <span class="text-xs text-gray-500">${offer.city || 'Город не указан'}</span>
-                                </div>
-                                <h4 class="text-lg font-bold text-gray-800 truncate">${offer.title}</h4>
-                                <p class="text-sm text-blue-600 font-medium mb-3">${offer.category || 'Без категории'}</p>
-                                
-                                <div class="flex items-center space-x-3">
-                                    <!-- Форматирование цены для читаемости -->
-                                    <span class="text-xl font-extrabold text-green-600">${newPrice.toLocaleString('ru-RU')} ₽</span>
-                                    <span class="text-sm text-gray-400 line-through">${oldPrice.toLocaleString('ru-RU')} ₽</span>
-                                </div>
-                            </div>
-                        `;
-                        return card;
-                    }
-
-                    // 2. Рендеринг кнопок категорий
-                    function renderCategoryButtons() {
-                        categoryFilterElement.innerHTML = '';
-
-                        // Все доступные категории из данных + дефолтные
-                        const uniqueCategories = new Set(allOffers.map(o => o.category).filter(c => c));
-                        defaultCategories.forEach(c => uniqueCategories.add(c));
-                        
-                        const categoriesToShow = ['Все', ...Array.from(uniqueCategories).sort()];
-
-                        categoriesToShow.forEach(category => {
-                            const button = document.createElement('button');
-                            button.className = `category-button ${currentFilter === category ? 'active' : ''}`;
-                            button.textContent = category;
-                            button.dataset.category = category;
-                            categoryFilterElement.appendChild(button);
-                        });
-                    }
-
-                    // 3. Фильтрация и рендеринг предложений
-                    function filterAndRenderOffers() {
-                        offersListElement.innerHTML = '';
-                        document.getElementById('loading').classList.add('hidden');
-                        
-                        const searchTerm = searchInput.value.toLowerCase().trim();
-
-                        const filteredOffers = allOffers.filter(offer => {
-                            const categoryMatch = currentFilter === 'Все' || offer.category === currentFilter;
-                            // Поиск по названию ИЛИ категории
-                            const searchMatch = offer.title.toLowerCase().includes(searchTerm) || (offer.category && offer.category.toLowerCase().includes(searchTerm));
-                            
-                            return categoryMatch && searchMatch;
-                        });
-
-                        if (filteredOffers.length === 0) {
-                            document.getElementById('no-offers').classList.remove('hidden');
-                        } else {
-                            document.getElementById('no-offers').classList.add('hidden');
-                            filteredOffers.forEach(offer => {
-                                offersListElement.appendChild(createOfferCard(offer));
-                            });
-                        }
-                    }
-
-                    // 4. Слушатель Realtime (основная логика)
+                    // 6. Слушатель Realtime (основная логика)
                     onSnapshot(offersCollection, (snapshot) => {
+                        updateLoadState("Данные получены, обновление списка...");
+                        
                         allOffers = [];
                         snapshot.forEach(doc => {
-                            // Присваиваем price 1000 по умолчанию, если его нет (для корректного отображения скидки)
-                            allOffers.push({ id: doc.id, price: 1000, ...doc.data() }); 
+                            // Добавляем обязательные поля с дефолтными значениями
+                            allOffers.push({ 
+                                id: doc.id, 
+                                price: 1000, 
+                                discount: 0, 
+                                title: 'Без названия',
+                                image: 'https://placehold.co/400x200/505050/FFFFFF?text=Нет+картинки',
+                                city: 'Неизвестен',
+                                ...doc.data() 
+                            }); 
                         });
 
-                        // Сортировка по дате создания (самые новые сверху)
+                        // Сортировка по дате создания (самые новые сверху). Firestore Timestamp имеет toMillis()
                         allOffers.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0)); 
 
                         // После загрузки данных обновляем кнопки и список
                         renderCategoryButtons(); 
                         filterAndRenderOffers();
+                        loadingElement.classList.add('hidden'); // Скрываем индикатор загрузки
+                        
                     }, (error) => {
                         console.error("Ошибка Realtime-слушателя:", error);
-                        offersListElement.innerHTML = `<div class="col-span-full text-center text-red-500 p-8">Ошибка загрузки данных: ${error.message}. Убедитесь, что коллекция 'offers' существует и правила безопасности разрешают чтение.</div>`;
-                        document.getElementById('loading').classList.add('hidden');
+                        updateLoadState(`Ошибка загрузки данных: ${error.message}. Проверьте правила безопасности.`, true);
                     });
 
-                    // 5. Обработчики событий
-                    categoryFilterElement.addEventListener('click', (e) => {
-                        if (e.target.classList.contains('category-button')) {
-                            // Снимаем активный класс со всех
-                            document.querySelectorAll('.category-button').forEach(btn => btn.classList.remove('active'));
-                            
-                            // Устанавливаем активный класс на нажатую кнопку
-                            e.target.classList.add('active');
-                            
-                            currentFilter = e.target.dataset.category;
-                            filterAndRenderOffers();
+
+                } else {
+                    // Пользователь не аутентифицирован. Попытка входа.
+                    updateLoadState("Вход в систему...");
+                    try {
+                        if (initialAuthToken) {
+                            // Вход по предоставленному кастомному токену
+                            await signInWithCustomToken(auth, initialAuthToken);
+                            console.log("Вход выполнен с помощью пользовательского токена.");
+                        } else {
+                            // Анонимный вход
+                            await signInAnonymously(auth);
+                            console.log("Выполнен анонимный вход.");
                         }
-                    });
-
-                    searchInput.addEventListener('input', filterAndRenderOffers);
-
-                    // Инициализация при загрузке
-                    renderCategoryButtons(); 
-
-                } catch (error) {
-                    console.error("Ошибка аутентификации Firebase:", error);
-                    document.getElementById('offers-list').innerHTML = `<div class="col-span-full text-center text-red-500 p-8">Ошибка аутентификации: ${error.message}</div>`;
-                    document.getElementById('loading').classList.add('hidden');
+                    } catch (error) {
+                        const errorMsg = `ОШИБКА ВХОДА: ${error.message}`;
+                        updateLoadState(errorMsg, true);
+                        console.error('Ошибка входа в Firebase:', error);
+                    }
                 }
-            }
+            });
 
-            authenticateAndLoad();
+
+            // 7. Обработчики событий (после того, как db/auth гарантированно инициализированы)
+            categoryFilterElement.addEventListener('click', (e) => {
+                if (e.target.classList.contains('category-button')) {
+                    // Управление активным состоянием кнопок
+                    document.querySelectorAll('.category-button').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.dataset.category;
+                    filterAndRenderOffers();
+                }
+            });
+
+            searchInput.addEventListener('input', filterAndRenderOffers);
+
+            // Первичная отрисовка кнопок (для случая, когда данных еще нет)
+            renderCategoryButtons(); 
         }
     </script>
 </body>
