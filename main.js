@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, signInAnonymously, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- Конфигурация Firebase ---
@@ -17,7 +17,6 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 document.addEventListener('DOMContentLoaded', () => {
-
     const offersListElement = document.getElementById('offers-list');
     const categoryFilterElement = document.getElementById('category-filter');
     const searchInput = document.getElementById('search-input');
@@ -27,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentFilter = 'Все';
     let allCategories = ['Все'];
 
-    // --- Функции для карточек ---
+    // --- Функция создания карточки ---
     function createOfferCard(offer) {
         const card = document.createElement('div');
         card.className = "offer-card";
@@ -37,24 +36,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const newPrice = Math.round(oldPrice * (1 - discount / 100));
 
         card.innerHTML = `
-            <img src="${offer.image}" onerror="this.onerror=null;this.src='https://placehold.co/400x200/505050/FFFFFF?text=${encodeURIComponent(offer.title)}';" alt="${offer.title}" class="w-full h-40 object-cover">
-            <div class="p-4">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-xs font-semibold px-2 py-1 bg-pink-100 text-pink-600 rounded-full">${discount}% Скидка</span>
-                    <span class="text-xs text-gray-500">${offer.city || ''}</span>
+            <div class="relative">
+                <img src="${offer.image}" onerror="this.onerror=null;this.src='https://placehold.co/400x250/F97316/FFFFFF?text=${encodeURIComponent(offer.title)}';" alt="${offer.title}" class="w-full h-48 object-cover">
+                <span class="absolute top-3 left-3 text-sm font-black px-3 py-1 bg-red-600 text-white rounded-lg shadow-md">-${discount}%</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 absolute top-3 right-3 text-white hover:text-red-400 transition cursor-pointer" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+            </div>
+            <div class="p-5">
+                <p class="text-xs font-semibold text-orange-600 uppercase mb-1">${offer.category}</p>
+                <h4 class="text-xl font-extrabold text-gray-900 truncate mb-3">${offer.title}</h4>
+                <div class="flex items-center justify-between mt-4">
+                    <div>
+                        <p class="text-sm text-gray-400 line-through">${oldPrice.toLocaleString('ru-RU', { style:'currency', currency:'BYN', maximumFractionDigits:0 })}</p>
+                        <span class="text-3xl font-black text-orange-600 tracking-tight">${newPrice.toLocaleString('ru-RU', { style:'currency', currency:'BYN', maximumFractionDigits:0 })}</span>
+                    </div>
+                    <button class="card-button text-white font-bold py-3 px-6 rounded-xl transition duration-300 text-sm hover:shadow-lg">Купить</button>
                 </div>
-                <h4 class="text-lg font-bold text-gray-800 truncate">${offer.title}</h4>
-                <p class="text-sm text-blue-600 font-medium mb-3">${offer.category}</p>
-                <div class="flex items-center space-x-3">
-                    <span class="text-xl font-extrabold text-green-600">${newPrice.toLocaleString('ru-RU', { style: 'currency', currency: 'BYN', maximumFractionDigits: 0 })}</span>
-                    <span class="text-sm text-gray-400 line-through">${oldPrice.toLocaleString('ru-RU', { style: 'currency', currency: 'BYN', maximumFractionDigits: 0 })}</span>
-                </div>
-                <button class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition duration-150">Подробнее</button>
             </div>
         `;
         return card;
     }
 
+    // --- Рендер списка ---
     function renderOffers(offers) {
         offersListElement.innerHTML = '';
         if (offers.length === 0) {
@@ -65,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Рендер категорий ---
     function renderCategories() {
         categoryFilterElement.innerHTML = '';
         allCategories.forEach(category => {
@@ -84,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Фильтрация ---
     function applyFilters() {
         const searchTerm = searchInput.value.toLowerCase().trim();
         const filteredByCategory = currentFilter === 'Все' ? allOffers : allOffers.filter(o => o.category === currentFilter);
@@ -95,28 +101,33 @@ document.addEventListener('DOMContentLoaded', () => {
         renderOffers(finalFiltered);
     }
 
-    // --- Анонимная аутентификация Firebase ---
-    signInAnonymously(auth).then(() => {
-        console.log("Firebase: Authenticated anonymously");
+    // --- Админ логин ---
+    const adminEmail = "admin@example.com"; // <-- замени на свой
+    const adminPassword = "12345678";       // <-- замени на свой
+    signInWithEmailAndPassword(auth, adminEmail, adminPassword)
+        .then(() => {
+            console.log("Admin signed in");
+            loadOffers();
+        })
+        .catch(err => {
+            console.warn("Admin login failed, falling back to anonymous", err);
+            // Анонимная авторизация для обычного пользователя
+            signInAnonymously(auth)
+                .then(() => loadOffers())
+                .catch(err => console.error("Firebase auth error:", err));
+        });
 
-        // --- Подключаемся к коллекции предложений ---
-        const offersRef = collection(db, 'offers'); // <-- твоя коллекция
+    // --- Загрузка предложений ---
+    function loadOffers() {
+        const offersRef = collection(db, 'offers');
         const q = query(offersRef, orderBy('createdAt', 'desc'));
-
         onSnapshot(q, snapshot => {
             allOffers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-            // Автоопределение категорий
             allCategories = ['Все', ...new Set(allOffers.map(o => o.category))];
-
             renderCategories();
             applyFilters();
         });
-
-    }).catch(err => {
-        console.error("Firebase auth error:", err);
-        offersListElement.innerHTML = `<p class="col-span-full text-center text-red-500 p-4">Ошибка аутентификации Firebase: ${err.message}</p>`;
-    });
+    }
 
     searchInput.addEventListener('input', applyFilters);
 });
