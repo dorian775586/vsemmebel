@@ -1,67 +1,67 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nolikby - Каталог Предложений</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; min-height: 100vh; }
-.mobile-nav { box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1); }
-.category-button { padding: 0.5rem 1rem; border: 1px solid #d1ddff; background-color: #ffffff; border-radius: 0.75rem; font-weight: 500; color: #4b5563; transition: all 0.2s ease; cursor: pointer; text-align: center; white-space: nowrap; }
-.category-button.active, .category-button:hover { border-color: #3b82f6; background-color: #3b82f6; color: #ffffff; }
-#category-filter::-webkit-scrollbar { display: none; }
-#category-filter { -ms-overflow-style: none; scrollbar-width: none; }
-.offer-card { background-color: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -2px rgba(0,0,0,0.06); transition: transform 0.2s; }
-.offer-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -4px rgba(0,0,0,0.1); }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nolikby - Каталог Предложений</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; min-height: 100vh; }
+        .mobile-nav { box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .category-button { padding: 0.5rem 1rem; border: 1px solid #d1ddff; background-color: #ffffff; border-radius: 0.75rem; font-weight: 500; color: #4b5563; transition: all 0.2s ease; cursor: pointer; text-align: center; white-space: nowrap; }
+        .category-button.active, .category-button:hover { border-color: #3b82f6; background-color: #3b82f6; color: #ffffff; }
+        #category-filter::-webkit-scrollbar { display: none; }
+        #category-filter { -ms-overflow-style: none; scrollbar-width: none; }
+        .offer-card { background-color: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -2px rgba(0,0,0,0.06); transition: transform 0.2s; }
+        .offer-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -4px rgba(0,0,0,0.1); }
+    </style>
 </head>
 <body class="pb-20">
 
-<div id="error-message" style="position: fixed; top: 0; left: 0; width: 100%; background-color: #fee2e2; color: #dc2626; padding: 10px; text-align: center; font-weight: bold; z-index: 1000; display: none;"></div>
+    <!-- Верхняя навигация -->
+    <header class="sticky top-0 bg-white shadow-sm z-10">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="#" class="text-blue-500 hover:text-blue-700 text-sm font-medium">Админ</a>
+            <div class="flex items-center space-x-2 border border-gray-300 rounded-full px-4 py-1 text-sm cursor-pointer">
+                <span id="current-city" class="font-medium text-gray-700">Гомель</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+        </div>
+    </header>
 
-<header class="sticky top-0 bg-white shadow-sm z-10">
-  <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-    <a href="admin.html" class="text-blue-500 hover:text-blue-700 text-sm font-medium">Админ</a>
-    <div class="flex items-center space-x-2 border border-gray-300 rounded-full px-4 py-1 text-sm cursor-pointer">
-      <span id="current-city" class="font-medium text-gray-700">Гомель</span>
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-      </svg>
-    </div>
-  </div>
-</header>
+    <main class="max-w-4xl mx-auto px-4 mt-4">
+        <div class="p-8 rounded-3xl bg-gradient-to-r from-purple-500 to-pink-500 text-white text-center shadow-xl mb-8">
+            <h2 class="text-2xl md:text-3xl font-bold">Скидка до 70% на всё!</h2>
+            <p class="text-lg font-medium mt-1">Эксклюзивно для наших пользователей</p>
+        </div>
 
-<main class="max-w-4xl mx-auto px-4 mt-4">
-  <div class="p-8 rounded-3xl bg-gradient-to-r from-purple-500 to-pink-500 text-white text-center shadow-xl mb-8">
-    <h2 class="text-2xl md:text-3xl font-bold">Скидка до 70% на всё!</h2>
-    <p class="text-lg font-medium mt-1">Эксклюзивно для наших пользователей</p>
-  </div>
+        <div class="relative mb-8">
+            <input type="text" id="search-input" placeholder="Я ищу..." class="w-full py-3 pl-12 pr-4 text-lg border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500" />
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        </div>
 
-  <div class="relative mb-8">
-    <input type="text" id="search-input" placeholder="Я ищу..." class="w-full py-3 pl-12 pr-4 text-lg border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500" />
-  </div>
+        <h3 class="text-xl font-bold text-gray-800 mb-3">Категории</h3>
+        <div id="category-filter" class="flex flex-nowrap overflow-x-auto space-x-3 pb-4 scrollbar-hide"></div>
 
-  <h3 class="text-xl font-bold text-gray-800 mb-3">Категории</h3>
-  <div id="category-filter" class="flex flex-nowrap overflow-x-auto space-x-3 pb-4"></div>
+        <h3 class="text-xl font-bold text-gray-800 my-4">Все предложения</h3>
+        <div id="offers-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div id="no-offers" class="col-span-full text-center text-gray-500 hidden p-8">Предложений пока нет.</div>
+        </div>
+    </main>
 
-  <h3 class="text-xl font-bold text-gray-800 my-4">Все предложения</h3>
-  <div id="offers-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-    <div id="loading" class="col-span-full text-center text-gray-500 p-8">Загрузка предложений...</div>
-    <div id="no-offers" class="col-span-full text-center text-gray-500 hidden p-8">Предложений пока нет.</div>
-  </div>
-</main>
+    <!-- Нижняя мобильная навигация -->
+    <nav class="mobile-nav fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 py-3 z-20">
+        <div class="max-w-4xl mx-auto flex justify-around">
+            <a href="#" class="flex flex-col items-center text-blue-600"><span class="text-xs font-medium">Главная</span></a>
+            <a href="#" class="flex flex-col items-center text-gray-500 hover:text-blue-600"><span class="text-xs font-medium">Категории</span></a>
+            <a href="#" class="flex flex-col items-center text-gray-500 hover:text-blue-600"><span class="text-xs font-medium">Мои Купоны</span></a>
+            <a href="#" class="flex flex-col items-center text-gray-500 hover:text-blue-600"><span class="text-xs font-medium">Избранное</span></a>
+            <a href="#" class="flex flex-col items-center text-gray-500 hover:text-blue-600"><span class="text-xs font-medium">Профиль</span></a>
+        </div>
+    </nav>
 
-<nav class="mobile-nav fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 py-3 z-20">
-  <div class="max-w-4xl mx-auto flex justify-around">
-    <a href="#" class="flex flex-col items-center text-blue-600"><span class="text-xs font-medium">Главная</span></a>
-    <a href="#" class="flex flex-col items-center text-gray-500 hover:text-blue-600"><span class="text-xs font-medium">Категории</span></a>
-    <a href="#" class="flex flex-col items-center text-gray-500 hover:text-blue-600"><span class="text-xs font-medium">Мои Купоны</span></a>
-    <a href="#" class="flex flex-col items-center text-gray-500 hover:text-blue-600"><span class="text-xs font-medium">Избранное</span></a>
-    <a href="#" class="flex flex-col items-center text-gray-500 hover:text-blue-600"><span class="text-xs font-medium">Профиль</span></a>
-  </div>
-</nav>
-<script type="module" src="./main.js"></script>
+    <script type="module" src="./main.js"></script>
 </body>
 </html>
