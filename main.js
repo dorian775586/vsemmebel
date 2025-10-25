@@ -114,18 +114,21 @@ function loadOffers() {
     });
 }
 
-// --- Анонимный вход для обычного пользователя ---
+// --- Анонимный вход и проверка админа ---
 onAuthStateChanged(auth, (user) => {
     if (!user) {
+        // Если пользователь не вошёл — делаем анонимный вход
         signInAnonymously(auth).catch(err => console.error(err));
     } else {
-        user.getIdTokenResult().then(token => {
-            isAdmin = token.claims?.admin || user.email === 'admin@example.com';
-            if (isAdmin) {
-                adminLoginBtn.textContent = 'Админка';
-                adminLoginBtn.onclick = () => window.location.href = '/admin.html';
-            }
-        });
+        // Проверяем, админ ли пользователь
+        isAdmin = (user.email === 'admin@example.com'); // <-- email админа
+        if (isAdmin) {
+            adminLoginBtn.textContent = 'Админка';
+            adminLoginBtn.onclick = () => window.location.href = '/admin.html';
+        } else {
+            // Обычные пользователи не видят кнопку
+            adminLoginBtn.style.display = 'block'; // или оставляем видимой для модалки
+        }
     }
 });
 
