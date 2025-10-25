@@ -50,13 +50,21 @@
         }
     </style>
 </head>
-<body class="pb-20"> <!-- Увеличил pb для нижней навигации -->
+<body class="pb-20">
+
+    <!-- Место для отображения критических ошибок (Firebase Config) -->
+    <div id="error-message" style="
+        position: fixed; top: 0; left: 0; width: 100%; 
+        background-color: #fee2e2; color: #dc2626; 
+        padding: 10px; text-align: center; font-weight: bold; 
+        z-index: 1000; display: none;">
+    </div>
 
     <!-- Верхняя навигация (Header) -->
     <header class="sticky top-0 bg-white shadow-sm z-10">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <!-- Ссылка на админ-панель -->
-            <a href="admin.html" class="text-blue-500 hover:text-blue-700 text-sm">Админ</a>
+            <a href="admin.html" class="text-blue-500 hover:text-blue-700 text-sm font-medium">Админ</a>
             <div class="flex items-center space-x-2 border border-gray-300 rounded-full px-4 py-1 text-sm cursor-pointer">
                 <span id="current-city" class="font-medium text-gray-700">Гомель</span>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -94,7 +102,6 @@
 
         <!-- Список акций -->
         <h3 class="text-xl font-bold text-gray-800 my-4">Все предложения</h3>
-        <!-- Изменено на адаптивную сетку -->
         <div id="offers-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             <!-- Здесь будут отображаться акции -->
             <div id="loading" class="col-span-full text-center text-gray-500 p-8">Загрузка предложений...</div>
@@ -132,24 +139,22 @@
     <!-- Скрипт для работы с Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // Добавлен onAuthStateChanged для корректного запуска логики после аутентификации
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // Добавлен setLogLevel для отладки
         import { getFirestore, collection, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+        
         // === Инициализация DOM элементов ===
         const offersListElement = document.getElementById('offers-list');
         const categoryFilterElement = document.getElementById('category-filter');
         const searchInput = document.getElementById('search-input');
         const loadingElement = document.getElementById('loading');
         const noOffersElement = document.getElementById('no-offers');
+        const errorMessageElement = document.getElementById('error-message'); // Элемент для критических ошибок
 
         // Глобальные переменные для данных и фильтров
         let db = null;
         let auth = null;
         let allOffers = [];
         let currentFilter = 'Все';
-        // Добавление "Электроника" для более полного каталога
         const defaultCategories = ["Мебель", "Аксессуары", "Услуги", "Электроника"]; 
 
         // 1. Инициализация глобальных переменных Canvas/Render и проверка конфигурации
@@ -158,39 +163,38 @@
         
         let firebaseConfig = null;
         try {
-            // Главная причина ошибки — парсинг или отсутствие __firebase_config
             if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                // Пытаемся распарсить JSON. Если не удается, перехватываем ошибку.
                 firebaseConfig = JSON.parse(__firebase_config);
             }
         } catch (e) {
             console.error("FIREBASE CRITICAL ERROR: Failed to parse __firebase_config.", e);
-            firebaseConfig = null; // Устанавливаем в null в случае ошибки парсинга
+            firebaseConfig = null; 
         }
         
         // Вспомогательная функция для обновления UI
         function updateLoadState(message, isError = false) {
             loadingElement.textContent = message;
             loadingElement.classList.remove('hidden');
+            noOffersElement.classList.add('hidden'); // Скрываем "нет предложений" при загрузке или ошибке
+
             if (isError) {
-                loadingElement.className = "col-span-full text-center text-red-600 p-8";
+                loadingElement.className = "col-span-full text-center text-red-600 p-8 border-2 border-red-200 rounded-xl bg-red-50 mt-4";
             } else {
                 loadingElement.className = "col-span-full text-center text-gray-500 p-8";
             }
         }
-
 
         // 2. Рендеринг карточки предложения
         function createOfferCard(offer) {
             const card = document.createElement('div');
             card.className = "offer-card";
             
-            // Замена price на старую цену, если она есть, иначе 1000
-            const oldPrice = offer.price || 1000;
-            const discount = offer.discount || 0;
+            const oldPrice = offer.price && !isNaN(parseFloat(offer.price)) ? parseFloat(offer.price) : 1000;
+            const discount = offer.discount && !isNaN(parseInt(offer.discount)) ? parseInt(offer.discount) : 0;
             const newPrice = Math.round(oldPrice * (1 - discount / 100));
 
             card.innerHTML = `
-                <!-- Обработка ошибки загрузки изображения с placeholder'ом -->
                 <img src="${offer.image}" onerror="this.onerror=null;this.src='https://placehold.co/400x200/505050/FFFFFF?text=${encodeURIComponent(offer.title)}';" alt="${offer.title}" class="w-full h-40 object-cover">
                 <div class="p-4">
                     <div class="flex justify-between items-center mb-2">
@@ -201,7 +205,6 @@
                     <p class="text-sm text-blue-600 font-medium mb-3">${offer.category || 'Без категории'}</p>
                     
                     <div class="flex items-center space-x-3">
-                        <!-- Форматирование цены для читаемости -->
                         <span class="text-xl font-extrabold text-green-600">${newPrice.toLocaleString('ru-RU')} ₽</span>
                         <span class="text-sm text-gray-400 line-through">${oldPrice.toLocaleString('ru-RU')} ₽</span>
                     </div>
@@ -214,7 +217,6 @@
         function renderCategoryButtons() {
             categoryFilterElement.innerHTML = '';
 
-            // Все доступные категории из данных + дефолтные
             const uniqueCategories = new Set(allOffers.map(o => o.category).filter(c => c));
             defaultCategories.forEach(c => uniqueCategories.add(c));
             
@@ -232,14 +234,16 @@
         // 4. Фильтрация и рендеринг предложений
         function filterAndRenderOffers() {
             offersListElement.innerHTML = '';
-            noOffersElement.classList.add('hidden'); // Скрываем сообщение "нет предложений"
+            noOffersElement.classList.add('hidden');
+            loadingElement.classList.add('hidden');
             
             const searchTerm = searchInput.value.toLowerCase().trim();
 
             const filteredOffers = allOffers.filter(offer => {
                 const categoryMatch = currentFilter === 'Все' || offer.category === currentFilter;
                 // Поиск по названию ИЛИ категории
-                const searchMatch = offer.title.toLowerCase().includes(searchTerm) || (offer.category && offer.category.toLowerCase().includes(searchTerm));
+                const searchMatch = offer.title.toLowerCase().includes(searchTerm) || 
+                                    (offer.category && offer.category.toLowerCase().includes(searchTerm));
                 
                 return categoryMatch && searchMatch;
             });
@@ -258,26 +262,24 @@
         // ГЛАВНАЯ ЛОГИКА: ИНИЦИАЛИЗАЦИЯ И ПОДПИСКА
         // ==========================================================
         if (!firebaseConfig) {
-            // Если конфигурация не найдена, выводим ошибку и останавливаемся.
-            console.error("FIREBASE ERROR: Configuration not found or invalid.");
-            offersListElement.innerHTML = '<div class="col-span-full text-center text-red-600 p-8 border-2 border-red-200 rounded-xl bg-red-50">❌ ОШИБКА: Конфигурация Firebase не найдена. Проверьте переменные окружения.</div>';
+            // Критическая ошибка конфигурации
+            errorMessageElement.textContent = '❌ КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase не найдена.';
+            errorMessageElement.style.display = 'block';
             loadingElement.classList.add('hidden');
         } else {
             // Инициализация сервисов Firebase
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
-            setLogLevel('debug'); // Включаем логирование для отладки
+            setLogLevel('debug'); 
             
             updateLoadState("Инициализация Firebase завершена. Ожидание аутентификации...");
 
-
             // 5. Аутентификация и запуск загрузки данных через onAuthStateChanged
-            // onAuthStateChanged запускается сразу после регистрации слушателя и при каждом изменении статуса
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     console.log(`Пользователь аутентифицирован (UID: ${user.uid}). Запуск загрузки данных.`);
-                    updateLoadState(`Пользователь (UID: ${user.uid}). Загрузка данных...`);
+                    updateLoadState(`Каталог: Пользователь (UID: ${user.uid}). Загрузка данных...`);
 
                     // Путь для общедоступных данных: /artifacts/{appId}/public/data/offers
                     const offersPath = `artifacts/${appId}/public/data/offers`;
@@ -289,25 +291,29 @@
                         
                         allOffers = [];
                         snapshot.forEach(doc => {
-                            // Добавляем обязательные поля с дефолтными значениями
+                            const data = doc.data();
                             allOffers.push({ 
                                 id: doc.id, 
-                                price: 1000, 
-                                discount: 0, 
-                                title: 'Без названия',
-                                image: 'https://placehold.co/400x200/505050/FFFFFF?text=Нет+картинки',
-                                city: 'Неизвестен',
-                                ...doc.data() 
+                                price: data.price || 1000, // Дефолтные значения для безопасности
+                                discount: data.discount || 0, 
+                                title: data.title || 'Без названия',
+                                image: data.image || 'https://placehold.co/400x200/505050/FFFFFF?text=Нет+картинки',
+                                city: data.city || 'Неизвестен',
+                                createdAt: data.createdAt,
                             }); 
                         });
 
-                        // Сортировка по дате создания (самые новые сверху). Firestore Timestamp имеет toMillis()
-                        allOffers.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0)); 
+                        // Сортировка по дате создания (самые новые сверху). 
+                        // Проверяем, является ли createdAt объектом, чтобы избежать ошибок toMillis.
+                        allOffers.sort((a, b) => {
+                            const aTime = (a.createdAt && typeof a.createdAt.toMillis === 'function') ? a.createdAt.toMillis() : 0;
+                            const bTime = (b.createdAt && typeof b.createdAt.toMillis === 'function') ? b.createdAt.toMillis() : 0;
+                            return bTime - aTime;
+                        }); 
 
-                        // После загрузки данных обновляем кнопки и список
                         renderCategoryButtons(); 
                         filterAndRenderOffers();
-                        loadingElement.classList.add('hidden'); // Скрываем индикатор загрузки
+                        loadingElement.classList.add('hidden');
                         
                     }, (error) => {
                         console.error("Ошибка Realtime-слушателя:", error);
@@ -320,13 +326,9 @@
                     updateLoadState("Вход в систему...");
                     try {
                         if (initialAuthToken) {
-                            // Вход по предоставленному кастомному токену
                             await signInWithCustomToken(auth, initialAuthToken);
-                            console.log("Вход выполнен с помощью пользовательского токена.");
                         } else {
-                            // Анонимный вход
                             await signInAnonymously(auth);
-                            console.log("Выполнен анонимный вход.");
                         }
                     } catch (error) {
                         const errorMsg = `ОШИБКА ВХОДА: ${error.message}`;
@@ -337,20 +339,28 @@
             });
 
 
-            // 7. Обработчики событий (после того, как db/auth гарантированно инициализированы)
+            // 7. Обработчики событий
             categoryFilterElement.addEventListener('click', (e) => {
                 if (e.target.classList.contains('category-button')) {
-                    // Управление активным состоянием кнопок
                     document.querySelectorAll('.category-button').forEach(btn => btn.classList.remove('active'));
                     e.target.classList.add('active');
                     currentFilter = e.target.dataset.category;
+                    searchInput.value = ''; // Сброс поиска при выборе категории
                     filterAndRenderOffers();
                 }
             });
 
-            searchInput.addEventListener('input', filterAndRenderOffers);
+            searchInput.addEventListener('input', () => {
+                // Сброс фильтра категории при начале поиска
+                document.querySelectorAll('.category-button').forEach(btn => btn.classList.remove('active'));
+                currentFilter = 'Все';
+                // Активируем кнопку "Все"
+                const allButton = categoryFilterElement.querySelector('[data-category="Все"]');
+                if (allButton) allButton.classList.add('active');
+                
+                filterAndRenderOffers();
+            });
 
-            // Первичная отрисовка кнопок (для случая, когда данных еще нет)
             renderCategoryButtons(); 
         }
     </script>
