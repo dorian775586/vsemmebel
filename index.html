@@ -12,7 +12,6 @@
             background-color: #f3f4f6;
             min-height: 100vh;
         }
-        /* Стилизация для мобильной навигации */
         .mobile-nav {
             box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
         }
@@ -139,16 +138,19 @@
     <!-- Скрипт для работы с Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
+        // Включаем уровень отладки для FireStore для более информативных ошибок
+        setLogLevel('debug'); 
+
         // === Инициализация DOM элементов ===
         const offersListElement = document.getElementById('offers-list');
         const categoryFilterElement = document.getElementById('category-filter');
         const searchInput = document.getElementById('search-input');
         const loadingElement = document.getElementById('loading');
         const noOffersElement = document.getElementById('no-offers');
-        const errorMessageElement = document.getElementById('error-message'); // Элемент для критических ошибок
+        const errorMessageElement = document.getElementById('error-message'); 
 
         // Глобальные переменные для данных и фильтров
         let db = null;
@@ -157,45 +159,69 @@
         let currentFilter = 'Все';
         const defaultCategories = ["Мебель", "Аксессуары", "Услуги", "Электроника"]; 
 
-        // 1. Инициализация глобальных переменных Canvas/Render и проверка конфигурации
+        // 1. НАДЕЖНОЕ ЧТЕНИЕ ГЛОБАЛЬНЫХ ПЕРЕМЕННЫХ
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const rawFirebaseConfig = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
         
         let firebaseConfig = null;
-        try {
-            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                // Пытаемся распарсить JSON. Если не удается, перехватываем ошибку.
-                firebaseConfig = JSON.parse(__firebase_config);
+        
+        // Функция для обработки конфигурации Firebase
+        function processFirebaseConfig(configJson) {
+            // Проверка на null/undefined/пустую строку
+            if (!configJson || typeof configJson !== 'string' || configJson.trim().length < 10) {
+                console.error("FIREBASE CRITICAL ERROR: __firebase_config is missing or invalid.");
+                return null;
             }
-        } catch (e) {
-            console.error("FIREBASE CRITICAL ERROR: Failed to parse __firebase_config.", e);
-            firebaseConfig = null; 
+            
+            try {
+                // Парсим строку JSON
+                const config = JSON.parse(configJson);
+                
+                // Проверка на наличие ключевых полей
+                if (!config.apiKey || !config.projectId) {
+                    console.error("FIREBASE CRITICAL ERROR: Parsed config is missing API key or project ID.");
+                    return null;
+                }
+                
+                return config;
+            } catch (e) {
+                // Ловим ошибку парсинга
+                console.error("FIREBASE CRITICAL ERROR: Failed to parse __firebase_config.", e);
+                return null; 
+            }
         }
+
+        // Пытаемся получить и обработать конфигурацию
+        firebaseConfig = processFirebaseConfig(rawFirebaseConfig);
         
         // Вспомогательная функция для обновления UI
         function updateLoadState(message, isError = false) {
             loadingElement.textContent = message;
             loadingElement.classList.remove('hidden');
-            noOffersElement.classList.add('hidden'); // Скрываем "нет предложений" при загрузке или ошибке
+            noOffersElement.classList.add('hidden'); 
 
             if (isError) {
-                loadingElement.className = "col-span-full text-center text-red-600 p-8 border-2 border-red-200 rounded-xl bg-red-50 mt-4";
+                loadingElement.className = "col-span-full text-center text-red-600 p-8 border-2 border-red-400 rounded-xl bg-red-100 mt-4 font-semibold";
+                errorMessageElement.textContent = message;
+                errorMessageElement.style.display = 'block';
             } else {
                 loadingElement.className = "col-span-full text-center text-gray-500 p-8";
+                errorMessageElement.style.display = 'none';
             }
         }
 
-        // 2. Рендеринг карточки предложения
+        // 2. Рендеринг карточки предложения (оставлено без изменений)
         function createOfferCard(offer) {
             const card = document.createElement('div');
             card.className = "offer-card";
             
-            const oldPrice = offer.price && !isNaN(parseFloat(offer.price)) ? parseFloat(offer.price) : 1000;
-            const discount = offer.discount && !isNaN(parseInt(offer.discount)) ? parseInt(offer.discount) : 0;
+            const oldPrice = parseFloat(offer.price) || 1000;
+            const discount = parseInt(offer.discount) || 0;
             const newPrice = Math.round(oldPrice * (1 - discount / 100));
 
             card.innerHTML = `
-                <img src="${offer.image}" onerror="this.onerror=null;this.src='https://placehold.co/400x200/505050/FFFFFF?text=${encodeURIComponent(offer.title)}';" alt="${offer.title}" class="w-full h-40 object-cover">
+                <img src="${offer.image || 'https://placehold.co/400x200/505050/FFFFFF?text=Offer'}" onerror="this.onerror=null;this.src='https://placehold.co/400x200/505050/FFFFFF?text=${encodeURIComponent(offer.title)}';" alt="${offer.title}" class="w-full h-40 object-cover">
                 <div class="p-4">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs font-semibold px-2 py-1 bg-pink-100 text-pink-600 rounded-full">${discount}% Скидка</span>
@@ -213,7 +239,7 @@
             return card;
         }
 
-        // 3. Рендеринг кнопок категорий
+        // 3. Рендеринг кнопок категорий (оставлено без изменений)
         function renderCategoryButtons() {
             categoryFilterElement.innerHTML = '';
 
@@ -231,7 +257,7 @@
             });
         }
 
-        // 4. Фильтрация и рендеринг предложений
+        // 4. Фильтрация и рендеринг предложений (оставлено без изменений)
         function filterAndRenderOffers() {
             offersListElement.innerHTML = '';
             noOffersElement.classList.add('hidden');
@@ -240,10 +266,11 @@
             const searchTerm = searchInput.value.toLowerCase().trim();
 
             const filteredOffers = allOffers.filter(offer => {
+                const offerCategory = offer.category ? offer.category.toLowerCase() : '';
+
                 const categoryMatch = currentFilter === 'Все' || offer.category === currentFilter;
-                // Поиск по названию ИЛИ категории
-                const searchMatch = offer.title.toLowerCase().includes(searchTerm) || 
-                                    (offer.category && offer.category.toLowerCase().includes(searchTerm));
+                const searchMatch = (offer.title && offer.title.toLowerCase().includes(searchTerm)) || 
+                                    offerCategory.includes(searchTerm);
                 
                 return categoryMatch && searchMatch;
             });
@@ -256,113 +283,89 @@
                 });
             }
         }
-
-
-        // ==========================================================
-        // ГЛАВНАЯ ЛОГИКА: ИНИЦИАЛИЗАЦИЯ И ПОДПИСКА
-        // ==========================================================
-        if (!firebaseConfig) {
-            // Критическая ошибка конфигурации
-            errorMessageElement.textContent = '❌ КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase не найдена.';
-            errorMessageElement.style.display = 'block';
-            loadingElement.classList.add('hidden');
-        } else {
-            // Инициализация сервисов Firebase
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            setLogLevel('debug'); 
+        
+        // 5. ПОДПИСКА НА ДАННЫЕ FIRESTORE (вызывается после успешной аутентификации)
+        function setupFirestoreListener() {
+            updateLoadState("Загрузка предложений...");
             
-            updateLoadState("Инициализация Firebase завершена. Ожидание аутентификации...");
+            // Путь к публичной коллекции предложений
+            const offersCollectionPath = `artifacts/${appId}/public/data/offers`;
+            const offersColRef = collection(db, offersCollectionPath);
+            
+            // Подписка на изменения в коллекции (onSnapshot)
+            onSnapshot(offersColRef, (snapshot) => {
+                allOffers = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
 
-            // 5. Аутентификация и запуск загрузки данных через onAuthStateChanged
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    console.log(`Пользователь аутентифицирован (UID: ${user.uid}). Запуск загрузки данных.`);
-                    updateLoadState(`Каталог: Пользователь (UID: ${user.uid}). Загрузка данных...`);
-
-                    // Путь для общедоступных данных: /artifacts/{appId}/public/data/offers
-                    const offersPath = `artifacts/${appId}/public/data/offers`;
-                    const offersCollection = collection(db, offersPath);
-
-                    // 6. Слушатель Realtime (основная логика)
-                    onSnapshot(offersCollection, (snapshot) => {
-                        updateLoadState("Данные получены, обновление списка...");
-                        
-                        allOffers = [];
-                        snapshot.forEach(doc => {
-                            const data = doc.data();
-                            allOffers.push({ 
-                                id: doc.id, 
-                                price: data.price || 1000, // Дефолтные значения для безопасности
-                                discount: data.discount || 0, 
-                                title: data.title || 'Без названия',
-                                image: data.image || 'https://placehold.co/400x200/505050/FFFFFF?text=Нет+картинки',
-                                city: data.city || 'Неизвестен',
-                                createdAt: data.createdAt,
-                            }); 
-                        });
-
-                        // Сортировка по дате создания (самые новые сверху). 
-                        // Проверяем, является ли createdAt объектом, чтобы избежать ошибок toMillis.
-                        allOffers.sort((a, b) => {
-                            const aTime = (a.createdAt && typeof a.createdAt.toMillis === 'function') ? a.createdAt.toMillis() : 0;
-                            const bTime = (b.createdAt && typeof b.createdAt.toMillis === 'function') ? b.createdAt.toMillis() : 0;
-                            return bTime - aTime;
-                        }); 
-
-                        renderCategoryButtons(); 
-                        filterAndRenderOffers();
-                        loadingElement.classList.add('hidden');
-                        
-                    }, (error) => {
-                        console.error("Ошибка Realtime-слушателя:", error);
-                        updateLoadState(`Ошибка загрузки данных: ${error.message}. Проверьте правила безопасности.`, true);
-                    });
-
-
-                } else {
-                    // Пользователь не аутентифицирован. Попытка входа.
-                    updateLoadState("Вход в систему...");
-                    try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        const errorMsg = `ОШИБКА ВХОДА: ${error.message}`;
-                        updateLoadState(errorMsg, true);
-                        console.error('Ошибка входа в Firebase:', error);
-                    }
-                }
-            });
-
-
-            // 7. Обработчики событий
-            categoryFilterElement.addEventListener('click', (e) => {
-                if (e.target.classList.contains('category-button')) {
-                    document.querySelectorAll('.category-button').forEach(btn => btn.classList.remove('active'));
-                    e.target.classList.add('active');
-                    currentFilter = e.target.dataset.category;
-                    searchInput.value = ''; // Сброс поиска при выборе категории
-                    filterAndRenderOffers();
-                }
-            });
-
-            searchInput.addEventListener('input', () => {
-                // Сброс фильтра категории при начале поиска
-                document.querySelectorAll('.category-button').forEach(btn => btn.classList.remove('active'));
-                currentFilter = 'Все';
-                // Активируем кнопку "Все"
-                const allButton = categoryFilterElement.querySelector('[data-category="Все"]');
-                if (allButton) allButton.classList.add('active');
-                
+                renderCategoryButtons();
                 filterAndRenderOffers();
-            });
+                
+                loadingElement.classList.add('hidden');
+                console.log(`Успешно загружено ${allOffers.length} предложений.`);
 
-            renderCategoryButtons(); 
+            }, (error) => {
+                console.error("Ошибка при получении данных Firestore:", error);
+                // Ошибка 7 (permission-denied) - это ошибка правил безопасности
+                if (error.code === 'permission-denied') {
+                     updateLoadState(`❌ ОШИБКА БЕЗОПАСНОСТИ: Firestore запретил доступ. Проверьте правила.`, true);
+                } else {
+                     updateLoadState(`❌ ОШИБКА ЧТЕНИЯ ДАННЫХ: Проблема с подключением. Код ошибки: ${error.code}.`, true);
+                }
+            });
         }
+
+
+        // 6. ГЛАВНАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ
+        async function initializeAppAndAuth() {
+            if (!firebaseConfig) {
+                updateLoadState('❌ КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase не найдена. Проверьте переменную __firebase_config.', true);
+                return;
+            }
+
+            try {
+                // Инициализация сервисов Firebase
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                updateLoadState("Инициализация Firebase завершена. Аутентификация...");
+
+                // Аутентификация: приоритет у custom token, затем анонимный вход
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // После успешной аутентификации запускаем слушатель данных
+                setupFirestoreListener();
+
+            } catch (error) {
+                console.error("Критическая ошибка аутентификации/инициализации:", error);
+                updateLoadState(`❌ КРИТИЧЕСКАЯ ОШИБКА АУТЕНТИФИКАЦИИ: ${error.message}.`, true);
+            }
+        }
+
+        // Запуск приложения
+        initializeAppAndAuth();
+        
+        // 7. Установка слушателей событий для фильтров и поиска
+        categoryFilterElement.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target.classList.contains('category-button')) {
+                // Снимаем активность со всех и добавляем к нажатой
+                document.querySelectorAll('.category-button').forEach(btn => btn.classList.remove('active'));
+                target.classList.add('active');
+                
+                currentFilter = target.dataset.category;
+                filterAndRenderOffers();
+            }
+        });
+
+        searchInput.addEventListener('input', filterAndRenderOffers);
+
     </script>
 </body>
 </html>
