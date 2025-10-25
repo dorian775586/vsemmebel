@@ -168,9 +168,12 @@
         
         // Функция для обработки конфигурации Firebase
         function processFirebaseConfig(configJson) {
-            // Проверка на null/undefined/пустую строку
+            console.log("DEBUG: Raw __firebase_config received (should be a JSON string):", configJson);
+            
+            // Проверка на null/undefined/пустую строку/не-строку
             if (!configJson || typeof configJson !== 'string' || configJson.trim().length < 10) {
-                console.error("FIREBASE CRITICAL ERROR: __firebase_config is missing or invalid.");
+                const message = "FIREBASE CRITICAL ERROR: Config string is missing, empty, or too short. Cannot initialize Firebase.";
+                console.error(message);
                 return null;
             }
             
@@ -180,14 +183,14 @@
                 
                 // Проверка на наличие ключевых полей
                 if (!config.apiKey || !config.projectId) {
-                    console.error("FIREBASE CRITICAL ERROR: Parsed config is missing API key or project ID.");
+                    console.error("FIREBASE CRITICAL ERROR: Parsed config is missing apiKey or projectId.");
                     return null;
                 }
                 
                 return config;
             } catch (e) {
                 // Ловим ошибку парсинга
-                console.error("FIREBASE CRITICAL ERROR: Failed to parse __firebase_config.", e);
+                console.error("FIREBASE CRITICAL ERROR: Failed to parse __firebase_config. Raw string may be invalid JSON. Error:", e);
                 return null; 
             }
         }
@@ -320,7 +323,7 @@
         // 6. ГЛАВНАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ
         async function initializeAppAndAuth() {
             if (!firebaseConfig) {
-                updateLoadState('❌ КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase не найдена. Проверьте переменную __firebase_config.', true);
+                updateLoadState('❌ КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase не найдена. См. консоль для деталей.', true);
                 return;
             }
 
