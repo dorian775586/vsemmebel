@@ -1,6 +1,5 @@
-// main.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- Firebase config ---
@@ -57,10 +56,19 @@ function createOfferCard(offer) {
                     <p class="text-sm text-gray-400 line-through">${oldPrice.toLocaleString('ru-RU', { style:'currency', currency:'BYN', maximumFractionDigits:0 })}</p>
                     <span class="text-3xl font-black text-orange-600 tracking-tight">${newPrice.toLocaleString('ru-RU', { style:'currency', currency:'BYN', maximumFractionDigits:0 })}</span>
                 </div>
-                <button class="card-button text-white font-bold py-3 px-6 rounded-xl transition duration-300 text-sm hover:shadow-lg">Купить</button>
+                <button class="card-button text-white font-bold py-3 px-6 rounded-xl transition duration-300 text-sm hover:shadow-lg">
+                    Купить
+                </button>
             </div>
         </div>
     `;
+
+    // --- Редирект кнопки на страницу товара ---
+    const buyBtn = card.querySelector('.card-button');
+    buyBtn.addEventListener('click', () => {
+        window.location.href = `product.html?id=${offer.id}`;
+    });
+
     return card;
 }
 
@@ -117,17 +125,14 @@ function loadOffers() {
 // --- Анонимный вход и проверка админа ---
 onAuthStateChanged(auth, (user) => {
     if (!user) {
-        // Если пользователь не вошёл — делаем анонимный вход
         signInAnonymously(auth).catch(err => console.error(err));
     } else {
-        // Проверяем, админ ли пользователь
-        isAdmin = (user.email === 'admin@example.com'); // <-- email админа
+        isAdmin = (user.email === 'admin@example.com');
         if (isAdmin) {
             adminLoginBtn.textContent = 'Админка';
             adminLoginBtn.onclick = () => window.location.href = '/admin.html';
         } else {
-            // Обычные пользователи не видят кнопку
-            adminLoginBtn.style.display = 'block'; // или оставляем видимой для модалки
+            adminLoginBtn.style.display = 'block';
         }
     }
 });

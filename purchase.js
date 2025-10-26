@@ -1,150 +1,127 @@
 // purchase.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-// ====== 1. Настройка Firebase ======
+// Firebase config
 const firebaseConfig = {
-    apiKey: "ВАШ_API_KEY",
-    authDomain: "ВАШ_PROJECT_ID.firebaseapp.com",
-    projectId: "ВАШ_PROJECT_ID",
-    storageBucket: "ВАШ_PROJECT_ID.appspot.com",
-    messagingSenderId: "ВАШ_SENDER_ID",
-    appId: "ВАШ_APP_ID"
+  apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
+  authDomain: "vsemmebel-90d48.firebaseapp.com",
+  projectId: "vsemmebel-90d48",
+  storageBucket: "vsemmebel-90d48.firebasestorage.app",
+  messagingSenderId: "958123504041",
+  appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ====== 2. Получение ID товара из URL ======
+// Получаем ID товара из URL, например: product.html?id=123
 const urlParams = new URLSearchParams(window.location.search);
-const productId = urlParams.get('id');
+const productId = urlParams.get("id");
 
 if (!productId) {
-    alert('Товар не найден!');
-    throw new Error('Нет ID товара в URL');
+  alert("Не указан ID товара!");
+} else {
+  loadProduct(productId);
 }
 
-// ====== 3. Функция форматирования цены ======
-function formatPrice(price) {
-    return price.toLocaleString('ru-RU', { style: 'currency', currency: 'BYN', maximumFractionDigits: 0 });
-}
-
-// ====== 4. Подгрузка данных товара ======
 async function loadProduct(id) {
-    const docRef = doc(db, "products", id);
+  try {
+    const docRef = doc(db, "products", id); // Коллекция 'products'
     const docSnap = await getDoc(docRef);
 
-    if (!docSnap.exists()) {
-        alert('Товар не найден в базе данных!');
-        return;
-    }
+    if (docSnap.exists()) {
+      const product = docSnap.data();
 
-    const product = docSnap.data();
+      // Обновляем DOM
+      document.getElementById("product-title").textContent = product.title;
+      document.getElementById("breadcrumb-title").textContent = product.title;
+      document.getElementById("product-category").textContent = product.category;
 
-    // Название и хлебные крошки
-    document.getElementById('product-title').textContent = product.title;
-    document.getElementById('breadcrumb-title').textContent = product.title;
-    document.getElementById('product-category').textContent = product.category;
-    document.getElementById('breadcrumb-category').textContent = product.category;
+      const oldPriceElement = document.getElementById("old-price");
+      const newPriceElement = document.getElementById("new-price");
 
-    // Цены
-    const oldPriceElem = document.getElementById('old-price');
-    const newPriceElem = document.getElementById('new-price');
-    const discount = product.discount || 0;
-    const oldPrice = product.price;
-    const newPrice = Math.round(oldPrice * (1 - discount / 100));
+      oldPriceElement.textContent = formatPrice(product.price);
+      newPriceElement.textContent = formatPrice(Math.round(product.price * (1 - (product.discount || 0)/100)));
 
-    oldPriceElem.textContent = formatPrice(oldPrice);
-    newPriceElem.textContent = formatPrice(newPrice);
+      document.getElementById("selected-facade").textContent = product.facade;
+      document.getElementById("selected-color").textContent = product.color;
+      document.getElementById("main-product-image").src = product.image;
 
-    // Мобильная навигация
-    const mobilePrice = document.querySelector('.mobile-nav .text-xl');
-    const mobileOldPrice = document.querySelector('.mobile-nav .line-through');
-    mobilePrice.textContent = formatPrice(newPrice);
-    mobileOldPrice.textContent = formatPrice(oldPrice);
-
-    // Фасад и цвет
-    document.getElementById('selected-facade').textContent = product.facade;
-    document.getElementById('selected-color').textContent = product.color;
-
-    // Главное изображение
-    document.getElementById('main-product-image').src = product.mainImage;
-
-    // ====== 5. Подгрузка миниатюр ======
-    const thumbContainer = document.getElementById('thumbnail-gallery');
-    thumbContainer.innerHTML = '';
-    product.images.forEach((img, index) => {
-        const thumb = document.createElement('img');
+      // Подгрузка миниатюр
+      const thumbnailGallery = document.getElementById("thumbnail-gallery");
+      thumbnailGallery.innerHTML = "";
+      product.images.forEach((img, index) => {
+        const thumb = document.createElement("img");
         thumb.src = img;
-        thumb.alt = `${product.color} ${index + 1}`;
-        thumb.className = `w-full aspect-square object-cover rounded-xl border-4 ${index === 0 ? 'border-orange-500 shadow-md' : 'border-transparent hover:border-orange-500 cursor-pointer transition'}`;
-        thumb.onclick = () => changeMainImage(img);
-        thumbContainer.appendChild(thumb);
-    });
+        thumb.className = "w-full aspect-square object-cover rounded-xl border-4 cursor-pointer transition";
+        if(index === 0) thumb.classList.add("border-orange-500", "shadow-md");
+        thumb.onclick = () => changeMainImage(img, thumbnailGallery, index);
+        thumbnailGallery.appendChild(thumb);
+      });
 
-    // ====== 6. Опции фасада ======
-    const facadeContainer = document.getElementById('facade-options');
-    facadeContainer.innerHTML = '';
-    product.facadeOptions.forEach(f => {
-        const btn = document.createElement('button');
+      // Подгрузка фасадов
+      const facadeOptions = document.getElementById("facade-options");
+      facadeOptions.innerHTML = "";
+      product.facades.forEach(f => {
+        const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = f;
-        btn.className = `option-button-style px-5 py-2.5 rounded-full text-sm ${f === product.facade ? 'active' : ''}`;
+        btn.className = `option-button-style px-5 py-2.5 rounded-full text-sm`;
+        if(f === product.facade) btn.classList.add("active");
         btn.onclick = () => selectFacade(btn, f);
-        facadeContainer.appendChild(btn);
-    });
+        facadeOptions.appendChild(btn);
+      });
 
-    // ====== 7. Опции цвета ======
-    const colorContainer = document.getElementById('color-options');
-    colorContainer.innerHTML = '';
-    product.colorOptions.forEach(c => {
-        const btn = document.createElement('button');
+      // Подгрузка цветов
+      const colorOptions = document.getElementById("color-options");
+      colorOptions.innerHTML = "";
+      product.colors.forEach(c => {
+        const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = c.name;
-        btn.dataset.image = c.image;
-        btn.className = `option-button-style px-5 py-2.5 rounded-full text-sm ${c.name === product.color ? 'active' : ''}`;
-        btn.onclick = () => selectColor(btn, c.name);
-        colorContainer.appendChild(btn);
-    });
+        btn.setAttribute("data-image", c.image);
+        btn.className = "option-button-style px-5 py-2.5 rounded-full text-sm";
+        if(c.name === product.color) btn.classList.add("active");
+        btn.onclick = () => selectColor(btn, c.name, c.image);
+        colorOptions.appendChild(btn);
+      });
 
-    // ====== 8. Кнопка Купить ======
-    const buyButtons = document.querySelectorAll('button.orange-accent');
-    buyButtons.forEach(btn => {
-        btn.onclick = () => {
-            if (!product.stores || product.stores.length === 0) {
-                alert("Информация о магазинах отсутствует");
-                return;
-            }
-            let storeInfo = product.stores.map(s => `🏬 ${s.name}\n📍 ${s.address}\n📞 ${s.phone}`).join('\n\n');
-            alert(`Доступно в магазинах:\n\n${storeInfo}`);
-        };
-    });
+    } else {
+      alert("Товар не найден!");
+    }
+  } catch (error) {
+    console.error("Ошибка загрузки товара:", error);
+  }
 }
 
-// ====== 9. Функции смены изображений и опций ======
-function changeMainImage(src) {
-    document.getElementById('main-product-image').src = src;
-    document.querySelectorAll('#thumbnail-gallery img').forEach(img => {
-        img.classList.remove('border-orange-500', 'shadow-md');
-        img.classList.add('border-transparent');
-        if (img.src === src) {
-            img.classList.add('border-orange-500', 'shadow-md');
-        }
-    });
+// Функции для смены изображений и опций
+function changeMainImage(src, gallery, activeIndex) {
+  document.getElementById("main-product-image").src = src;
+  gallery.querySelectorAll("img").forEach((img, idx) => {
+    img.classList.remove("border-orange-500", "shadow-md");
+    img.classList.add("border-transparent");
+    if(idx === activeIndex) {
+      img.classList.add("border-orange-500", "shadow-md");
+    }
+  });
 }
 
 function selectFacade(button, facadeName) {
-    document.querySelectorAll('#facade-options .option-button-style').forEach(btn => btn.classList.remove('active'));
-    button.classList.add('active');
-    document.getElementById('selected-facade').textContent = facadeName;
+  document.querySelectorAll('#facade-options .option-button-style').forEach(btn => btn.classList.remove("active"));
+  button.classList.add("active");
+  document.getElementById("selected-facade").textContent = facadeName;
 }
 
-function selectColor(button, colorName) {
-    document.querySelectorAll('#color-options .option-button-style').forEach(btn => btn.classList.remove('active'));
-    button.classList.add('active');
-    document.getElementById('selected-color').textContent = colorName;
-    changeMainImage(button.dataset.image);
+function selectColor(button, colorName, imageSrc) {
+  document.querySelectorAll('#color-options .option-button-style').forEach(btn => btn.classList.remove("active"));
+  button.classList.add("active");
+  document.getElementById("selected-color").textContent = colorName;
+  document.getElementById("main-product-image").src = imageSrc;
 }
 
-// ====== 10. Запуск ======
-document.addEventListener('DOMContentLoaded', () => loadProduct(productId));
+// Формат цены
+function formatPrice(price) {
+  return price.toLocaleString('ru-RU', { style: 'currency', currency: 'BYN', maximumFractionDigits: 0 });
+}
