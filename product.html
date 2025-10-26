@@ -1,0 +1,80 @@
+// Импорт Firebase через ES Modules
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+// Конфиг Firebase
+const firebaseConfig = {
+  apiKey: "ВАШ_API_KEY",
+  authDomain: "ВАШ_PROJECT.firebaseapp.com",
+  projectId: "ВАШ_PROJECT_ID",
+  storageBucket: "ВАШ_PROJECT.appspot.com",
+  messagingSenderId: "ВАШ_SENDER_ID",
+  appId: "ВАШ_APP_ID"
+};
+
+// Инициализация
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Получаем ID из URL
+const urlParams = new URLSearchParams(window.location.search);
+const productId = urlParams.get("id");
+
+if (!productId) {
+    alert("Товар не выбран!");
+}
+
+// Функция загрузки товара
+async function loadProduct(id) {
+    const docRef = doc(db, "products", id);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+        alert("Товар не найден!");
+        return;
+    }
+
+    const data = docSnap.data();
+
+    // Заголовок и категория
+    document.getElementById("product-title").textContent = data.title;
+    document.getElementById("product-category").textContent = data.category;
+
+    // Галерея
+    const gallery = document.getElementById("gallery");
+    gallery.innerHTML = data.images.map(img => `
+        <img src="${img}" class="w-full mb-3 rounded-xl border border-gray-300 cursor-pointer" onclick="document.getElementById('main-image').src='${img}'">
+    `).join('');
+    gallery.innerHTML += `<img id="main-image" src="${data.images[0]}" class="w-full rounded-3xl mb-3">`;
+
+    // Фасады
+    const facadeContainer = document.getElementById("facade-options");
+    facadeContainer.innerHTML = data.facades.map(f => `
+        <button class="px-5 py-2.5 rounded-full text-sm border-2 border-orange-600 text-orange-600" type="button" onclick="selectFacade('${f}')">${f}</button>
+    `).join('');
+
+    // Цвета
+    const colorContainer = document.getElementById("color-options");
+    colorContainer.innerHTML = data.colors.map(c => `
+        <button class="px-5 py-2.5 rounded-full text-sm border-2 border-orange-600 text-orange-600" type="button" onclick="selectColor('${c.name}', '${c.image}')">${c.name}</button>
+    `).join('');
+
+    // Кнопка "Купить"
+    document.getElementById("buy-button").onclick = () => {
+        let storesInfo = data.stores.map(s => `${s.name} - ${s.address} - ${s.phone}`).join("\n");
+        alert("Где купить:\n" + storesInfo);
+    };
+}
+
+// Функции выбора фасада и цвета
+window.selectFacade = function(facade) {
+    alert("Выбран фасад: " + facade);
+};
+
+window.selectColor = function(color, img) {
+    document.getElementById("main-image").src = img;
+    alert("Выбран цвет: " + color);
+};
+
+// Загрузка
+loadProduct(productId);
