@@ -56,28 +56,28 @@
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Картинки</label>
         <div id="images-container" class="mb-2"></div>
-        <button type="button" class="btn-primary text-white py-1 px-3 rounded" onclick="addImageField()">Добавить картинку</button>
+        <button type="button" id="addImageBtn" class="btn-primary text-white py-1 px-3 rounded">Добавить картинку</button>
       </div>
 
       <!-- Фасады -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Фасады</label>
         <div id="facades-container" class="mb-2"></div>
-        <button type="button" class="btn-primary text-white py-1 px-3 rounded" onclick="addFacadeField()">Добавить фасад</button>
+        <button type="button" id="addFacadeBtn" class="btn-primary text-white py-1 px-3 rounded">Добавить фасад</button>
       </div>
 
       <!-- Цвета -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Цвета</label>
         <div id="colors-container" class="mb-2"></div>
-        <button type="button" class="btn-primary text-white py-1 px-3 rounded" onclick="addColorField()">Добавить цвет</button>
+        <button type="button" id="addColorBtn" class="btn-primary text-white py-1 px-3 rounded">Добавить цвет</button>
       </div>
 
       <!-- Цены -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Цены для комбинаций фасад+цвет</label>
         <div id="prices-container" class="mb-2"></div>
-        <button type="button" class="btn-primary text-white py-1 px-3 rounded" onclick="addPriceField()">Добавить цену</button>
+        <button type="button" id="addPriceBtn" class="btn-primary text-white py-1 px-3 rounded">Добавить цену</button>
       </div>
 
       <button type="submit" class="w-full btn-primary text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg">Сохранить</button>
@@ -92,6 +92,21 @@
 
   </div>
 
-  <script type="module" src="./admin.js"></script>
+  <script type="module">
+    import './admin.js';
+    
+    // 👇 Привязка кнопок к функциям после загрузки admin.js
+    import {
+      addImageField,
+      addFacadeField,
+      addColorField,
+      addPriceField
+    } from './admin.js';
+
+    document.getElementById('addImageBtn').onclick = () => addImageField();
+    document.getElementById('addFacadeBtn').onclick = () => addFacadeField();
+    document.getElementById('addColorBtn').onclick = () => addColorField();
+    document.getElementById('addPriceBtn').onclick = () => addPriceField();
+  </script>
 </body>
 </html>
