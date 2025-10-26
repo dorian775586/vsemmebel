@@ -27,7 +27,6 @@ const logoutBtn = document.getElementById('logoutBtn');
 // --- Проверка авторизации и прав администратора ---
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    // Если не авторизован
     if (accessDenied) accessDenied.classList.remove('hidden');
     if (adminPanel) adminPanel.classList.add('hidden');
     return;
@@ -38,14 +37,12 @@ onAuthStateChanged(auth, async (user) => {
     const isAdmin = token.claims?.admin || user.email === 'admin@example.com';
 
     if (!isAdmin) {
-      // Не админ
       if (accessDenied) accessDenied.classList.remove('hidden');
       if (adminPanel) adminPanel.classList.add('hidden');
       await signOut(auth);
       return;
     }
 
-    // Показываем панель админа
     if (adminPanel) adminPanel.classList.remove('hidden');
     if (accessDenied) accessDenied.classList.add('hidden');
 
@@ -60,17 +57,42 @@ onAuthStateChanged(auth, async (user) => {
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  // Получаем значения с формы
+  const title = document.getElementById('title').value.trim();
+  const discount = Number(document.getElementById('discount').value);
+  const mainImage = document.getElementById('image').value.trim();
+  const category = document.getElementById('category').value;
+
+  // Дополнительные поля
+  // Картинки: вводятся через запятую
+  const imagesInput = document.getElementById('images').value.trim();
+  const images = imagesInput ? imagesInput.split(',').map(i => i.trim()) : [mainImage];
+
+  // Фасады: вводятся через запятую
+  const facadesInput = document.getElementById('facades').value.trim();
+  const facades = facadesInput ? facadesInput.split(',').map(f => f.trim()) : [];
+
+  // Цвета: вводятся через запятую в формате "Название|URL картинки"
+  const colorsInput = document.getElementById('colors').value.trim();
+  const colors = colorsInput ? colorsInput.split(',').map(c => {
+    const [name, img] = c.split('|').map(s => s.trim());
+    return { name, image: img || mainImage };
+  }) : [];
+
   const newOffer = {
-    title: document.getElementById('title').value.trim(),
-    discount: Number(document.getElementById('discount').value),
-    image: document.getElementById('image').value.trim(),
-    category: document.getElementById('category').value,
+    title,
+    discount,
+    image: mainImage,
+    category,
+    images,
+    facades,
+    colors,
     createdAt: serverTimestamp()
   };
 
   try {
     await addDoc(collection(db, 'offers'), newOffer);
-    statusMessage.textContent = '✅ Предложение успешно добавлено!';
+    statusMessage.textContent = '✅ Товар успешно добавлен!';
     statusMessage.className = 'status-success text-center py-2 rounded-lg font-medium';
     statusMessage.classList.remove('hidden');
     form.reset();
