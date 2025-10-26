@@ -1,117 +1,97 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Админ-панель</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-  body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; }
-  .container-card { max-width: 700px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); }
-  .btn-primary { background-color: #4f46e5; transition: background-color 0.2s; }
-  .btn-primary:hover { background-color: #4338ca; }
-  .status-success { background-color: #d1fae5; color: #065f46; }
-  .status-error { background-color: #fee2e2; color: #991b1b; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админ-панель</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+    .container-card { max-width: 800px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); margin-bottom:2rem; }
+    .btn-primary { background-color: #4f46e5; transition: background-color 0.2s; }
+    .btn-primary:hover { background-color: #4338ca; }
+    .status-success { background-color: #d1fae5; color: #065f46; }
+    .status-error { background-color: #fee2e2; color: #991b1b; }
+    .color-box { width: 25px; height: 25px; border:1px solid #ccc; display:inline-block; margin-right:5px; vertical-align:middle; }
+  </style>
 </head>
 <body class="p-4 sm:p-8">
 
-<!-- Сообщение об ошибке прав -->
-<div id="accessDenied" class="hidden container-card mx-auto bg-red-100 text-red-700 p-6 md:p-10 rounded-xl text-center font-bold">
+  <!-- Сообщение об ошибке прав -->
+  <div id="accessDenied" class="hidden container-card mx-auto bg-red-100 text-red-700 p-6 rounded-xl text-center font-bold">
     У вас нет прав администратора. Пожалуйста, войдите как админ.
-</div>
+  </div>
 
-<!-- Форма добавления товара -->
-<div id="adminPanel" class="container-card mx-auto bg-white p-6 md:p-10 rounded-xl hidden">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">Админ-панель: Добавить Товар</h1>
+  <!-- Админ-панель -->
+  <div id="adminPanel" class="container-card mx-auto bg-white p-6 rounded-xl hidden">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">Админ-панель: Товары</h1>
 
     <form id="addOfferForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Название товара</label>
+        <input type="text" id="title" class="w-full p-2 border rounded-lg" required>
+      </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Название товара</label>
-            <input type="text" id="title" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-        </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Категория</label>
+        <select id="category" class="w-full p-2 border rounded-lg">
+          <option value="Все">Все</option>
+          <option value="Мебель">Мебель</option>
+          <option value="Аксессуары">Аксессуары</option>
+          <option value="Услуги">Услуги</option>
+        </select>
+      </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Категория</label>
-            <select id="category" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-                <option value="Все">Все</option>
-                <option value="Мебель">Мебель</option>
-                <option value="Аксессуары">Аксессуары</option>
-                <option value="Услуги">Услуги</option>
-            </select>
-        </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Скидка (%)</label>
+        <input type="number" id="discount" min="0" max="100" class="w-full p-2 border rounded-lg">
+      </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Скидка (%)</label>
-            <input type="number" id="discount" required min="0" max="100" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-        </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+        <textarea id="description" rows="3" class="w-full p-2 border rounded-lg"></textarea>
+      </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
-            <textarea id="description" rows="4" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-        </div>
+      <!-- Картинки -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Картинки</label>
+        <div id="images-container" class="mb-2"></div>
+        <button type="button" class="btn-primary text-white py-1 px-3 rounded" onclick="addImageField()">Добавить картинку</button>
+      </div>
 
-        <!-- Главная картинка -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Главная картинка URL</label>
-            <input type="url" id="image" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-        </div>
+      <!-- Фасады -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Фасады</label>
+        <div id="facades-container" class="mb-2"></div>
+        <button type="button" class="btn-primary text-white py-1 px-3 rounded" onclick="addFacadeField()">Добавить фасад</button>
+      </div>
 
-        <!-- Доп. картинки -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Дополнительные картинки</label>
-            <div id="images-container" class="space-y-2"></div>
-            <button type="button" id="addImageBtn" class="mt-2 w-full btn-primary text-white font-semibold py-2 rounded-lg">Добавить картинку</button>
-        </div>
+      <!-- Цвета -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Цвета</label>
+        <div id="colors-container" class="mb-2"></div>
+        <button type="button" class="btn-primary text-white py-1 px-3 rounded" onclick="addColorField()">Добавить цвет</button>
+      </div>
 
-        <!-- Фасады -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Фасады</label>
-            <div id="facades-container" class="space-y-2"></div>
-            <button type="button" id="addFacadeBtn" class="mt-2 w-full btn-primary text-white font-semibold py-2 rounded-lg">Добавить фасад</button>
-        </div>
+      <!-- Цены -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Цены для комбинаций фасад+цвет</label>
+        <div id="prices-container" class="mb-2"></div>
+        <button type="button" class="btn-primary text-white py-1 px-3 rounded" onclick="addPriceField()">Добавить цену</button>
+      </div>
 
-        <!-- Цвета -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Цвета</label>
-            <div id="colors-container" class="space-y-2"></div>
-            <button type="button" id="addColorBtn" class="mt-2 w-full btn-primary text-white font-semibold py-2 rounded-lg">Добавить цвет</button>
-        </div>
-
-        <!-- Цены -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Цены для комбинаций фасад+цвет</label>
-            <div id="prices-container" class="space-y-2"></div>
-            <button type="button" id="addPriceBtn" class="mt-2 w-full btn-primary text-white font-semibold py-2 rounded-lg">Добавить цену</button>
-        </div>
-
-        <button type="submit" class="w-full btn-primary text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg transition duration-150 ease-in-out">
-            Добавить товар
-        </button>
-
-        <p id="statusMessage" class="hidden text-center py-2 rounded-lg font-medium"></p>
+      <button type="submit" class="w-full btn-primary text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg">Сохранить</button>
+      <p id="statusMessage" class="hidden text-center py-2 rounded-lg font-medium"></p>
     </form>
 
     <button id="logoutBtn" class="mt-6 w-full bg-red-500 text-white font-semibold py-2 rounded-lg hover:bg-red-600 transition">Выйти</button>
-</div>
 
-<script type="module" src="./admin.js"></script>
-<script>
-  // Кнопки добавления динамических полей
-  import { addImageField, addFacadeField, addColorField, addPriceField } from './admin.js';
+    <!-- Список существующих товаров -->
+    <h2 class="text-2xl font-bold mt-8 mb-4">Существующие товары</h2>
+    <div id="offers-list" class="space-y-2"></div>
 
-  document.getElementById('addImageBtn').onclick = () => addImageField();
-  document.getElementById('addFacadeBtn').onclick = () => addFacadeField();
-  document.getElementById('addColorBtn').onclick = () => addColorField();
-  document.getElementById('addPriceBtn').onclick = () => addPriceField();
+  </div>
 
-  // Инициализация одного пустого поля
-  addImageField();
-  addFacadeField();
-  addColorField();
-  addPriceField();
-</script>
-
+  <script type="module" src="./admin.js"></script>
 </body>
 </html>
