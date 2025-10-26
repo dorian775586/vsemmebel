@@ -10,19 +10,15 @@
     .container-card { max-width: 800px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); margin-bottom:2rem; }
     .btn-primary { background-color: #4f46e5; transition: background-color 0.2s; }
     .btn-primary:hover { background-color: #4338ca; }
-    .status-success { background-color: #d1fae5; color: #065f46; }
-    .status-error { background-color: #fee2e2; color: #991b1b; }
-    .color-box { width: 25px; height: 25px; border:1px solid #ccc; display:inline-block; margin-right:5px; vertical-align:middle; }
+    .color-box { width: 25px; height: 25px; border: 1px solid #ccc; display: inline-block; margin-right: 5px; vertical-align: middle; }
   </style>
 </head>
 <body class="p-4 sm:p-8">
 
-  <!-- Сообщение об ошибке прав -->
   <div id="accessDenied" class="hidden container-card mx-auto bg-red-100 text-red-700 p-6 rounded-xl text-center font-bold">
     У вас нет прав администратора. Пожалуйста, войдите как админ.
   </div>
 
-  <!-- Админ-панель -->
   <div id="adminPanel" class="container-card mx-auto bg-white p-6 rounded-xl hidden">
     <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">Админ-панель: Товары</h1>
 
@@ -86,27 +82,11 @@
 
     <button id="logoutBtn" class="mt-6 w-full bg-red-500 text-white font-semibold py-2 rounded-lg hover:bg-red-600 transition">Выйти</button>
 
-    <!-- Список существующих товаров -->
     <h2 class="text-2xl font-bold mt-8 mb-4">Существующие товары</h2>
     <div id="offers-list" class="space-y-2"></div>
 
   </div>
 
-  <script type="module">
-    import './admin.js';
-    
-    // 👇 Привязка кнопок к функциям после загрузки admin.js
-    import {
-      addImageField,
-      addFacadeField,
-      addColorField,
-      addPriceField
-    } from './admin.js';
-
-    document.getElementById('addImageBtn').onclick = () => addImageField();
-    document.getElementById('addFacadeBtn').onclick = () => addFacadeField();
-    document.getElementById('addColorBtn').onclick = () => addColorField();
-    document.getElementById('addPriceBtn').onclick = () => addPriceField();
-  </script>
+  <script type="module" src="./admin.js"></script>
 </body>
 </html>
