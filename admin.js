@@ -17,37 +17,53 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// --- DOM элементы ---
+const adminPanel = document.getElementById('adminPanel');
+const accessDenied = document.getElementById('accessDenied');
+const form = document.getElementById('addOfferForm');
+const statusMessage = document.getElementById('statusMessage');
+const logoutBtn = document.getElementById('logoutBtn');
+
 // --- Проверка авторизации и прав администратора ---
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    alert('Пожалуйста, войдите как админ.');
-    window.location.href = '/'; // редирект на главную
+    // Если не авторизован
+    if (accessDenied) accessDenied.classList.remove('hidden');
+    if (adminPanel) adminPanel.classList.add('hidden');
     return;
   }
 
   try {
     const token = await user.getIdTokenResult();
-    const isAdmin = token.claims?.admin || user.email === 'admin@example.com'; // fallback на email
+    const isAdmin = token.claims?.admin || user.email === 'admin@example.com';
+
     if (!isAdmin) {
-      alert('У вас нет прав администратора.');
-      signOut(auth);
-      window.location.href = '/';
+      // Не админ
+      if (accessDenied) accessDenied.classList.remove('hidden');
+      if (adminPanel) adminPanel.classList.add('hidden');
+      await signOut(auth);
+      return;
     }
+
+    // Показываем панель админа
+    if (adminPanel) adminPanel.classList.remove('hidden');
+    if (accessDenied) accessDenied.classList.add('hidden');
+
   } catch (err) {
     console.error('Ошибка проверки прав админа:', err);
+    if (accessDenied) accessDenied.classList.remove('hidden');
+    if (adminPanel) adminPanel.classList.add('hidden');
   }
 });
 
-// --- Работа с формой ---
-const form = document.getElementById('addOfferForm');
-const statusMessage = document.getElementById('statusMessage');
-
+// --- Работа с формой добавления предложения ---
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
+
   const newOffer = {
-    title: document.getElementById('title').value,
+    title: document.getElementById('title').value.trim(),
     discount: Number(document.getElementById('discount').value),
-    image: document.getElementById('image').value,
+    image: document.getElementById('image').value.trim(),
     category: document.getElementById('category').value,
     createdAt: serverTimestamp()
   };
@@ -64,4 +80,10 @@ form.addEventListener('submit', async (e) => {
     statusMessage.className = 'status-error text-center py-2 rounded-lg font-medium';
     statusMessage.classList.remove('hidden');
   }
+});
+
+// --- Выход из админки ---
+logoutBtn.addEventListener('click', async () => {
+  await signOut(auth);
+  window.location.href = '/';
 });
