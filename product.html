@@ -21,18 +21,19 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 
 <header class="sticky top-0 header-bg z-20">
   <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-    <a href="#" class="text-3xl font-black text-gray-900 tracking-tight">Nolikby</a>
+    <a href="#" class="text-3xl font-black text-gray-900 tracking-tight">Mebel.bel</a>
   </div>
 </header>
 
 <main class="max-w-6xl mx-auto px-4 mt-6">
 
+  <!-- Хлебные крошки -->
   <div class="mb-6 text-sm text-gray-500">
     <a href="#" class="hover:text-orange-500 transition">Главная</a>
     <span class="mx-2">/</span>
-    <a href="#" class="hover:text-orange-500 transition" id="product-category">Категория</a>
+    <span class="hover:text-orange-500 transition" id="breadcrumb-category">Категория</span>
     <span class="mx-2">/</span>
-    <span class="text-gray-900 font-medium" id="product-title">Товар</span>
+    <span class="text-gray-900 font-medium" id="breadcrumb-title">Товар</span>
   </div>
 
   <div class="lg:grid lg:grid-cols-2 lg:gap-10">
@@ -40,7 +41,7 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
     <!-- Галерея -->
     <div class="mb-8 lg:mb-0">
       <div id="thumbnail-gallery" class="flex gap-3 mb-3"></div>
-      <img id="main-image" src="" class="w-full rounded-3xl mb-3">
+      <img id="main-product-image" src="https://placehold.co/400x400?text=No+Image" class="w-full rounded-3xl mb-3">
     </div>
 
     <!-- Информация о товаре -->
@@ -48,16 +49,24 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
       <h1 class="text-4xl font-black text-gray-900 mb-2" id="product-title">Товар</h1>
       <p class="text-lg font-medium text-orange-600 uppercase mb-4" id="product-category">Категория</p>
 
+      <!-- Цена -->
+      <div class="mb-5">
+        <span id="old-price" class="line-through text-gray-400 mr-3">0 BYN</span>
+        <span id="new-price" class="text-3xl font-black text-orange-600">0 BYN</span>
+      </div>
+
       <!-- Фасады -->
       <div class="mb-5">
         <p class="font-bold text-gray-800 mb-3">Фасад:</p>
         <div class="flex flex-wrap gap-3" id="facade-options"></div>
+        <p>Выбран: <span id="selected-facade">-</span></p>
       </div>
 
       <!-- Цвета -->
       <div class="mb-8">
         <p class="font-bold text-gray-800 mb-3">Цвет/Текстура:</p>
         <div class="flex flex-wrap gap-3" id="color-options"></div>
+        <p>Выбран: <span id="selected-color">-</span></p>
       </div>
 
       <!-- Кнопка купить -->
@@ -72,15 +81,15 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 </main>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-// Firebase конфиг
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
   authDomain: "vsemmebel-90d48.firebaseapp.com",
   projectId: "vsemmebel-90d48",
-  storageBucket: "vsemmebel-90d48.appspot.com",
+  storageBucket: "vsemmebel-90d48.firebasestorage.app",
   messagingSenderId: "958123504041",
   appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
 };
@@ -88,65 +97,100 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Получаем ID из URL
+// Получаем ID товара из URL
 const urlParams = new URLSearchParams(window.location.search);
 const productId = urlParams.get("id");
-if (!productId) alert("Товар не выбран!");
 
-// Загрузка товара
+if (!productId) alert("Не указан ID товара!");
+else loadProduct(productId);
+
 async function loadProduct(id) {
-  const docRef = doc(db, "products", id);
-  const docSnap = await getDoc(docRef);
+  try {
+    const docRef = doc(db, "offers", id);
+    const docSnap = await getDoc(docRef);
 
-  if (!docSnap.exists()) { alert("Товар не найден!"); return; }
-  const data = docSnap.data();
+    if (!docSnap.exists()) { alert("Товар не найден!"); return; }
+    const product = docSnap.data();
 
-  document.getElementById("product-title").textContent = data.title;
-  document.getElementById("product-category").textContent = data.category;
-  document.getElementById("main-image").src = data.images[0];
+    // Заголовки и хлебные крошки
+    document.getElementById("product-title").textContent = product.title || "Без названия";
+    document.getElementById("breadcrumb-title").textContent = product.title || "Без названия";
+    document.getElementById("breadcrumb-category").textContent = product.category || "-";
 
-  // Галерея миниатюр
-  const gallery = document.getElementById("thumbnail-gallery");
-  gallery.innerHTML = data.images.map((img,i) => `<img src="${img}" class="thumbnail ${i===0?'active':''}" onclick="selectThumbnail(this, '${img}')">`).join('');
+    // Цена
+    const oldPrice = product.price || 1000;
+    document.getElementById("old-price").textContent = formatPrice(oldPrice);
+    document.getElementById("new-price").textContent = formatPrice(Math.round(oldPrice * (1 - (product.discount || 0)/100)));
 
-  // Фасады
-  const facadeContainer = document.getElementById("facade-options");
-  facadeContainer.innerHTML = data.facades.map(f => `<button class="option-button-style ${f===data.facades[0]?'active':''}" type="button" onclick="selectFacade(this, '${f}')">${f}</button>`).join('');
+    // Фасад и цвет
+    document.getElementById("selected-facade").textContent = product.facade || "-";
+    document.getElementById("selected-color").textContent = product.color || "-";
 
-  // Цвета
-  const colorContainer = document.getElementById("color-options");
-  colorContainer.innerHTML = data.colors.map(c => `<button class="option-button-style ${c.name===data.colors[0].name?'active':''}" type="button" onclick="selectColor(this, '${c.name}', '${c.image}')">${c.name}</button>`).join('');
+    // Основная картинка
+    document.getElementById("main-product-image").src = (product.images && product.images[0]) || product.image || "https://placehold.co/400x400?text=No+Image";
 
-  // Купить
-  document.getElementById("buy-button").onclick = () => {
-    const storesInfo = data.stores.map(s => `${s.name} - ${s.address} - ${s.phone}`).join("\n");
-    alert("Где купить:\n" + storesInfo);
-  };
+    // Галерея миниатюр
+    const gallery = document.getElementById("thumbnail-gallery");
+    gallery.innerHTML = "";
+    (product.images || [product.image]).forEach((img, index) => {
+      const thumb = document.createElement("img");
+      thumb.src = img;
+      thumb.className = "thumbnail" + (index===0 ? " active" : "");
+      thumb.onclick = () => {
+        document.getElementById("main-product-image").src = img;
+        gallery.querySelectorAll("img").forEach(t => t.classList.remove("active"));
+        thumb.classList.add("active");
+      };
+      gallery.appendChild(thumb);
+    });
+
+    // Фасады
+    const facadeContainer = document.getElementById("facade-options");
+    facadeContainer.innerHTML = "";
+    (product.facades || []).forEach(f => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = f;
+      btn.className = "option-button-style" + (f===product.facade ? " active" : "");
+      btn.onclick = () => {
+        document.querySelectorAll("#facade-options .option-button-style").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("selected-facade").textContent = f;
+      };
+      facadeContainer.appendChild(btn);
+    });
+
+    // Цвета
+    const colorContainer = document.getElementById("color-options");
+    colorContainer.innerHTML = "";
+    (product.colors || []).forEach(c => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = c.name;
+      btn.setAttribute("data-image", c.image);
+      btn.className = "option-button-style" + (c.name===product.color ? " active" : "");
+      btn.onclick = () => {
+        document.querySelectorAll("#color-options .option-button-style").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("selected-color").textContent = c.name;
+        document.getElementById("main-product-image").src = c.image;
+      };
+      colorContainer.appendChild(btn);
+    });
+
+    // Кнопка купить
+    document.getElementById("buy-button").onclick = () => {
+      alert(`Вы купили: ${product.title}\nФасад: ${document.getElementById("selected-facade").textContent}\nЦвет: ${document.getElementById("selected-color").textContent}`);
+    };
+
+  } catch (err) {
+    console.error("Ошибка загрузки товара:", err);
+  }
 }
 
-// Выбор миниатюры
-window.selectThumbnail = function(el, img) {
-  document.getElementById("main-image").src = img;
-  document.querySelectorAll(".thumbnail").forEach(t => t.classList.remove("active"));
-  el.classList.add("active");
-};
-
-// Выбор фасада
-window.selectFacade = function(el, facade) {
-  document.querySelectorAll("#facade-options .option-button-style").forEach(b => b.classList.remove("active"));
-  el.classList.add("active");
-  alert("Выбран фасад: " + facade);
-};
-
-// Выбор цвета
-window.selectColor = function(el, color, img) {
-  document.getElementById("main-image").src = img;
-  document.querySelectorAll("#color-options .option-button-style").forEach(b => b.classList.remove("active"));
-  el.classList.add("active");
-  alert("Выбран цвет: " + color);
-};
-
-loadProduct(productId);
+function formatPrice(price) {
+  return price.toLocaleString('ru-RU', { style: 'currency', currency: 'BYN', maximumFractionDigits:0 });
+}
 </script>
 </body>
 </html>
