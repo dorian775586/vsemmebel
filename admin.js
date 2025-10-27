@@ -1,7 +1,25 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+// admin.js
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  deleteDoc,
+  updateDoc,
+  getDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// === Firebase ===
+// --- Конфиг Firebase ---
 const firebaseConfig = {
   apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
   authDomain: "vsemmebel-90d48.firebaseapp.com",
@@ -10,153 +28,207 @@ const firebaseConfig = {
   messagingSenderId: "958123504041",
   appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-// === DOM ===
+// --- DOM ---
 const adminPanel = document.getElementById('adminPanel');
-const addImageBtn = document.getElementById('addImageBtn');
-const addFacadeBtn = document.getElementById('addFacadeBtn');
-const addColorBtn = document.getElementById('addColorBtn');
-const addPriceBtn = document.getElementById('addPriceBtn');
-const offersList = document.getElementById('offers-list');
+const accessDenied = document.getElementById('accessDenied');
 const form = document.getElementById('addOfferForm');
 const statusMessage = document.getElementById('statusMessage');
+const logoutBtn = document.getElementById('logoutBtn');
+const offersList = document.getElementById('offers-list');
 
-// Показ панели
-adminPanel.classList.remove('hidden');
+const imagesContainer = document.getElementById('images-container');
+const facadesContainer = document.getElementById('facades-container');
+const colorsContainer = document.getElementById('colors-container');
+const pricesContainer = document.getElementById('prices-container');
 
-// === Функции добавления полей ===
-function addImageField(value = "") {
-  const container = document.getElementById('images-container');
-  const div = document.createElement('div');
-  div.className = 'flex items-center gap-2 mb-2';
-  div.innerHTML = `
-    <input type="text" placeholder="URL картинки" class="w-full p-2 border rounded-lg" value="${value}">
-    <button type="button" class="text-red-600 font-bold px-2">✕</button>
-  `;
-  div.querySelector('button').onclick = () => div.remove();
-  container.appendChild(div);
-}
-addImageBtn.addEventListener('click', () => addImageField());
+let editingId = null; // ID редактируемого товара
 
-function addFacadeField(value = "") {
-  const container = document.getElementById('facades-container');
-  const div = document.createElement('div');
-  div.className = 'flex items-center gap-2 mb-2';
-  div.innerHTML = `
-    <input type="text" placeholder="Название фасада" class="w-full p-2 border rounded-lg" value="${value}">
-    <button type="button" class="text-red-600 font-bold px-2">✕</button>
-  `;
-  div.querySelector('button').onclick = () => div.remove();
-  container.appendChild(div);
-}
-addFacadeBtn.addEventListener('click', () => addFacadeField());
-
-function addColorField(name = "", color = "#ffffff") {
-  const container = document.getElementById('colors-container');
-  const div = document.createElement('div');
-  div.className = 'flex items-center gap-2 mb-2';
-  div.innerHTML = `
-    <input type="text" placeholder="Название цвета" class="flex-1 p-2 border rounded-lg" value="${name}">
-    <input type="color" class="w-10 h-10 border rounded" value="${color}">
-    <button type="button" class="text-red-600 font-bold px-2">✕</button>
-  `;
-  div.querySelector('button').onclick = () => div.remove();
-  container.appendChild(div);
-}
-addColorBtn.addEventListener('click', () => addColorField());
-
-function addPriceField(facade = "", color = "", price = "") {
-  const container = document.getElementById('prices-container');
-  const div = document.createElement('div');
-  div.className = 'flex items-center gap-2 mb-2';
-  div.innerHTML = `
-    <input type="text" placeholder="Фасад" class="p-2 border rounded-lg" value="${facade}">
-    <input type="text" placeholder="Цвет" class="p-2 border rounded-lg" value="${color}">
-    <input type="number" placeholder="Цена" class="w-28 p-2 border rounded-lg" value="${price}">
-    <button type="button" class="text-red-600 font-bold px-2">✕</button>
-  `;
-  div.querySelector('button').onclick = () => div.remove();
-  container.appendChild(div);
-}
-addPriceBtn.addEventListener('click', () => addPriceField());
-
-// === Сохранение нового товара ===
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const newOffer = {
-    title: document.getElementById('title').value,
-    category: document.getElementById('category').value,
-    discount: Number(document.getElementById('discount').value || 0),
-    description: document.getElementById('description').value,
-    images: Array.from(document.querySelectorAll('#images-container input')).map(i => i.value),
-    facades: Array.from(document.querySelectorAll('#facades-container input')).map(i => i.value),
-    colors: Array.from(document.querySelectorAll('#colors-container div')).map(div => ({
-      name: div.querySelector('input[type=text]').value,
-      color: div.querySelector('input[type=color]').value
-    })),
-    prices: Array.from(document.querySelectorAll('#prices-container div')).map(div => ({
-      facade: div.querySelectorAll('input')[0].value,
-      color: div.querySelectorAll('input')[1].value,
-      price: Number(div.querySelectorAll('input')[2].value)
-    })),
-    createdAt: serverTimestamp()
-  };
-
-  try {
-    await addDoc(collection(db, 'offers'), newOffer);
-    statusMessage.textContent = '✅ Добавлено!';
-    statusMessage.className = 'text-green-600 text-center';
-    loadOffers();
-  } catch (err) {
-    console.error(err);
-    statusMessage.textContent = '❌ Ошибка';
+// --- Проверка авторизации ---
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    accessDenied.classList.remove('hidden');
+    adminPanel.classList.add('hidden');
+    return;
   }
+  adminPanel.classList.remove('hidden');
+  accessDenied.classList.add('hidden');
+  loadOffers();
 });
 
-// === Загрузка существующих товаров ===
+// --- Добавление динамических полей ---
+function addImageField(value = "") {
+  const div = document.createElement('div');
+  div.className = "flex gap-2 mb-2";
+  div.innerHTML = `
+    <input type="url" placeholder="URL изображения" class="w-full p-2 border rounded" value="${value}" required>
+    <button type="button" class="bg-red-500 text-white px-3 rounded">Удалить</button>
+  `;
+  div.querySelector('button').onclick = () => div.remove();
+  imagesContainer.appendChild(div);
+}
+
+function addFacadeField(value = "") {
+  const div = document.createElement('div');
+  div.className = "flex gap-2 mb-2";
+  div.innerHTML = `
+    <input type="text" placeholder="Название фасада" class="w-full p-2 border rounded" value="${value}" required>
+    <button type="button" class="bg-red-500 text-white px-3 rounded">Удалить</button>
+  `;
+  div.querySelector('button').onclick = () => div.remove();
+  facadesContainer.appendChild(div);
+}
+
+function addColorField(name = "", hex = "#ffffff") {
+  const div = document.createElement('div');
+  div.className = "flex items-center gap-2 mb-2";
+  div.innerHTML = `
+    <input type="text" placeholder="Название цвета" class="p-2 border rounded w-1/2" value="${name}" required>
+    <input type="color" class="w-10 h-10 border rounded" value="${hex}">
+    <button type="button" class="bg-red-500 text-white px-3 rounded">Удалить</button>
+  `;
+  div.querySelector('button').onclick = () => div.remove();
+  colorsContainer.appendChild(div);
+}
+
+function addPriceField(facade = "", color = "", price = "") {
+  const div = document.createElement('div');
+  div.className = "flex gap-2 mb-2";
+  div.innerHTML = `
+    <input type="text" placeholder="Фасад" class="p-2 border rounded w-1/3" value="${facade}" required>
+    <input type="text" placeholder="Цвет" class="p-2 border rounded w-1/3" value="${color}" required>
+    <input type="number" placeholder="Цена" class="p-2 border rounded w-1/3" value="${price}" required>
+    <button type="button" class="bg-red-500 text-white px-3 rounded">Удалить</button>
+  `;
+  div.querySelector('button').onclick = () => div.remove();
+  pricesContainer.appendChild(div);
+}
+
+// --- Загрузка товаров ---
 async function loadOffers() {
-  offersList.innerHTML = '<p class="text-gray-500">Загрузка...</p>';
-  const snapshot = await getDocs(collection(db, 'offers'));
+  offersList.innerHTML = "<p class='text-gray-500'>Загрузка...</p>";
+  const querySnapshot = await getDocs(collection(db, 'offers'));
   offersList.innerHTML = "";
-  snapshot.forEach(docSnap => {
-    const offer = docSnap.data();
+
+  querySnapshot.forEach((docSnap) => {
+    const data = docSnap.data();
     const div = document.createElement('div');
-    div.className = 'p-4 border rounded-lg bg-gray-50 flex justify-between items-center';
+    div.className = "border p-4 rounded flex justify-between items-center";
     div.innerHTML = `
       <div>
-        <h3 class="font-semibold text-lg">${offer.title}</h3>
-        <p class="text-sm text-gray-500">${offer.category}</p>
+        <p class="font-semibold">${data.title}</p>
+        <p class="text-sm text-gray-500">${data.category}</p>
       </div>
       <div class="flex gap-2">
-        <button class="btn-primary text-white px-3 py-1 rounded" data-id="${docSnap.id}" data-action="edit">Редактировать</button>
-        <button class="btn-danger text-white px-3 py-1 rounded" data-id="${docSnap.id}" data-action="delete">Удалить</button>
+        <button class="bg-blue-500 text-white px-3 py-1 rounded">Редактировать</button>
+        <button class="bg-red-500 text-white px-3 py-1 rounded">Удалить</button>
       </div>
     `;
-    offersList.appendChild(div);
-  });
 
-  document.querySelectorAll('[data-action="delete"]').forEach(btn => {
-    btn.onclick = async () => {
-      if (confirm("Точно удалить этот товар?")) {
-        await deleteDoc(doc(db, 'offers', btn.dataset.id));
+    // Удаление
+    div.querySelector('.bg-red-500').onclick = async () => {
+      if (confirm(`Удалить товар "${data.title}"?`)) {
+        await deleteDoc(doc(db, 'offers', docSnap.id));
         loadOffers();
       }
     };
-  });
 
-  document.querySelectorAll('[data-action="edit"]').forEach(btn => {
-    btn.onclick = async () => {
-      const id = btn.dataset.id;
-      const snap = snapshot.docs.find(d => d.id === id);
-      if (!snap) return;
-      const data = snap.data();
-      alert(`Редактирование товара "${data.title}" можно реализовать — загрузим поля в форму`);
-      // при желании можно загрузить данные в форму для редактирования
+    // Редактирование
+    div.querySelector('.bg-blue-500').onclick = async () => {
+      editingId = docSnap.id;
+      alert(`Редактирование товара "${data.title}"`);
+
+      const snap = await getDoc(doc(db, 'offers', editingId));
+      if (!snap.exists()) return;
+
+      const offer = snap.data();
+
+      // Подставляем данные в форму
+      document.getElementById('title').value = offer.title || "";
+      document.getElementById('category').value = offer.category || "Все";
+      document.getElementById('discount').value = offer.discount || 0;
+      document.getElementById('description').value = offer.description || "";
+
+      imagesContainer.innerHTML = "";
+      (offer.images || []).forEach(url => addImageField(url));
+
+      facadesContainer.innerHTML = "";
+      (offer.facades || []).forEach(f => addFacadeField(f));
+
+      colorsContainer.innerHTML = "";
+      (offer.colors || []).forEach(c => addColorField(c.name, c.hex || "#ffffff"));
+
+      pricesContainer.innerHTML = "";
+      (offer.prices || []).forEach(p => addPriceField(p.facade, p.color, p.price));
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+    offersList.appendChild(div);
   });
 }
 
-loadOffers();
+// --- Сохранение (новое или обновление) ---
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const offer = {
+    title: document.getElementById('title').value.trim(),
+    category: document.getElementById('category').value,
+    discount: Number(document.getElementById('discount').value),
+    description: document.getElementById('description').value.trim(),
+    images: Array.from(imagesContainer.querySelectorAll('input[type="url"]')).map(i => i.value.trim()),
+    facades: Array.from(facadesContainer.querySelectorAll('input[type="text"]')).map(i => i.value.trim()),
+    colors: Array.from(colorsContainer.children).map(div => ({
+      name: div.querySelector('input[type="text"]').value.trim(),
+      hex: div.querySelector('input[type="color"]').value
+    })),
+    prices: Array.from(pricesContainer.children).map(div => ({
+      facade: div.querySelectorAll('input')[0].value.trim(),
+      color: div.querySelectorAll('input')[1].value.trim(),
+      price: Number(div.querySelectorAll('input')[2].value)
+    })),
+    updatedAt: serverTimestamp()
+  };
+
+  try {
+    if (editingId) {
+      await updateDoc(doc(db, 'offers', editingId), offer);
+      statusMessage.textContent = "✅ Товар успешно обновлён!";
+      editingId = null;
+    } else {
+      offer.createdAt = serverTimestamp();
+      await addDoc(collection(db, 'offers'), offer);
+      statusMessage.textContent = "✅ Новый товар добавлен!";
+    }
+    statusMessage.className = "status-success text-center py-2 rounded-lg font-medium";
+    statusMessage.classList.remove('hidden');
+    form.reset();
+    imagesContainer.innerHTML = "";
+    facadesContainer.innerHTML = "";
+    colorsContainer.innerHTML = "";
+    pricesContainer.innerHTML = "";
+    loadOffers();
+  } catch (err) {
+    console.error(err);
+    statusMessage.textContent = "❌ Ошибка: " + err.message;
+    statusMessage.className = "status-error text-center py-2 rounded-lg font-medium";
+    statusMessage.classList.remove('hidden');
+  }
+});
+
+// --- Выход ---
+logoutBtn.addEventListener('click', async () => {
+  await signOut(auth);
+  window.location.href = "/";
+});
+
+// --- Инициализация ---
+addImageField();
+addFacadeField();
+addColorField();
+addPriceField();
