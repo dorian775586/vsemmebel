@@ -1,4 +1,3 @@
-// admin.js
 import {
   initializeApp
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -33,7 +32,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// --- DOM ---
+// --- DOM элементы ---
 const adminPanel = document.getElementById('adminPanel');
 const accessDenied = document.getElementById('accessDenied');
 const form = document.getElementById('addOfferForm');
@@ -60,7 +59,7 @@ onAuthStateChanged(auth, async (user) => {
   loadOffers();
 });
 
-// --- Добавление динамических полей ---
+// --- Динамические поля ---
 function addImageField(value = "") {
   const div = document.createElement('div');
   div.className = "flex gap-2 mb-2";
@@ -108,7 +107,7 @@ function addPriceField(facade = "", color = "", price = "") {
   pricesContainer.appendChild(div);
 }
 
-// --- Загрузка товаров ---
+// --- Загрузка существующих товаров ---
 async function loadOffers() {
   offersList.innerHTML = "<p class='text-gray-500'>Загрузка...</p>";
   const querySnapshot = await getDocs(collection(db, 'offers'));
@@ -172,7 +171,7 @@ async function loadOffers() {
   });
 }
 
-// --- Сохранение (новое или обновление) ---
+// --- Сохранение товара ---
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -205,13 +204,16 @@ form.addEventListener('submit', async (e) => {
       await addDoc(collection(db, 'offers'), offer);
       statusMessage.textContent = "✅ Новый товар добавлен!";
     }
+
     statusMessage.className = "status-success text-center py-2 rounded-lg font-medium";
     statusMessage.classList.remove('hidden');
+
     form.reset();
     imagesContainer.innerHTML = "";
     facadesContainer.innerHTML = "";
     colorsContainer.innerHTML = "";
     pricesContainer.innerHTML = "";
+
     loadOffers();
   } catch (err) {
     console.error(err);
@@ -221,7 +223,7 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
-// --- Выход ---
+// --- Выход из аккаунта ---
 logoutBtn.addEventListener('click', async () => {
   await signOut(auth);
   window.location.href = "/";
@@ -232,3 +234,9 @@ addImageField();
 addFacadeField();
 addColorField();
 addPriceField();
+
+// --- Делаем функции доступными для кнопок HTML ---
+window.addImageField = addImageField;
+window.addFacadeField = addFacadeField;
+window.addColorField = addColorField;
+window.addPriceField = addPriceField;
