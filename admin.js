@@ -39,12 +39,18 @@ const offersList = document.getElementById('offers-list');
 const imagesContainer = document.getElementById('images-container');
 const facadesContainer = document.getElementById('facades-container');
 const colorsContainer = document.getElementById('colors-container');
+const materialsContainer = document.getElementById('materials-container');
 const pricesContainer = document.getElementById('prices-container');
 
 const addImageBtn = document.getElementById('add-image-btn');
 const addFacadeBtn = document.getElementById('add-facade-btn');
 const addColorBtn = document.getElementById('add-color-btn');
+const addMaterialBtn = document.getElementById('add-material-btn');
 const addPriceBtn = document.getElementById('add-price-btn');
+const generatePairsBtn = document.getElementById('generate-pairs-btn');
+
+const discountCheckbox = document.getElementById('discount-checkbox');
+const discountInput = document.getElementById('discount');
 
 let editingId = null;
 
@@ -76,38 +82,90 @@ function createImageRow(value="") {
   const del=document.createElement('button'); del.type="button"; del.className="bg-red-500 text-white px-3 rounded"; del.textContent="Удалить"; del.onclick=()=>div.remove();
   div.append(input,del); return div;
 }
-function createFacadeRow(value="") {
-  const div=document.createElement('div'); div.className="flex gap-2 mb-2";
-  const input=document.createElement('input'); input.type="text"; input.placeholder="Название фасада"; input.className="w-full p-2 border rounded"; input.required=true; input.value=value;
-  const del=document.createElement('button'); del.type="button"; del.className="bg-red-500 text-white px-3 rounded"; del.textContent="Удалить"; del.onclick=()=>div.remove();
-  div.append(input,del); return div;
-}
-function createColorRow(name="",hex="#ffffff") {
-  const div=document.createElement('div'); div.className="flex items-center gap-2 mb-2";
-  const inputName=document.createElement('input'); inputName.type="text"; inputName.placeholder="Название цвета"; inputName.className="p-2 border rounded w-1/2"; inputName.required=true; inputName.value=name;
-  const inputColor=document.createElement('input'); inputColor.type="color"; inputColor.className="w-10 h-10 border rounded"; inputColor.value=hex;
-  const del=document.createElement('button'); del.type="button"; del.className="bg-red-500 text-white px-3 rounded"; del.textContent="Удалить"; del.onclick=()=>div.remove();
-  div.append(inputName,inputColor,del); return div;
-}
-function createPriceRow(facade="",color="",price="") {
-  const div=document.createElement('div'); div.className="flex gap-2 mb-2";
-  const inFacade=document.createElement('input'); inFacade.type="text"; inFacade.placeholder="Фасад"; inFacade.className="p-2 border rounded w-1/3"; inFacade.required=true; inFacade.value=facade;
-  const inColor=document.createElement('input'); inColor.type="text"; inColor.placeholder="Цвет"; inColor.className="p-2 border rounded w-1/3"; inColor.required=true; inColor.value=color;
-  const inPrice=document.createElement('input'); inPrice.type="number"; inPrice.placeholder="Цена"; inPrice.className="p-2 border rounded w-1/3"; inPrice.required=true; inPrice.value=price;
-  const del=document.createElement('button'); del.type="button"; del.className="bg-red-500 text-white px-3 rounded"; del.textContent="Удалить"; del.onclick=()=>div.remove();
-  div.append(inFacade,inColor,inPrice,del); return div;
+
+// -------------------- ЧАСТЬ 2: ФАСАДЫ, ЦВЕТА, МАТЕРИАЛЫ --------------------
+let facadesList = [];
+let colorsList = [];
+let materialsList = [];
+
+// Добавление фасада вручную
+addFacadeBtn.addEventListener('click', ()=>{
+  const val = prompt("Введите название фасада");
+  if(!val) return;
+  facadesList.push(val);
+  updateSelectors();
+});
+
+// Добавление цвета вручную
+addColorBtn.addEventListener('click', ()=>{
+  const name = prompt("Название цвета");
+  const hex = prompt("HEX цвет, например #ff0000") || "#ffffff";
+  if(!name) return;
+  colorsList.push({name, hex});
+  updateSelectors();
+});
+
+// Добавление материала вручную
+addMaterialBtn.addEventListener('click', ()=>{
+  const val = prompt("Введите материал");
+  if(!val) return;
+  materialsList.push(val);
+  updateSelectors();
+});
+
+// -------------------- СОЗДАНИЕ СТРОК ДЛЯ ЦЕНЫ --------------------
+function createPriceRowDropdown(facade="", color="", material="", price="") {
+  const div = document.createElement('div');
+  div.className = "flex gap-2 mb-2";
+
+  const facadeSelect = document.createElement('select');
+  facadeSelect.className = "p-2 border rounded w-1/4";
+  facadesList.forEach(f => { const opt=document.createElement('option'); opt.value=f; opt.textContent=f; if(f===facade) opt.selected=true; facadeSelect.appendChild(opt); });
+
+  const colorSelect = document.createElement('select');
+  colorSelect.className = "p-2 border rounded w-1/4";
+  colorsList.forEach(c => { const opt=document.createElement('option'); opt.value=c.name; opt.textContent=c.name; if(c.name===color) opt.selected=true; colorSelect.appendChild(opt); });
+
+  const materialSelect = document.createElement('select');
+  materialSelect.className = "p-2 border rounded w-1/4";
+  materialsList.forEach(m => { const opt=document.createElement('option'); opt.value=m; opt.textContent=m; if(m===material) opt.selected=true; materialSelect.appendChild(opt); });
+
+  const priceInput = document.createElement('input');
+  priceInput.type="number"; priceInput.placeholder="Цена"; priceInput.className="p-2 border rounded w-1/4"; priceInput.value = price;
+
+  const del = document.createElement('button'); del.type="button"; del.className="bg-red-500 text-white px-3 rounded"; del.textContent="Удалить"; del.onclick=()=>div.remove();
+
+  div.append(facadeSelect, colorSelect, materialSelect, priceInput, del);
+  return div;
 }
 
-// -------------------- ЧАСТЬ 2: КНОПКИ --------------------
+// -------------------- ОБНОВЛЕНИЕ СЕЛЕКТОРОВ В СТРОКАХ ЦЕН --------------------
+function updateSelectors() {
+  const priceRows = pricesContainer.querySelectorAll('div');
+  priceRows.forEach(row => {
+    const [fSelect, cSelect, mSelect] = row.querySelectorAll('select');
+    fSelect.innerHTML=""; facadesList.forEach(f=>{ const opt=document.createElement('option'); opt.value=f; opt.textContent=f; fSelect.appendChild(opt); });
+    cSelect.innerHTML=""; colorsList.forEach(c=>{ const opt=document.createElement('option'); opt.value=c.name; opt.textContent=c.name; cSelect.appendChild(opt); });
+    mSelect.innerHTML=""; materialsList.forEach(m=>{ const opt=document.createElement('option'); opt.value=m; opt.textContent=m; mSelect.appendChild(opt); });
+  });
+}
+
+// -------------------- КНОПКИ --------------------
 addImageBtn.addEventListener('click',()=>imagesContainer.appendChild(createImageRow()));
-addFacadeBtn.addEventListener('click',()=>facadesContainer.appendChild(createFacadeRow()));
-addColorBtn.addEventListener('click',()=>colorsContainer.appendChild(createColorRow()));
-addPriceBtn.addEventListener('click',()=>pricesContainer.appendChild(createPriceRow()));
+addPriceBtn.addEventListener('click',()=>pricesContainer.appendChild(createPriceRowDropdown()));
+generatePairsBtn.addEventListener('click', ()=>{
+  pricesContainer.innerHTML = "";
+  facadesList.forEach(facade=>{
+    colorsList.forEach(color=>{
+      materialsList.forEach(material=>{
+        pricesContainer.appendChild(createPriceRowDropdown(facade, color.name, material));
+      });
+    });
+  });
+});
 
-imagesContainer.appendChild(createImageRow());
-facadesContainer.appendChild(createFacadeRow());
-colorsContainer.appendChild(createColorRow());
-pricesContainer.appendChild(createPriceRow());
+// -------------------- СКИДКА С ГАЛОЧКОЙ --------------------
+discountCheckbox.addEventListener('change', ()=>{ discountInput.disabled = !discountCheckbox.checked; });
 
 // -------------------- ЧАСТЬ 4: ПРЕДУСТАНОВЛЕННЫЕ КОМНАТЫ --------------------
 const roomsContainer = document.createElement('div');
@@ -236,15 +294,20 @@ async function loadOffers(){
       if(!snap.exists()) return alert('Документ не найден');
       const offer=snap.data();
       document.getElementById('title').value=offer.title||"";
-      document.getElementById('discount').value=offer.discount||0;
+      discountInput.value=offer.discount||0;
+      discountCheckbox.checked = !!offer.discount;
+      discountInput.disabled = !discountCheckbox.checked;
       document.getElementById('description').value=offer.description||"";
       roomSelect.value=offer.roomId||""; await roomSelect.dispatchEvent(new Event('change'));
       categorySelect.value=offer.category||""; await categorySelect.dispatchEvent(new Event('change'));
       subcategorySelect.value=offer.subcategory||"";
       imagesContainer.innerHTML=""; (offer.images||[]).forEach(url=>imagesContainer.appendChild(createImageRow(url)));
-      facadesContainer.innerHTML=""; (offer.facades||[]).forEach(f=>facadesContainer.appendChild(createFacadeRow(f)));
-      colorsContainer.innerHTML=""; (offer.colors||[]).forEach(c=>colorsContainer.appendChild(createColorRow(c.name,c.hex||'#ffffff')));
-      pricesContainer.innerHTML=""; (offer.prices||[]).forEach(p=>pricesContainer.appendChild(createPriceRow(p.facade,p.color,p.price)));
+      facadesList = offer.facades || [];
+      colorsList = offer.colors || [];
+      materialsList = offer.materials || [];
+      updateSelectors();
+      pricesContainer.innerHTML="";
+      (offer.prices||[]).forEach(p=>pricesContainer.appendChild(createPriceRowDropdown(p.facade,p.color,p.material,p.price)));
       window.scrollTo({top:0,behavior:'smooth'});
     };
     offersList.appendChild(div);
@@ -259,12 +322,16 @@ form.addEventListener('submit', async (e)=>{
     category: categorySelect.value,
     subcategory: subcategorySelect.value,
     roomId: roomSelect.value,
-    discount: Number(document.getElementById('discount').value)||0,
+    discount: discountCheckbox.checked ? Number(discountInput.value)||0 : 0,
     description: document.getElementById('description').value.trim(),
     images: Array.from(imagesContainer.querySelectorAll('input[type="url"]')).map(i=>i.value.trim()).filter(Boolean),
-    facades: Array.from(facadesContainer.querySelectorAll('input[type="text"]')).map(i=>i.value.trim()).filter(Boolean),
-    colors: Array.from(colorsContainer.children).map(div=>({name:div.querySelector('input[type="text"]').value.trim(),hex:div.querySelector('input[type="color"]').value})),
-    prices: Array.from(pricesContainer.children).map(div=>({facade:div.querySelectorAll('input')[0].value.trim(),color:div.querySelectorAll('input')[1].value.trim(),price:Number(div.querySelectorAll('input')[2].value)})),
+    facades: facadesList,
+    colors: colorsList,
+    materials: materialsList,
+    prices: Array.from(pricesContainer.querySelectorAll('div')).map(div=>{
+      const [fSel,cSel,mSel,pInp] = div.querySelectorAll('select, input[type="number"]');
+      return {facade:fSel.value, color:cSel.value, material:mSel.value, price:Number(pInp.value)};
+    }),
     updatedAt: serverTimestamp()
   };
   try{
@@ -272,10 +339,11 @@ form.addEventListener('submit', async (e)=>{
     else{docData.createdAt=serverTimestamp(); await addDoc(collection(db,'offers'),docData); statusMessage.textContent='✅ Новый товар добавлен!';}
     statusMessage.className="status-success text-center py-2 rounded-lg font-medium"; statusMessage.classList.remove('hidden');
     form.reset();
-    imagesContainer.innerHTML=""; facadesContainer.innerHTML=""; colorsContainer.innerHTML=""; pricesContainer.innerHTML="";
-    imagesContainer.appendChild(createImageRow()); facadesContainer.appendChild(createFacadeRow());
-    colorsContainer.appendChild(createColorRow()); pricesContainer.appendChild(createPriceRow());
+    imagesContainer.innerHTML=""; facadesContainer.innerHTML=""; colorsContainer.innerHTML=""; materialsContainer.innerHTML=""; pricesContainer.innerHTML="";
+    imagesContainer.appendChild(createImageRow());
+    pricesContainer.appendChild(createPriceRowDropdown());
     roomSelect.value=""; categorySelect.innerHTML="<option value=''>Выберите категорию</option>"; subcategorySelect.innerHTML="<option value=''>Выберите подкатегорию</option>";
+    facadesList=[]; colorsList=[]; materialsList=[];
     await loadOffers();
   }catch(err){console.error(err); statusMessage.textContent='❌ Ошибка: '+err.message; statusMessage.className="status-error text-center py-2 rounded-lg font-medium"; statusMessage.classList.remove('hidden');}
 });
