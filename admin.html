@@ -1,93 +1,77 @@
 <!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Админ-панель</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-    .container-card { max-width: 900px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); margin-bottom:2rem; }
-    .btn-primary { background-color: #4f46e5; transition: background-color 0.2s; }
-    .btn-primary:hover { background-color: #4338ca; }
-    .status-success { background-color: #d1fae5; color: #065f46; }
-    .status-error { background-color: #fee2e2; color: #991b1b; }
-    .color-box { width: 25px; height: 25px; border:1px solid #ccc; display:inline-block; margin-right:5px; vertical-align:middle; }
-  </style>
-</head>
-<body class="p-4 sm:p-8">
+<!-- facades/colors/prices matrix -->
+<div>
+<div class="flex items-center justify-between mb-2">
+<h3 class="font-semibold">Цены по комбинациям</h3>
+<div class="flex gap-2">
+<button id="generateCombBtn" type="button" class="px-2 py-1 bg-slate-500 text-white rounded mini">Сгенерировать все пары</button>
+<button id="addPriceRowBtn" type="button" class="px-2 py-1 bg-green-600 text-white rounded mini">Добавить строку</button>
+</div>
+</div>
 
-  <div id="accessDenied" class="hidden container-card mx-auto bg-red-100 text-red-700 p-6 rounded-xl text-center font-bold">
-    У вас нет прав администратора. Пожалуйста, войдите как админ.
-  </div>
 
-  <div id="adminPanel" class="container-card mx-auto bg-white p-6 rounded-xl hidden">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">Админ-панель: Товары</h1>
+<div id="pricesContainer" class="space-y-2"></div>
+</div>
 
-    <form id="addOfferForm" class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Название товара</label>
-        <input type="text" id="title" class="w-full p-2 border rounded-lg" required>
-      </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Категория</label>
-        <select id="category" class="w-full p-2 border rounded-lg">
-          <option value="Все">Все</option>
-          <option value="Мебель">Мебель</option>
-          <option value="Аксессуары">Аксессуары</option>
-          <option value="Услуги">Услуги</option>
-        </select>
-      </div>
+<div class="flex gap-2">
+<button id="saveBtn" type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded">Сохранить</button>
+<button id="resetBtn" type="button" class="px-4 py-2 bg-gray-200 rounded">Сброс</button>
+</div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Скидка (%)</label>
-        <input type="number" id="discount" min="0" max="100" class="w-full p-2 border rounded-lg">
-      </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
-        <textarea id="description" rows="3" class="w-full p-2 border rounded-lg"></textarea>
-      </div>
+</form>
+</div>
+</div>
+</section>
 
-      <!-- Картинки -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Картинки</label>
-        <div id="images-container" class="mb-2"></div>
-        <button id="add-image-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить картинку</button>
-      </div>
 
-      <!-- Фасады -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Фасады</label>
-        <div id="facades-container" class="mb-2"></div>
-        <button id="add-facade-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить фасад</button>
-      </div>
+<!-- TAB: Structure -->
+<section id="panel-structure" class="hidden bg-white rounded-xl shadow p-6">
+<div class="flex gap-6">
+<div class="w-1/3">
+<h3 class="font-semibold mb-2">Комнаты</h3>
+<div id="roomsList" class="space-y-2 mb-4 max-h-[60vh] overflow-auto"></div>
+<div class="flex gap-2">
+<input id="newRoomName" class="p-2 border rounded flex-1" placeholder="Новая комната" />
+<button id="addRoomBtn" class="px-3 py-2 bg-green-600 text-white rounded">Добавить</button>
+</div>
+</div>
+<div class="w-1/3">
+<h3 class="font-semibold mb-2">Категории</h3>
+<div id="categoriesList" class="space-y-2 mb-4 max-h-[60vh] overflow-auto"></div>
+<div class="flex gap-2">
+<input id="newCategoryName" class="p-2 border rounded flex-1" placeholder="Новая категория" />
+<button id="addCategoryBtn" class="px-3 py-2 bg-green-600 text-white rounded">Добавить</button>
+</div>
+</div>
+<div class="w-1/3">
+<h3 class="font-semibold mb-2">Подкатегории / Типы / Атрибуты</h3>
+<div id="subcategoriesList" class="space-y-2 mb-4 max-h-[60vh] overflow-auto"></div>
+<div class="space-y-2">
+<input id="newSubName" class="p-2 border rounded w-full" placeholder="Новая подкатегория (при выборе комнаты+категории)" />
+<input id="newSubTypes" class="p-2 border rounded w-full" placeholder="Типы через запятую (Прямой,Угловой,П-образный)" />
+<input id="newSubAttrs" class="p-2 border rounded w-full" placeholder="Атрибуты через запятую (Фасад,Цвет,Размер)" />
+<div class="flex gap-2">
+<button id="addSubBtn" class="px-3 py-2 bg-green-600 text-white rounded">Добавить подкатегорию</button>
+<button id="saveStructureBtn" class="px-3 py-2 bg-indigo-600 text-white rounded">Сохранить структуру</button>
+</div>
+</div>
+</div>
+</div>
+</section>
 
-      <!-- Цвета -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Цвета</label>
-        <div id="colors-container" class="mb-2"></div>
-        <button id="add-color-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить цвет</button>
-      </div>
 
-      <!-- Цены -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Цены для комбинаций фасад+цвет</label>
-        <div id="prices-container" class="mb-2"></div>
-        <button id="add-price-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить цену</button>
-      </div>
+<!-- TAB: Settings -->
+<section id="panel-settings" class="hidden bg-white rounded-xl shadow p-6">
+<h3 class="font-semibold mb-4">Настройки</h3>
+<p class="text-sm text-gray-600">Экспорт, резервное копирование и другие настройки появятся здесь.</p>
+</section>
 
-      <button id="save-btn" type="submit" class="w-full btn-primary text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg">Сохранить</button>
-      <p id="statusMessage" class="hidden text-center py-2 rounded-lg font-medium"></p>
-    </form>
 
-    <button id="logoutBtn" class="mt-6 w-full bg-red-500 text-white font-semibold py-2 rounded-lg hover:bg-red-600 transition">Выйти</button>
+</div>
 
-    <h2 class="text-2xl font-bold mt-8 mb-4">Существующие товары</h2>
-    <div id="offers-list" class="space-y-2"></div>
-  </div>
 
-  <script type="module" src="./admin.js"></script>
+<script type="module" src="./admin.js"></script>
 </body>
 </html>
