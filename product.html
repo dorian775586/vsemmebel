@@ -15,516 +15,182 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 .option-button-style.active { background:#f97316; color:white; box-shadow:0 2px 5px rgba(249,115,22,0.3);}
 .thumbnail { width:60px; height:60px; border:2px solid transparent; cursor:pointer; border-radius:0.5rem; transition:0.2s; }
 .thumbnail.active { border-color:#f97316; box-shadow:0 2px 5px rgba(249,115,22,0.3);}
-.edit-input { width: 100%; border: 1px solid #ddd; padding: 8px; border-radius: 6px; margin-top: 5px; }
-.hidden-edit { display: none; }
-/* Стили для модального окна */
-.message-box {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    padding: 24px;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    z-index: 1000;
-    min-width: 300px;
-    text-align: center;
-}
-.message-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.4);
-    z-index: 999;
-}
 </style>
 </head>
 <body class="pb-20">
 
 <header class="sticky top-0 header-bg z-20">
-  <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-    <a href="#" class="text-3xl font-black text-gray-900 tracking-tight">Mebel.bel</a>
-  </div>
+  <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+    <a href="#" class="text-3xl font-black text-gray-900 tracking-tight">Mebel.bel</a>
+  </div>
 </header>
 
 <main class="max-w-6xl mx-auto px-4 mt-6">
 
-  <!-- Хлебные крошки -->
-  <div class="mb-6 text-sm text-gray-500">
-    <a href="#" class="hover:text-orange-500 transition">Главная</a>
-    <span class="mx-2">/</span>
-    <span class="hover:text-orange-500 transition" id="breadcrumb-category">Категория</span>
-    <span class="mx-2">/</span>
-    <span class="text-gray-900 font-medium" id="breadcrumb-title">Товар</span>
-  </div>
+  <!-- Хлебные крошки -->
+  <div class="mb-6 text-sm text-gray-500">
+    <a href="#" class="hover:text-orange-500 transition">Главная</a>
+    <span class="mx-2">/</span>
+    <span class="hover:text-orange-500 transition" id="breadcrumb-category">Категория</span>
+    <span class="mx-2">/</span>
+    <span class="text-gray-900 font-medium" id="breadcrumb-title">Товар</span>
+  </div>
 
-  <div class="lg:grid lg:grid-cols-2 lg:gap-10">
+  <div class="lg:grid lg:grid-cols-2 lg:gap-10">
 
-    <!-- Галерея -->
-    <div class="mb-8 lg:mb-0">
-      <div id="thumbnail-gallery" class="flex gap-3 mb-3"></div>
-      <img id="main-product-image" src="https://placehold.co/400x400?text=No+Image" class="w-full rounded-3xl mb-3" alt="Изображение товара">
-      
-      <!-- Поле для редактирования URL основного изображения (видно только в режиме редактирования) -->
-      <div class="hidden-edit" id="edit-image-container">
-        <label class="font-bold text-gray-800">URL основного изображения:</label>
-        <input id="edit-image" type="text" class="edit-input" placeholder="URL изображения">
-      </div>
-      
-    </div>
+    <!-- Галерея -->
+    <div class="mb-8 lg:mb-0">
+      <div id="thumbnail-gallery" class="flex gap-3 mb-3"></div>
+      <img id="main-product-image" src="https://placehold.co/400x400?text=No+Image" class="w-full rounded-3xl mb-3">
+    </div>
 
-    <!-- Информация о товаре -->
-    <div class="p-6 bg-white rounded-3xl shadow-2xl">
-      <!-- Заголовок и категория -->
-      <div class="mb-4">
-        <h1 class="text-4xl font-black text-gray-900 mb-2">
-            <span id="product-title">Товар</span>
-            <input id="edit-title" type="text" class="edit-input hidden-edit" placeholder="Заголовок">
-        </h1>
-        <p class="text-lg font-medium text-orange-600 uppercase">
-            <span id="product-category">Категория</span>
-            <input id="edit-category" type="text" class="edit-input hidden-edit" placeholder="Категория">
-        </p>
-      </div>
-      
+    <!-- Информация о товаре -->
+    <div class="p-6 bg-white rounded-3xl shadow-2xl">
+      <h1 class="text-4xl font-black text-gray-900 mb-2" id="product-title">Товар</h1>
+      <p class="text-lg font-medium text-orange-600 uppercase mb-4" id="product-category">Категория</p>
 
-      <!-- Цена -->
-      <div class="mb-5 flex items-end space-x-4">
-        <div>
-            <span class="line-through text-gray-400 mr-3">
-                <span id="old-price">0 BYN</span>
-            </span>
-            <span class="hidden-edit">
-                <label class="font-medium text-gray-500 text-sm">Цена:</label>
-                <input id="edit-price" type="number" class="edit-input w-24 inline-block" placeholder="Цена">
-            </span>
-        </div>
-        <div>
-            <span class="text-3xl font-black text-orange-600">
-                <span id="new-price">0 BYN</span>
-            </span>
-            <span class="hidden-edit">
-                <label class="font-medium text-gray-500 text-sm">Скидка (%):</label>
-                <input id="edit-discount" type="number" class="edit-input w-20 inline-block" placeholder="Скидка">
-            </span>
-        </div>
-      </div>
+      <!-- Цена -->
+      <div class="mb-5">
+        <span id="old-price" class="line-through text-gray-400 mr-3">0 BYN</span>
+        <span id="new-price" class="text-3xl font-black text-orange-600">0 BYN</span>
+      </div>
 
-      <!-- Фасады -->
-      <div class="mb-5">
-        <p class="font-bold text-gray-800 mb-3">Фасад:</p>
-        <div class="flex flex-wrap gap-3" id="facade-options"></div>
-        <p>Выбран: <span id="selected-facade">-</span></p>
-        <div class="hidden-edit mt-3">
-            <label class="font-medium text-gray-500 text-sm block">Фасады (JSON Array):</label>
-            <textarea id="edit-facades" class="edit-input h-20" placeholder='["Фасад 1", "Фасад 2"]'></textarea>
-        </div>
-      </div>
+      <!-- Фасады -->
+      <div class="mb-5">
+        <p class="font-bold text-gray-800 mb-3">Фасад:</p>
+        <div class="flex flex-wrap gap-3" id="facade-options"></div>
+        <p>Выбран: <span id="selected-facade">-</span></p>
+      </div>
 
-      <!-- Цвета -->
-      <div class="mb-8">
-        <p class="font-bold text-gray-800 mb-3">Цвет/Текстура:</p>
-        <div class="flex flex-wrap gap-3" id="color-options"></div>
-        <p>Выбран: <span id="selected-color">-</span></p>
-        <div class="hidden-edit mt-3">
-            <label class="font-medium text-gray-500 text-sm block">Цвета (JSON Array):</label>
-            <textarea id="edit-colors" class="edit-input h-32" placeholder='[{"name": "Белый", "image": "URL"}, {"name": "Серый", "image": "URL"}]'></textarea>
-        </div>
-      </div>
-      
-      <!-- НОВЫЙ БЛОК: Материалы -->
-      <div class="mb-8">
-        <p class="font-bold text-gray-800 mb-3">Материалы:</p>
-        <ul id="material-list" class="list-disc list-inside space-y-1 text-gray-700 ml-4">
-            <li id="no-materials-message">Материалы не указаны.</li>
-        </ul>
-        <div class="hidden-edit mt-3">
-            <label class="font-medium text-gray-500 text-sm block">Материалы (JSON Array):</label>
-            <textarea id="edit-materials" class="edit-input h-20" placeholder='["Материал 1: ДСП", "Материал 2: Металл"]'></textarea>
-        </div>
-      </div>
-      <!-- КОНЕЦ НОВОГО БЛОКА -->
+      <!-- Цвета -->
+      <div class="mb-8">
+        <p class="font-bold text-gray-800 mb-3">Цвет/Текстура:</p>
+        <div class="flex flex-wrap gap-3" id="color-options"></div>
+        <p>Выбран: <span id="selected-color">-</span></p>
+      </div>
 
+      <!-- Кнопка купить -->
+      <div class="flex flex-col space-y-4">
+        <button id="buy-button" class="orange-accent text-white font-black text-lg py-4 rounded-xl uppercase">
+          Купить
+        </button>
+      </div>
+    </div>
 
-      <!-- Кнопки управления -->
-      <div class="flex flex-col space-y-4">
-        <button id="save-button" class="orange-accent text-white font-black text-lg py-4 rounded-xl uppercase hidden-edit">
-          Сохранить изменения
-        </button>
-        <button id="edit-button" class="orange-accent text-white font-black text-lg py-4 rounded-xl uppercase">
-          Редактировать
-        </button>
-        <button id="buy-button" class="orange-accent text-white font-black text-lg py-4 rounded-xl uppercase">
-          Купить
-        </button>
-      </div>
-    </div>
-
-  </div>
+  </div>
 </main>
 
-<!-- Кастомное модальное окно (замена alert) -->
-<div id="message-modal" class="hidden">
-    <div class="message-overlay" onclick="closeMessageBox()"></div>
-    <div class="message-box">
-        <h3 id="modal-title" class="text-xl font-bold mb-3 text-gray-900"></h3>
-        <p id="modal-message" class="text-gray-700 mb-5"></p>
-        <button onclick="closeMessageBox()" class="orange-accent px-4 py-2 rounded-lg text-sm">Закрыть</button>
-    </div>
-</div>
-
 <script type="module">
-// ИМПОРТЫ ОБНОВЛЕНЫ ДО ВЕРСИИ 11.6.1 И ДОБАВЛЕН signInWithCustomToken
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { 
-    getAuth, 
-    signInAnonymously,
-    signInWithCustomToken 
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { 
-    getFirestore, 
-    doc, 
-    getDoc, 
-    updateDoc,
-    setLogLevel // Добавлен для отладки
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-// Глобальные переменные Canvas (МАНДАТОРНЫЕ)
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-// ИСПОЛЬЗУЕМ __firebase_config ВМЕСТО ЖЕСТКО ЗАКОДИРОВАННОГО CONFIG
-const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
+  authDomain: "vsemmebel-90d48.firebaseapp.com",
+  projectId: "vsemmebel-90d48",
+  storageBucket: "vsemmebel-90d48.firebasestorage.app",
+  messagingSenderId: "958123504041",
+  appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
+};
 
-// Глобальные переменные
-let db;
-let auth;
-let userId = 'anon-user';
-let currentProduct = null;
-let productId = null;
-let isEditMode = false;
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-// Инициализация Firebase
-async function initFirebase() {
-    try {
-        if (!firebaseConfig || !firebaseConfig.apiKey) {
-            console.error("Firebase config is missing or invalid. Check __firebase_config.");
-            showMessageBox("Ошибка!", "Конфигурация Firebase не найдена. Проверьте консоль.");
-            return;
-        }
+// Получаем ID товара из URL
+const urlParams = new URLSearchParams(window.location.search);
+const productId = urlParams.get("id");
 
-        const app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(app);
-        setLogLevel('Debug'); // Включаем логирование для отладки
+if (!productId) alert("Не указан ID товара!");
+else loadProduct(productId);
 
-        // МАНДАТОРНАЯ АУТЕНТИФИКАЦИЯ: используем кастомный токен, если он есть, иначе - анонимный вход
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            console.log("Attempting sign-in with custom token...");
-            await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-            console.log("Attempting anonymous sign-in...");
-            await signInAnonymously(auth);
-        }
-        
-        // Получаем ID пользователя после аутентификации
-        userId = auth.currentUser?.uid || crypto.randomUUID();
-        console.log("Authentication successful. User ID:", userId);
-
-        // Получаем ID товара из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        productId = urlParams.get("id");
-
-        if (!productId) {
-            showMessageBox("Ошибка!", "Не указан ID товара! Пожалуйста, добавьте его в URL (например, `?id=123`).");
-        } else {
-            await loadProduct(productId);
-        }
-    } catch (err) {
-        console.error("Ошибка инициализации Firebase или аутентификации:", err);
-        showMessageBox("Ошибка!", `Не удалось подключиться к базе данных. Проверьте консоль: ${err.message}`);
-    }
-}
-
-// Загрузка данных о товаре
 async function loadProduct(id) {
-    try {
-        const docRef = doc(db, "offers", id);
-        const docSnap = await getDoc(docRef);
+  try {
+    const docRef = doc(db, "offers", id);
+    const docSnap = await getDoc(docRef);
 
-        if (!docSnap.exists()) { 
-            showMessageBox("Ошибка!", `Товар с ID: ${id} не найден!`);
-            return; 
-        }
-        currentProduct = docSnap.data();
+    if (!docSnap.exists()) { alert("Товар не найден!"); return; }
+    const product = docSnap.data();
 
-        // Заголовки и хлебные крошки
-        document.getElementById("product-title").textContent = currentProduct.title || "Без названия";
-        document.getElementById("breadcrumb-title").textContent = currentProduct.title || "Без названия";
-        document.getElementById("breadcrumb-category").textContent = currentProduct.category || "-";
+    // Заголовки и хлебные крошки
+    document.getElementById("product-title").textContent = product.title || "Без названия";
+    document.getElementById("breadcrumb-title").textContent = product.title || "Без названия";
+    document.getElementById("breadcrumb-category").textContent = product.category || "-";
 
-        // Цена
-        const oldPrice = currentProduct.price || 1000;
-        const discount = currentProduct.discount || 0;
-        const newPrice = Math.round(oldPrice * (1 - discount / 100));
-        
-        document.getElementById("old-price").textContent = formatPrice(oldPrice);
-        document.getElementById("new-price").textContent = formatPrice(newPrice);
-        
-        // Основная картинка
-        const mainImage = (currentProduct.images && currentProduct.images[0]) || currentProduct.image || "https://placehold.co/400x400?text=No+Image";
-        document.getElementById("main-product-image").src = mainImage;
+    // Цена
+    const oldPrice = product.price || 1000;
+    document.getElementById("old-price").textContent = formatPrice(oldPrice);
+    document.getElementById("new-price").textContent = formatPrice(Math.round(oldPrice * (1 - (product.discount || 0)/100)));
 
-        // Генерация галереи миниатюр
-        renderThumbnails(currentProduct.images || [currentProduct.image].filter(img => img));
+    // Фасад и цвет
+    document.getElementById("selected-facade").textContent = product.facade || "-";
+    document.getElementById("selected-color").textContent = product.color || "-";
 
-        // Генерация Фасадов
-        renderOptionButtons("facade-options", currentProduct.facades, "selected-facade", currentProduct.facade, selectFacade);
+    // Основная картинка
+    document.getElementById("main-product-image").src = (product.images && product.images[0]) || product.image || "https://placehold.co/400x400?text=No+Image";
 
-        // Генерация Цветов
-        renderOptionButtons("color-options", currentProduct.colors, "selected-color", currentProduct.color, selectColor, true);
-        
-        // Генерация Материалов
-        renderMaterials(currentProduct.materials);
+    // Галерея миниатюр
+    const gallery = document.getElementById("thumbnail-gallery");
+    gallery.innerHTML = "";
+    (product.images || [product.image]).forEach((img, index) => {
+      const thumb = document.createElement("img");
+      thumb.src = img;
+      thumb.className = "thumbnail" + (index===0 ? " active" : "");
+      thumb.onclick = () => {
+        document.getElementById("main-product-image").src = img;
+        gallery.querySelectorAll("img").forEach(t => t.classList.remove("active"));
+        thumb.classList.add("active");
+      };
+      gallery.appendChild(thumb);
+    });
 
-    } catch (err) {
-        console.error("Ошибка загрузки товара:", err);
-        showMessageBox("Ошибка!", "Не удалось загрузить данные о товаре. Проверьте, существует ли документ в коллекции `offers`.");
-    }
+    // Фасады
+    const facadeContainer = document.getElementById("facade-options");
+    facadeContainer.innerHTML = "";
+    (product.facades || []).forEach(f => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = f;
+      btn.className = "option-button-style" + (f===product.facade ? " active" : "");
+      btn.onclick = () => {
+        document.querySelectorAll("#facade-options .option-button-style").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("selected-facade").textContent = f;
+      };
+      facadeContainer.appendChild(btn);
+    });
+
+    // Цвета
+    const colorContainer = document.getElementById("color-options");
+    colorContainer.innerHTML = "";
+    (product.colors || []).forEach(c => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = c.name;
+      btn.setAttribute("data-image", c.image);
+      btn.className = "option-button-style" + (c.name===product.color ? " active" : "");
+      btn.onclick = () => {
+        document.querySelectorAll("#color-options .option-button-style").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("selected-color").textContent = c.name;
+        document.getElementById("main-product-image").src = c.image;
+      };
+      colorContainer.appendChild(btn);
+    });
+
+    // Кнопка купить
+    document.getElementById("buy-button").onclick = () => {
+      alert(`Вы купили: ${product.title}\nФасад: ${document.getElementById("selected-facade").textContent}\nЦвет: ${document.getElementById("selected-color").textContent}`);
+    };
+
+  } catch (err) {
+    console.error("Ошибка загрузки товара:", err);
+  }
 }
 
-// Рендеринг списка материалов
-function renderMaterials(materials) {
-    const listContainer = document.getElementById("material-list");
-    listContainer.innerHTML = "";
-    
-    if (materials && materials.length > 0) {
-        (materials || []).forEach(m => {
-            const li = document.createElement("li");
-            li.textContent = m;
-            listContainer.appendChild(li);
-        });
-    } else {
-        const li = document.createElement("li");
-        li.textContent = "Материалы не указаны.";
-        listContainer.appendChild(li);
-    }
-}
-
-// Общая функция для рендеринга кнопок опций (Фасады/Цвета)
-function renderOptionButtons(containerId, options, selectedDisplayId, defaultValue, clickHandler, isColor = false) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = "";
-    
-    const selectedDisplay = document.getElementById(selectedDisplayId);
-    selectedDisplay.textContent = defaultValue || "-";
-
-    (options || []).forEach(option => {
-        const name = isColor ? option.name : option;
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = name;
-        btn.className = "option-button-style px-5 py-2.5 rounded-full text-sm";
-        if (name === defaultValue) btn.classList.add("active");
-        
-        if (isColor) {
-            btn.setAttribute("data-image", option.image);
-            btn.onclick = () => clickHandler(btn, name, option.image);
-        } else {
-            btn.onclick = () => clickHandler(btn, name);
-        }
-        container.appendChild(btn);
-    });
-}
-
-// Рендеринг миниатюр
-function renderThumbnails(images) {
-    const gallery = document.getElementById("thumbnail-gallery");
-    gallery.innerHTML = "";
-    const validImages = images.filter(img => img); // Фильтруем пустые/null значения
-    if (validImages.length === 0) return;
-
-    validImages.forEach((img, index) => {
-        const thumb = document.createElement("img");
-        thumb.src = img;
-        thumb.className = "thumbnail" + (index === 0 ? " active" : "");
-        thumb.onerror = () => thumb.src = "https://placehold.co/60x60?text=Error"; // Обработка ошибки
-        thumb.onclick = () => {
-            document.getElementById("main-product-image").src = img;
-            gallery.querySelectorAll("img").forEach(t => t.classList.remove("active"));
-            thumb.classList.add("active");
-        };
-        gallery.appendChild(thumb);
-    });
-}
-
-// Функции выбора опций
-function selectFacade(button, facadeName) {
-    document.querySelectorAll('#facade-options .option-button-style').forEach(btn => btn.classList.remove("active"));
-    button.classList.add("active");
-    document.getElementById("selected-facade").textContent = facadeName;
-}
-
-function selectColor(button, colorName, imageSrc) {
-    document.querySelectorAll('#color-options .option-button-style').forEach(btn => btn.classList.remove("active"));
-    button.classList.add("active");
-    document.getElementById("selected-color").textContent = colorName;
-    document.getElementById("main-product-image").src = imageSrc;
-}
-
-// Переключение режима редактирования
-function toggleEditMode() {
-    isEditMode = !isEditMode;
-    const editElements = document.querySelectorAll(".hidden-edit");
-    const editButton = document.getElementById("edit-button");
-    const saveButton = document.getElementById("save-button");
-    
-    // Скрываем/показываем поля ввода
-    editElements.forEach(el => el.classList.toggle("hidden-edit", !isEditMode));
-    
-    // Скрываем/показываем текст
-    document.getElementById("product-title").classList.toggle("hidden", isEditMode);
-    document.getElementById("product-category").classList.toggle("hidden", isEditMode);
-    document.getElementById("old-price").parentElement.classList.toggle("hidden", isEditMode);
-    document.getElementById("new-price").parentElement.classList.toggle("hidden", isEditMode);
-    
-    // Скрываем/показываем кнопки
-    editButton.classList.toggle("hidden", isEditMode);
-    saveButton.classList.toggle("hidden", !isEditMode);
-    document.getElementById("buy-button").classList.toggle("hidden", isEditMode);
-
-    if (isEditMode) {
-        loadEditForm();
-    } else {
-        // Выходим из режима редактирования и перезагружаем данные
-        loadProduct(productId);
-    }
-}
-
-// Загрузка данных в форму редактирования
-function loadEditForm() {
-    if (!currentProduct) return;
-
-    // Основные поля
-    document.getElementById("edit-title").value = currentProduct.title || "";
-    document.getElementById("edit-category").value = currentProduct.category || "";
-    document.getElementById("edit-price").value = currentProduct.price || 0;
-    document.getElementById("edit-discount").value = currentProduct.discount || 0;
-    document.getElementById("edit-image").value = currentProduct.image || "";
-    
-    // Комплексные поля (JSON)
-    document.getElementById("edit-facades").value = JSON.stringify(currentProduct.facades || [], null, 2);
-    document.getElementById("edit-colors").value = JSON.stringify(currentProduct.colors || [], null, 2);
-    document.getElementById("edit-materials").value = JSON.stringify(currentProduct.materials || [], null, 2);
-}
-
-// Сохранение изменений в Firestore
-async function saveProduct() {
-    if (!productId || !db) {
-        showMessageBox("Ошибка!", "ID товара не определен или база данных недоступна.");
-        return;
-    }
-
-    try {
-        const updatedData = {};
-
-        // 1. Основные поля
-        updatedData.title = document.getElementById("edit-title").value;
-        updatedData.category = document.getElementById("edit-category").value;
-        updatedData.price = parseFloat(document.getElementById("edit-price").value) || 0;
-        updatedData.discount = parseInt(document.getElementById("edit-discount").value) || 0;
-        updatedData.image = document.getElementById("edit-image").value;
-        // Обновляем список изображений, добавляя/заменяя основное изображение
-        updatedData.images = (currentProduct.images || []).filter(img => img !== currentProduct.image);
-        if (updatedData.image) {
-            updatedData.images.unshift(updatedData.image);
-        }
-
-        // 2. Комплексные поля (JSON-валидация и парсинг)
-        const jsonFields = {
-            facades: "edit-facades",
-            colors: "edit-colors",
-            materials: "edit-materials" 
-        };
-
-        for (const key in jsonFields) {
-            const jsonText = document.getElementById(jsonFields[key]).value;
-            try {
-                updatedData[key] = JSON.parse(jsonText);
-                if (key === 'facades' && !Array.isArray(updatedData[key])) {
-                    throw new Error("Ожидался массив.");
-                }
-                if (key === 'colors' && !Array.isArray(updatedData[key])) {
-                     throw new Error("Ожидался массив объектов.");
-                }
-            } catch (e) {
-                showMessageBox("Ошибка сохранения!", `Неверный формат JSON в поле "${key}". Проверьте синтаксис.`);
-                console.error(`JSON Parsing Error for ${key}:`, e);
-                return;
-            }
-        }
-        
-        // Обновляем текущие выбранные значения (для отображения после сохранения)
-        if (updatedData.facades.length > 0) updatedData.facade = updatedData.facades[0];
-        if (updatedData.colors.length > 0) updatedData.color = updatedData.colors[0].name;
-
-
-        // 3. Обновление Firestore
-        const docRef = doc(db, "offers", productId);
-        console.log("Saving data:", updatedData);
-        await updateDoc(docRef, updatedData);
-
-        showMessageBox("Успех!", "Данные о товаре успешно сохранены.");
-        
-        // Выходим из режима редактирования и перезагружаем данные
-        // Сначала обновляем currentProduct, чтобы loadProduct не делал лишних запросов
-        currentProduct = { ...currentProduct, ...updatedData };
-        toggleEditMode(); 
-        // await loadProduct(productId); // Уже вызвано в toggleEditMode
-
-    } catch (err) {
-        console.error("Ошибка сохранения в Firestore:", err);
-        showMessageBox("Ошибка!", `Не удалось сохранить данные. Проверьте правила безопасности Firestore: ${err.message}`);
-    }
-}
-
-// Формат цены
 function formatPrice(price) {
-    return price.toLocaleString('ru-RU', { style: 'currency', currency: 'BYN', maximumFractionDigits: 0 });
+  return price.toLocaleString('ru-RU', { style: 'currency', currency: 'BYN', maximumFractionDigits:0 });
 }
-
-// Пользовательское диалоговое окно вместо alert()
-function showMessageBox(title, message) {
-    const modal = document.getElementById("message-modal");
-    const modalTitle = document.getElementById("modal-title");
-    const modalMessage = document.getElementById("modal-message");
-
-    // Выводим сообщение в консоль для отладки
-    console.log(`[${title}] ${message}`);
-
-    // Отображаем кастомное модальное окно
-    modalTitle.textContent = title;
-    modalMessage.textContent = message;
-    modal.classList.remove("hidden");
-}
-
-function closeMessageBox() {
-    document.getElementById("message-modal").classList.add("hidden");
-}
-
-// Назначение обработчиков событий
-document.addEventListener('DOMContentLoaded', () => {
-    initFirebase();
-    document.getElementById("edit-button").onclick = toggleEditMode;
-    document.getElementById("save-button").onclick = saveProduct;
-    document.getElementById("buy-button").onclick = () => {
-        const title = document.getElementById("product-title").textContent;
-        const facade = document.getElementById("selected-facade").textContent;
-        const color = document.getElementById("selected-color").textContent;
-        showMessageBox("Покупка", `Вы купили: ${title} (Фасад: ${facade}, Цвет: ${color})`);
-    };
-});
 </script>
 </body>
 </html>
