@@ -4,8 +4,10 @@ import {
 import {
     getAuth,
     onAuthStateChanged,
-    signOut
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"; // Восстановлено для Auth
+    signOut,
+    signInWithCustomToken, // Добавлено для инициализации Canvas
+    signInAnonymously // Добавлено для инициализации Canvas
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
     getFirestore,
     collection,
@@ -16,25 +18,28 @@ import {
     updateDoc,
     getDoc,
     serverTimestamp,
-    // Используем специальные глобальные переменные Canvas для инициализации
-    // signInWithCustomToken, signInAnonymously 
+    // onSnapshot, query, where - можно добавить при необходимости
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // --- КОНФИГ И ИНИЦИАЛИЗАЦИЯ (Используем Canvas Globals) ---
-// Внимание: В реальной среде Canvas переменные __firebase_config и __initial_auth_token
-// будут доступны. Для локального запуска может потребоваться ручная настройка.
-const firebaseConfig = {
-    apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
-    authDomain: "vsemmebel-90d48.firebaseapp.com",
-    projectId: "vsemmebel-90d48",
-    storageBucket: "vsemmebel-90d48.firebasestorage.app",
-    messagingSenderId: "958123504041",
-    appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
-};
+// В реальной среде Canvas эти переменные будут предоставлены
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+if (Object.keys(firebaseConfig).length === 0) {
+    console.error("Firebase config is missing. Check Canvas environment.");
+}
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+// --- Глобальный стейт для модального окна подтверждения ---
+const customModal = {
+    element: null,
+    resolve: null,
+};
 
 // --- DOM элементы ---
 const adminPanel = document.getElementById('adminPanel');
@@ -51,18 +56,70 @@ const colorsContainer = document.getElementById('colors-container');
 const pricesContainer = document.getElementById('prices-container');
 
 // Кнопки и связанные элементы
-const itemTypeSelect = document.getElementById('itemType'); // НОВОЕ
-const facadeOrMaterialGroup = document.getElementById('facadeOrMaterialGroup'); // НОВОЕ
-const facadeOrMaterialLabel = document.getElementById('facadeOrMaterialLabel'); // НОВОЕ
-const colorsGroup = document.getElementById('colorsGroup'); // НОВОЕ
-const pricesGroup = document.getElementById('pricesGroup'); // НОВОЕ
+const itemTypeSelect = document.getElementById('itemType');
+const facadeOrMaterialGroup = document.getElementById('facadeOrMaterialGroup');
+const facadeOrMaterialLabel = document.getElementById('facadeOrMaterialLabel');
+const colorsGroup = document.getElementById('colorsGroup');
+const pricesGroup = document.getElementById('pricesGroup');
 
 const addImageBtn = document.getElementById('addImageBtn');
-const addFacadeOrMaterialBtn = document.getElementById('addFacadeOrMaterialBtn'); // ИЗМЕНЕНО
+const addFacadeOrMaterialBtn = document.getElementById('addFacadeOrMaterialBtn');
 const addColorBtn = document.getElementById('addColorBtn');
 const addPriceBtn = document.getElementById('addPriceBtn');
 
 let editingId = null;
+
+// --- Custom Confirmation Modal Logic (Замена window.confirm) ---
+
+function createConfirmationModal() {
+    // Проверка, чтобы не создавать модальное окно дважды
+    if (document.getElementById('customConfirmModal')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'customConfirmModal';
+    overlay.className = 'fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 p-4';
+    
+    const modal = document.createElement('div');
+    modal.className = 'bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full transform scale-100 transition-transform duration-300';
+    
+    modal.innerHTML = `
+        <h3 id="confirmTitle" class="text-xl font-bold text-red-600 mb-4">Подтвердите удаление</h3>
+        <p id="confirmMessage" class="text-gray-700 mb-6"></p>
+        <div class="flex justify-end gap-3">
+            <button id="confirmCancel" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition">Отмена</button>
+            <button id="confirmOK" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition">Удалить</button>
+        </div>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    customModal.element = overlay;
+
+    document.getElementById('confirmCancel').addEventListener('click', () => {
+        customModal.element.classList.add('hidden');
+        if (customModal.resolve) customModal.resolve(false);
+    });
+
+    document.getElementById('confirmOK').addEventListener('click', () => {
+        customModal.element.classList.add('hidden');
+        if (customModal.resolve) customModal.resolve(true);
+    });
+}
+
+function showCustomConfirm(message) {
+    if (!customModal.element) createConfirmationModal();
+
+    return new Promise(resolve => {
+        document.getElementById('confirmMessage').textContent = message;
+        customModal.resolve = resolve;
+        customModal.element.classList.remove('hidden');
+    });
+}
+
+// Создаем модальное окно сразу
+createConfirmationModal();
+// --- Конец Custom Confirmation Modal Logic ---
+
 
 // --- Управление UI на основе Типа Товара ---
 function updateUIBasedOnType() {
@@ -84,13 +141,11 @@ function updateUIBasedOnType() {
         facadeOrMaterialLabel.textContent = 'Фасады / Опции';
     }
 
-    // 3. Управление полем Цвета
+    // 3. Управление полями Цвета и Цены
     if (type === 'Кухня' || type === 'Мебель' || type === 'Все') {
         colorsGroup.classList.remove('hidden');
         pricesGroup.classList.remove('hidden');
     } else {
-        // Диван/Кресло: цена обычно зависит только от Материала, цвет может быть свободным текстом в описании.
-        // Аксессуары/Услуги: не имеют комбинаций.
         colorsGroup.classList.add('hidden');
         pricesGroup.classList.add('hidden');
     }
@@ -107,26 +162,44 @@ function updateUIBasedOnType() {
     if (!colorsGroup.classList.contains('hidden')) {
         colorsContainer.appendChild(createColorRow());
     }
-    if (!pricesGroup.classList.contains('hidden')) {
-        pricesContainer.appendChild(createPriceRow());
-    }
+    // Здесь не вызываем createPriceRow() для пустого товара, т.к. цены нет
+    // Это сделает пользователь, нажав addPriceBtn
 }
 
 itemTypeSelect.addEventListener('change', updateUIBasedOnType);
 
 
-// --- Auth check ---
-onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-        accessDenied.classList.remove('hidden');
-        adminPanel.classList.add('hidden');
-        return;
+// --- Auth check и Инициализация ---
+async function initializeAuthAndLoad() {
+    // 1. Аутентификация
+    try {
+        if (initialAuthToken) {
+            await signInWithCustomToken(auth, initialAuthToken);
+        } else {
+            await signInAnonymously(auth);
+        }
+    } catch (error) {
+        console.error("Ошибка при входе в Firebase:", error);
+        // Продолжаем, даже если вход не удался, onAuthStateChanged обработает
     }
-    adminPanel.classList.remove('hidden');
-    accessDenied.classList.add('hidden');
-    await loadOffers();
-    updateUIBasedOnType(); // Инициализация UI после загрузки
-});
+
+    // 2. Слушатель состояния
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            accessDenied.classList.remove('hidden');
+            adminPanel.classList.add('hidden');
+            return;
+        }
+        adminPanel.classList.remove('hidden');
+        accessDenied.classList.add('hidden');
+        await loadOffers();
+        updateUIBasedOnType(); // Инициализация UI после загрузки
+    });
+}
+
+// Запускаем процесс инициализации
+initializeAuthAndLoad();
+
 
 // --- Вспомогательные функции для создания полей ---
 
@@ -150,11 +223,12 @@ function createFacadeOrMaterialRow(value = "") {
     `;
     div.querySelector('button').onclick = () => {
         div.remove();
-        // Обновляем цены при удалении опции
+        // ОБНОВЛЕНИЕ 1: Обновляем цены при удалении опции
         if (pricesGroup.classList.contains('hidden') === false) updatePricesDropdowns();
     };
-    // Обновляем цены при изменении опции
+    // ОБНОВЛЕНИЕ 2: Обновляем цены при изменении опции
     div.querySelector('input').oninput = () => {
+        // Мы вызываем updatePricesDropdowns, чтобы новый введенный текст сразу стал опцией в price select
         if (pricesGroup.classList.contains('hidden') === false) updatePricesDropdowns();
     };
     return div;
@@ -171,11 +245,12 @@ function createColorRow(name = "", hex = "#ffffff") {
 
     div.querySelector('button').onclick = () => {
         div.remove();
-        // Обновляем цены при удалении цвета
+        // ОБНОВЛЕНИЕ 3: Обновляем цены при удалении цвета
         if (pricesGroup.classList.contains('hidden') === false) updatePricesDropdowns();
     };
-    // Обновляем цены при изменении цвета
+    // ОБНОВЛЕНИЕ 4: Обновляем цены при изменении цвета
     div.querySelector('input[type="text"]').oninput = () => {
+         // Мы вызываем updatePricesDropdowns, чтобы новый введенный текст сразу стал опцией в price select
         if (pricesGroup.classList.contains('hidden') === false) updatePricesDropdowns();
     };
     return div;
@@ -188,6 +263,7 @@ function createColorRow(name = "", hex = "#ffffff") {
  * @param {string|number} price - Цена.
  */
 function createPriceRow(optName = "", colorName = "", price = "") {
+    // Важно: эти функции вызываются, чтобы получить АКТУАЛЬНЫЙ список опций из инпутов
     const opts = getFacadeOrMaterialOptions();
     const colors = getColorOptions();
     
@@ -207,8 +283,8 @@ function createPriceRow(optName = "", colorName = "", price = "") {
         optSelect.add(option);
     });
 
-    // 2. Выбор Цвета (если не "Диван" или "Кресло")
-    let colorSelect;
+    // 2. Выбор Цвета (если требуется)
+    let colorSelect = null;
     if (pricesGroup.classList.contains('hidden') === false) {
         colorSelect = document.createElement('select');
         colorSelect.className = "p-2 border rounded w-1/3";
@@ -259,43 +335,54 @@ function getColorOptions() {
 }
 
 /**
- * Обновляет выпадающие списки в существующих рядах цен после изменения опций/цветов.
+ * КЛЮЧЕВАЯ ФУНКЦИЯ: Обновляет выпадающие списки в существующих рядах цен.
+ * Сохраняет выбранные значения, удаляет все ряды и создает их заново,
+ * используя актуальные списки опций и цветов, полученные из полей ввода.
  */
 function updatePricesDropdowns() {
+    // 1. Сбор текущих данных из Price Rows
     const currentPrices = Array.from(pricesContainer.children).map(div => {
         const selects = div.querySelectorAll('select');
+        // Проверка на количество select'ов (зависит от itemType)
+        const isColorUsed = selects.length > 1; 
+
         return {
             opt: selects[0].value,
-            color: selects.length > 1 ? selects[1].value : '',
+            color: isColorUsed ? selects[1].value : '',
             price: div.querySelector('input[type="number"]').value
         };
     });
 
+    // 2. Очистка контейнера
     pricesContainer.innerHTML = '';
     
+    // 3. Восстановление рядов с НОВЫМИ выпадающими списками
     currentPrices.forEach(p => {
         pricesContainer.appendChild(createPriceRow(p.opt, p.color, p.price));
     });
 }
 
-// --- Привязка кнопок (ИСПРАВЛЕНО И ОБНОВЛЕНО) ---
+// --- Привязка кнопок (ОБНОВЛЕНО) ---
 addImageBtn.addEventListener('click', () => imagesContainer.appendChild(createImageRow()));
+
+// ОБНОВЛЕНИЕ 5: Добавляем новое поле и сразу обновляем выпадающие списки цен
 addFacadeOrMaterialBtn.addEventListener('click', () => {
     facadeOrMaterialContainer.appendChild(createFacadeOrMaterialRow());
-    updatePricesDropdowns();
+    if (pricesGroup.classList.contains('hidden') === false) updatePricesDropdowns();
 });
+
+// ОБНОВЛЕНИЕ 6: Добавляем новое поле цвета и сразу обновляем выпадающие списки цен
 addColorBtn.addEventListener('click', () => {
     colorsContainer.appendChild(createColorRow());
-    updatePricesDropdowns();
+    if (pricesGroup.classList.contains('hidden') === false) updatePricesDropdowns();
 });
+
 addPriceBtn.addEventListener('click', () => pricesContainer.appendChild(createPriceRow()));
 
 
 // --- Загрузка существующих товаров ---
 async function loadOffers() {
     offersList.innerHTML = "<p class='text-gray-500'>Загрузка...</p>";
-    // Используем 'offers' как в ваших security rules, подразумевая путь /offers/{offerId} или /artifacts/{appId}/public/data/offers/{offerId}
-    // Если используется путь artifacts, замените 'offers' на `artifacts/${__app_id}/public/data/offers`
     const collectionPath = 'offers'; 
 
     try {
@@ -320,8 +407,10 @@ async function loadOffers() {
             const delBtn = div.querySelector('.del-btn');
 
             delBtn.onclick = async () => {
-                 // Замена confirm() на window.confirm()
-                if (window.confirm(`Удалить товар "${data.title}"?`)) { 
+                // ОБНОВЛЕНИЕ 7: Замена window.confirm на custom modal
+                const confirmed = await showCustomConfirm(`Вы уверены, что хотите удалить товар "${data.title}"?`);
+                
+                if (confirmed) { 
                     try {
                         await deleteDoc(doc(db, collectionPath, docSnap.id));
                         await loadOffers();
@@ -342,7 +431,7 @@ async function loadOffers() {
 
                 // 1. Основные поля
                 document.getElementById('title').value = offer.title || "";
-                itemTypeSelect.value = offer.itemType || "Все"; // НОВОЕ ПОЛЕ
+                itemTypeSelect.value = offer.itemType || "Все";
                 document.getElementById('category').value = offer.category || "Все";
                 document.getElementById('discount').value = offer.discount || 0;
                 document.getElementById('description').value = offer.description || "";
@@ -362,9 +451,11 @@ async function loadOffers() {
                 
                 // 3. Цены (требуется предварительная загрузка опций/цветов)
                 pricesContainer.innerHTML = "";
-                // Важно: нужно убедиться, что все опции/цвета загружены, прежде чем создавать select'ы для цен
+                // ОБНОВЛЕНИЕ 8: Обязательно вызываем updatePricesDropdowns() для инициализации select'ов
+                // Это гарантирует, что select'ы в price rows будут содержать только что загруженные опции и цвета.
                 updatePricesDropdowns(); 
-                // Теперь добавляем цены (опции/цвета в select'ах должны совпадать с сохраненными)
+                
+                // Теперь добавляем сохраненные цены
                 (offer.prices || []).forEach(p => pricesContainer.appendChild(createPriceRow(p.option, p.color, p.price)));
 
                 document.getElementById('save-btn').textContent = "Обновить товар";
@@ -384,6 +475,7 @@ async function loadOffers() {
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     document.getElementById('save-btn').textContent = "Сохранение...";
+    statusMessage.classList.add('hidden'); // Скрываем сообщение перед сохранением
 
     // Сбор данных опций и цен
     const optionsArray = getFacadeOrMaterialOptions();
@@ -401,25 +493,25 @@ form.addEventListener('submit', async (e) => {
             color: selects.length > 1 ? selects[1].value.trim() : '',
             price: Number(priceInput.value)
         };
-    }).filter(p => p.option); // Убеждаемся, что есть хотя бы опция
+    }).filter(p => p.option && p.price > 0); // Убеждаемся, что есть опция и цена
 
     const docData = {
         title: document.getElementById('title').value.trim(),
-        itemType: itemTypeSelect.value, // НОВОЕ ПОЛЕ
+        itemType: itemTypeSelect.value,
         category: document.getElementById('category').value,
         discount: Number(document.getElementById('discount').value) || 0,
         description: document.getElementById('description').value.trim(),
         images: Array.from(imagesContainer.querySelectorAll('input[type="url"]')).map(i => i.value.trim()).filter(Boolean),
         
-        // Опции и цены
-        options: optionsArray, // Фасады/Материалы
-        colors: colorsData,    // Цвета
-        prices: pricesData,    // Комбинации цен
+        // Опции и цены - данные для карточки товара
+        options: optionsArray, 
+        colors: colorsData, 
+        prices: pricesData, 
         
         updatedAt: serverTimestamp()
     };
     
-    // Путь к коллекции (см. loadOffers)
+    // Путь к коллекции
     const collectionPath = 'offers'; 
 
     try {
@@ -433,7 +525,7 @@ form.addEventListener('submit', async (e) => {
             statusMessage.textContent = '✅ Новый товар добавлен!';
         }
 
-        statusMessage.className = "status-success text-center py-2 rounded-lg font-medium";
+        statusMessage.className = "text-center py-2 rounded-lg font-medium bg-green-100 text-green-700";
         statusMessage.classList.remove('hidden');
 
         form.reset();
@@ -444,7 +536,7 @@ form.addEventListener('submit', async (e) => {
     } catch (err) {
         console.error("Ошибка сохранения:", err);
         statusMessage.textContent = '❌ Ошибка: ' + err.message;
-        statusMessage.className = "status-error text-center py-2 rounded-lg font-medium";
+        statusMessage.className = "text-center py-2 rounded-lg font-medium bg-red-100 text-red-700";
         statusMessage.classList.remove('hidden');
         document.getElementById('save-btn').textContent = "Сохранить товар";
     }
@@ -453,14 +545,11 @@ form.addEventListener('submit', async (e) => {
 // --- Выход из аккаунта ---
 logoutBtn.addEventListener('click', async () => {
     await signOut(auth);
-    // В среде Canvas это может не сработать, но мы оставляем для полноты
-    window.location.href = '/'; 
 });
 
 // --- Инициализация (на случай, если Auth завершится позже) ---
-// Если itemTypeSelect не был обработан Auth, обрабатываем его здесь
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', updateUIBasedOnType);
 } else {
-    updateUIBasedOnType();
+    // Вызов initializeAuthAndLoad уже заботится об этом
 }
