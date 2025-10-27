@@ -5,8 +5,8 @@ import {
     getAuth,
     onAuthStateChanged,
     signOut,
-    signInWithCustomToken, // Добавлено для инициализации Canvas
-    signInAnonymously // Добавлено для инициализации Canvas
+    signInWithCustomToken,
+    signInAnonymously
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
     getFirestore,
@@ -18,30 +18,44 @@ import {
     updateDoc,
     getDoc,
     serverTimestamp,
-    // onSnapshot, query, where - можно добавить при необходимости
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// --- КОНФИГ И ИНИЦИАЛИЗАЦИЯ (Используем Canvas Globals) ---
-// В реальной среде Canvas эти переменные будут предоставлены
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+// --- КОНФИГ И ИНИЦИАЛИЗАЦИЯ (Используем Canvas Globals и Fallback) ---
 
-if (Object.keys(firebaseConfig).length === 0) {
-    console.error("Firebase config is missing. Check Canvas environment.");
-}
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-// --- Глобальный стейт для модального окна подтверждения ---
-const customModal = {
-    element: null,
-    resolve: null,
+// Пользовательский хардкодный конфиг для FALLBACK, если Canvas globals недоступны
+const FALLBACK_FIREBASE_CONFIG = {
+    apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
+    authDomain: "vsemmebel-90d48.firebaseapp.com",
+    projectId: "vsemmebel-90d48",
+    storageBucket: "vsemmebel-90d48.firebasestorage.app",
+    messagingSenderId: "958123504041",
+    appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
 };
 
+// 1. Определение конфига: используем глобальный __firebase_config, если он есть, иначе FALLBACK
+const firebaseConfig = typeof __firebase_config !== 'undefined' ?
+    JSON.parse(__firebase_config) :
+    FALLBACK_FIREBASE_CONFIG;
+
+// 2. Определение токена: используем глобальный __initial_auth_token, если он есть
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+// Инициализация
+let app, db, auth;
+try {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    console.log("Firebase инициализирован успешно.");
+} catch (e) {
+    console.error("КРИТИЧЕСКАЯ ОШИБКА: Не удалось инициализировать Firebase.", e);
+    // Останавливаем выполнение или отображаем критическое сообщение
+    alert("КРИТИЧЕСКАЯ ОШИБКА: Не удалось подключиться к Firebase. См. консоль.");
+}
+
+
 // --- DOM элементы ---
+// Проверка на существование элементов перед использованием
 const adminPanel = document.getElementById('adminPanel');
 const accessDenied = document.getElementById('accessDenied');
 const form = document.getElementById('addOfferForm');
@@ -71,17 +85,19 @@ let editingId = null;
 
 // --- Custom Confirmation Modal Logic (Замена window.confirm) ---
 
+// Функция для создания модального окна (оставлена для полноты, она должна быть вызвана где-то в HTML)
 function createConfirmationModal() {
     // Проверка, чтобы не создавать модальное окно дважды
     if (document.getElementById('customConfirmModal')) return;
 
     const overlay = document.createElement('div');
     overlay.id = 'customConfirmModal';
-    overlay.className = 'fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 p-4';
-    
+    // Используем z-index выше 10, чтобы перекрыть все
+    overlay.className = 'fixed inset-0 z-[100] hidden flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 p-4';
+
     const modal = document.createElement('div');
     modal.className = 'bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full transform scale-100 transition-transform duration-300';
-    
+
     modal.innerHTML = `
         <h3 id="confirmTitle" class="text-xl font-bold text-red-600 mb-4">Подтвердите удаление</h3>
         <p id="confirmMessage" class="text-gray-700 mb-6"></p>
@@ -93,33 +109,43 @@ function createConfirmationModal() {
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    customModal.element = overlay;
+    // Добавляем модальное окно в глобальный объект (если не определен)
+    if (typeof window.customModal === 'undefined') {
+        window.customModal = {
+            element: null,
+            resolve: null
+        };
+    }
+    window.customModal.element = overlay;
 
     document.getElementById('confirmCancel').addEventListener('click', () => {
-        customModal.element.classList.add('hidden');
-        if (customModal.resolve) customModal.resolve(false);
+        window.customModal.element.classList.add('hidden');
+        if (window.customModal.resolve) window.customModal.resolve(false);
     });
 
     document.getElementById('confirmOK').addEventListener('click', () => {
-        customModal.element.classList.add('hidden');
-        if (customModal.resolve) customModal.resolve(true);
+        window.customModal.element.classList.add('hidden');
+        if (window.customModal.resolve) window.customModal.resolve(true);
     });
 }
 
 function showCustomConfirm(message) {
-    if (!customModal.element) createConfirmationModal();
+    if (!document.getElementById('customConfirmModal')) createConfirmationModal();
 
     return new Promise(resolve => {
         document.getElementById('confirmMessage').textContent = message;
-        customModal.resolve = resolve;
-        customModal.element.classList.remove('hidden');
+        window.customModal.resolve = resolve;
+        window.customModal.element.classList.remove('hidden');
     });
 }
 
 // Создаем модальное окно сразу
-createConfirmationModal();
+if (document.body) {
+    createConfirmationModal();
+} else {
+    document.addEventListener('DOMContentLoaded', createConfirmationModal);
+}
 // --- Конец Custom Confirmation Modal Logic ---
-
 
 // --- Управление UI на основе Типа Товара ---
 function updateUIBasedOnType() {
@@ -150,7 +176,7 @@ function updateUIBasedOnType() {
         pricesGroup.classList.add('hidden');
     }
 
-    // Принудительно очищаем контейнеры, чтобы не было путаницы при переключении типов
+    // Принудительно очищаем контейнеры
     facadeOrMaterialContainer.innerHTML = "";
     colorsContainer.innerHTML = "";
     pricesContainer.innerHTML = "";
@@ -162,43 +188,54 @@ function updateUIBasedOnType() {
     if (!colorsGroup.classList.contains('hidden')) {
         colorsContainer.appendChild(createColorRow());
     }
-    // Здесь не вызываем createPriceRow() для пустого товара, т.к. цены нет
-    // Это сделает пользователь, нажав addPriceBtn
 }
 
 itemTypeSelect.addEventListener('change', updateUIBasedOnType);
 
 
-// --- Auth check и Инициализация ---
-async function initializeAuthAndLoad() {
-    // 1. Аутентификация
-    try {
-        if (initialAuthToken) {
-            await signInWithCustomToken(auth, initialAuthToken);
-        } else {
-            await signInAnonymously(auth);
-        }
-    } catch (error) {
-        console.error("Ошибка при входе в Firebase:", error);
-        // Продолжаем, даже если вход не удался, onAuthStateChanged обработает
-    }
+// --- Auth check ---
 
-    // 2. Слушатель состояния
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) {
+// 3. Вход по Custom Token, если он есть
+if (auth && initialAuthToken) {
+    signInWithCustomToken(auth, initialAuthToken).catch(e => {
+        console.error("Ошибка входа по Custom Token:", e);
+    });
+}
+
+onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+        // Если нет пользователя, пробуем анонимный вход как запасной вариант
+        try {
+            await signInAnonymously(auth);
+            // Если вошли анонимно, onAuthStateChanged вызовется снова
+        } catch (e) {
+            console.error("Ошибка анонимного входа:", e);
             accessDenied.classList.remove('hidden');
             adminPanel.classList.add('hidden');
             return;
         }
+    }
+    
+    // Если пользователь есть (либо старый, либо только что анонимно вошедший)
+    if (user) {
         adminPanel.classList.remove('hidden');
         accessDenied.classList.add('hidden');
-        await loadOffers();
-        updateUIBasedOnType(); // Инициализация UI после загрузки
-    });
-}
-
-// Запускаем процесс инициализации
-initializeAuthAndLoad();
+        // Убеждаемся, что DOM загружен, прежде чем работать с offersList
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', async () => {
+                await loadOffers();
+                updateUIBasedOnType(); // Инициализация UI после загрузки
+            });
+        } else {
+            await loadOffers();
+            updateUIBasedOnType(); // Инициализация UI после загрузки
+        }
+    } else {
+         // Отобразить отказ в доступе, если даже анонимный вход не удался
+        accessDenied.classList.remove('hidden');
+        adminPanel.classList.add('hidden');
+    }
+});
 
 
 // --- Вспомогательные функции для создания полей ---
@@ -223,13 +260,10 @@ function createFacadeOrMaterialRow(value = "") {
     `;
     div.querySelector('button').onclick = () => {
         div.remove();
-        // ОБНОВЛЕНИЕ 1: Обновляем цены при удалении опции
-        if (pricesGroup.classList.contains('hidden') === false) updatePricesDropdowns();
+        if (pricesGroup && !pricesGroup.classList.contains('hidden')) updatePricesDropdowns();
     };
-    // ОБНОВЛЕНИЕ 2: Обновляем цены при изменении опции
     div.querySelector('input').oninput = () => {
-        // Мы вызываем updatePricesDropdowns, чтобы новый введенный текст сразу стал опцией в price select
-        if (pricesGroup.classList.contains('hidden') === false) updatePricesDropdowns();
+        if (pricesGroup && !pricesGroup.classList.contains('hidden')) updatePricesDropdowns();
     };
     return div;
 }
@@ -245,22 +279,16 @@ function createColorRow(name = "", hex = "#ffffff") {
 
     div.querySelector('button').onclick = () => {
         div.remove();
-        // ОБНОВЛЕНИЕ 3: Обновляем цены при удалении цвета
-        if (pricesGroup.classList.contains('hidden') === false) updatePricesDropdowns();
+        if (pricesGroup && !pricesGroup.classList.contains('hidden')) updatePricesDropdowns();
     };
-    // ОБНОВЛЕНИЕ 4: Обновляем цены при изменении цвета
     div.querySelector('input[type="text"]').oninput = () => {
-         // Мы вызываем updatePricesDropdowns, чтобы новый введенный текст сразу стал опцией в price select
-        if (pricesGroup.classList.contains('hidden') === false) updatePricesDropdowns();
+        if (pricesGroup && !pricesGroup.classList.contains('hidden')) updatePricesDropdowns();
     };
     return div;
 }
 
 /**
  * Создает ряд для цены с выпадающими списками.
- * @param {string} optName - Выбранное название опции (фасад/материал).
- * @param {string} colorName - Выбранное название цвета.
- * @param {string|number} price - Цена.
  */
 function createPriceRow(optName = "", colorName = "", price = "") {
     // Важно: эти функции вызываются, чтобы получить АКТУАЛЬНЫЙ список опций из инпутов
@@ -285,7 +313,7 @@ function createPriceRow(optName = "", colorName = "", price = "") {
 
     // 2. Выбор Цвета (если требуется)
     let colorSelect = null;
-    if (pricesGroup.classList.contains('hidden') === false) {
+    if (pricesGroup && !pricesGroup.classList.contains('hidden')) {
         colorSelect = document.createElement('select');
         colorSelect.className = "p-2 border rounded w-1/3";
         colorSelect.innerHTML = `<option value="">-- Выберите Цвет --</option>`;
@@ -336,14 +364,11 @@ function getColorOptions() {
 
 /**
  * КЛЮЧЕВАЯ ФУНКЦИЯ: Обновляет выпадающие списки в существующих рядах цен.
- * Сохраняет выбранные значения, удаляет все ряды и создает их заново,
- * используя актуальные списки опций и цветов, полученные из полей ввода.
  */
 function updatePricesDropdowns() {
     // 1. Сбор текущих данных из Price Rows
     const currentPrices = Array.from(pricesContainer.children).map(div => {
         const selects = div.querySelectorAll('select');
-        // Проверка на количество select'ов (зависит от itemType)
         const isColorUsed = selects.length > 1; 
 
         return {
@@ -365,16 +390,14 @@ function updatePricesDropdowns() {
 // --- Привязка кнопок (ОБНОВЛЕНО) ---
 addImageBtn.addEventListener('click', () => imagesContainer.appendChild(createImageRow()));
 
-// ОБНОВЛЕНИЕ 5: Добавляем новое поле и сразу обновляем выпадающие списки цен
 addFacadeOrMaterialBtn.addEventListener('click', () => {
     facadeOrMaterialContainer.appendChild(createFacadeOrMaterialRow());
-    if (pricesGroup.classList.contains('hidden') === false) updatePricesDropdowns();
+    if (pricesGroup && !pricesGroup.classList.contains('hidden')) updatePricesDropdowns();
 });
 
-// ОБНОВЛЕНИЕ 6: Добавляем новое поле цвета и сразу обновляем выпадающие списки цен
 addColorBtn.addEventListener('click', () => {
     colorsContainer.appendChild(createColorRow());
-    if (pricesGroup.classList.contains('hidden') === false) updatePricesDropdowns();
+    if (pricesGroup && !pricesGroup.classList.contains('hidden')) updatePricesDropdowns();
 });
 
 addPriceBtn.addEventListener('click', () => pricesContainer.appendChild(createPriceRow()));
@@ -382,6 +405,11 @@ addPriceBtn.addEventListener('click', () => pricesContainer.appendChild(createPr
 
 // --- Загрузка существующих товаров ---
 async function loadOffers() {
+    if (!db) {
+        console.error("Firestore не инициализирован. Пропускаем загрузку.");
+        offersList.innerHTML = '<p class="text-red-500">Не удалось подключиться к базе данных для загрузки товаров.</p>';
+        return;
+    }
     offersList.innerHTML = "<p class='text-gray-500'>Загрузка...</p>";
     const collectionPath = 'offers'; 
 
@@ -407,7 +435,6 @@ async function loadOffers() {
             const delBtn = div.querySelector('.del-btn');
 
             delBtn.onclick = async () => {
-                // ОБНОВЛЕНИЕ 7: Замена window.confirm на custom modal
                 const confirmed = await showCustomConfirm(`Вы уверены, что хотите удалить товар "${data.title}"?`);
                 
                 if (confirmed) { 
@@ -451,8 +478,6 @@ async function loadOffers() {
                 
                 // 3. Цены (требуется предварительная загрузка опций/цветов)
                 pricesContainer.innerHTML = "";
-                // ОБНОВЛЕНИЕ 8: Обязательно вызываем updatePricesDropdowns() для инициализации select'ов
-                // Это гарантирует, что select'ы в price rows будут содержать только что загруженные опции и цвета.
                 updatePricesDropdowns(); 
                 
                 // Теперь добавляем сохраненные цены
@@ -466,7 +491,7 @@ async function loadOffers() {
         });
     } catch (err) {
         console.error("Ошибка загрузки товаров:", err);
-        offersList.innerHTML = '<p class="text-red-500">Ошибка загрузки товаров.</p>';
+        offersList.innerHTML = '<p class="text-red-500">Ошибка загрузки товаров: ' + err.message + '</p>';
     }
 }
 
@@ -548,8 +573,11 @@ logoutBtn.addEventListener('click', async () => {
 });
 
 // --- Инициализация (на случай, если Auth завершится позже) ---
+// Этот код больше не нужен, так как onAuthStateChanged обрабатывает все после инициализации
+/*
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', updateUIBasedOnType);
 } else {
-    // Вызов initializeAuthAndLoad уже заботится об этом
+    // updateUIBasedOnType(); // Вызывается внутри onAuthStateChanged
 }
+*/
