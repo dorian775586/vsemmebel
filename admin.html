@@ -7,13 +7,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-    .container-card { max-width: 1200px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); margin-bottom:2rem; }
+    .container-card { max-width: 1000px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); margin-bottom:2rem; }
     .btn-primary { background-color: #4f46e5; transition: background-color 0.2s; }
     .btn-primary:hover { background-color: #4338ca; }
     .status-success { background-color: #d1fae5; color: #065f46; }
     .status-error { background-color: #fee2e2; color: #991b1b; }
     .color-box { width: 25px; height: 25px; border:1px solid #ccc; display:inline-block; margin-right:5px; vertical-align:middle; }
-    select, input, textarea { font-family: 'Inter', sans-serif; }
   </style>
 </head>
 <body class="p-4 sm:p-8">
@@ -23,22 +22,14 @@
   </div>
 
   <div id="adminPanel" class="container-card mx-auto bg-white p-6 rounded-xl hidden">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">Админ-панель: Товары</h1>
+    <div id="breadcrumb-container" class="mb-4 text-gray-700 font-medium"></div>
 
-    <!-- Хлебные крошки -->
-    <div id="breadcrumb-container" class="mb-4 text-sm text-gray-500"></div>
+    <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">Админ-панель: Товары</h1>
 
     <form id="addOfferForm" class="space-y-4">
 
-      <!-- Селекторы комнаты/категории/подкатегории -->
-      <label class="block text-sm font-medium text-gray-700">Комната</label>
-      <div id="roomSelectContainer"></div>
-      <label class="block text-sm font-medium text-gray-700">Категория</label>
-      <div id="categorySelectContainer"></div>
-      <label class="block text-sm font-medium text-gray-700">Подкатегория</label>
-      <div id="subcategorySelectContainer"></div>
+      <!-- Комнаты, категории, подкатегории будут вставлены динамически перед формой -->
 
-      <!-- Название и описание -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Название товара</label>
         <input type="text" id="title" class="w-full p-2 border rounded-lg" required>
@@ -77,29 +68,19 @@
 
       <!-- Цены -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Цены по комбинациям</label>
-        <div class="flex gap-2 mb-2">
-          <button id="generate-combinations-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Сгенерировать все пары</button>
-          <button id="add-price-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить строку</button>
-        </div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Цены для комбинаций фасад+цвет</label>
         <div id="prices-container" class="mb-2"></div>
+        <button id="add-price-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Сгенерировать все пары</button>
       </div>
 
       <button id="save-btn" type="submit" class="w-full btn-primary text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg">Сохранить</button>
       <p id="statusMessage" class="hidden text-center py-2 rounded-lg font-medium"></p>
     </form>
 
-    <!-- Структура комнат/категорий -->
-    <div class="mt-8">
-      <h2 class="text-2xl font-bold mb-4">Управление комнатами и категориями</h2>
-      <div id="rooms-container" class="space-y-4"></div>
-    </div>
+    <button id="logoutBtn" class="mt-6 w-full bg-red-500 text-white font-semibold py-2 rounded-lg hover:bg-red-600 transition">Выйти</button>
 
-    <!-- Список существующих товаров -->
     <h2 class="text-2xl font-bold mt-8 mb-4">Существующие товары</h2>
     <div id="offers-list" class="space-y-2"></div>
-
-    <button id="logoutBtn" class="mt-6 w-full bg-red-500 text-white font-semibold py-2 rounded-lg hover:bg-red-600 transition">Выйти</button>
   </div>
 
   <script type="module" src="./admin.js"></script>
