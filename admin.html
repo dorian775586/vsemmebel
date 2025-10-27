@@ -35,9 +35,13 @@
         <input type="text" id="title" class="w-full p-2 border rounded-lg" required>
       </div>
 
+      <!-- Галочка включения скидки -->
+      <div class="flex items-center gap-2">
+        <input type="checkbox" id="discountCheckbox" class="mt-1">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Включить скидку</label>
+      </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Скидка (%)</label>
-        <input type="number" id="discount" min="0" max="100" class="w-full p-2 border rounded-lg">
+        <input type="number" id="discount" min="0" max="100" class="w-full p-2 border rounded-lg" disabled>
       </div>
 
       <div>
@@ -66,9 +70,16 @@
         <button id="add-color-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить цвет</button>
       </div>
 
+      <!-- Материалы -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Материалы</label>
+        <div id="materials-container" class="mb-2"></div>
+        <button id="add-material-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить материал</button>
+      </div>
+
       <!-- Цены -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Цены для комбинаций фасад+цвет</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Цены для комбинаций фасад+цвет+материал</label>
         <div id="prices-container" class="mb-2"></div>
         <button id="add-price-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Сгенерировать все пары</button>
       </div>
