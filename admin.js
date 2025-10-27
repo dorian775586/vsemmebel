@@ -1,11 +1,5 @@
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
   getFirestore,
   collection,
@@ -18,7 +12,7 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// --- Конфиг Firebase ---
+// --- Firebase config ---
 const firebaseConfig = {
   apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
   authDomain: "vsemmebel-90d48.firebaseapp.com",
@@ -32,7 +26,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// --- DOM элементы ---
+// DOM
 const adminPanel = document.getElementById('adminPanel');
 const accessDenied = document.getElementById('accessDenied');
 const form = document.getElementById('addOfferForm');
@@ -45,9 +39,14 @@ const facadesContainer = document.getElementById('facades-container');
 const colorsContainer = document.getElementById('colors-container');
 const pricesContainer = document.getElementById('prices-container');
 
-let editingId = null; // ID редактируемого товара
+const addImageBtn = document.getElementById('add-image-btn');
+const addFacadeBtn = document.getElementById('add-facade-btn');
+const addColorBtn = document.getElementById('add-color-btn');
+const addPriceBtn = document.getElementById('add-price-btn');
 
-// --- Проверка авторизации ---
+let editingId = null;
+
+// Auth check
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     accessDenied.classList.remove('hidden');
@@ -56,132 +55,193 @@ onAuthStateChanged(auth, async (user) => {
   }
   adminPanel.classList.remove('hidden');
   accessDenied.classList.add('hidden');
-  loadOffers();
+  await loadOffers();
 });
 
-// --- Динамические поля ---
-function addImageField(value = "") {
+// --- helpers to create fields ---
+function createImageRow(value = "") {
   const div = document.createElement('div');
   div.className = "flex gap-2 mb-2";
-  div.innerHTML = `
-    <input type="url" placeholder="URL изображения" class="w-full p-2 border rounded" value="${value}" required>
-    <button type="button" class="bg-red-500 text-white px-3 rounded">Удалить</button>
-  `;
-  div.querySelector('button').onclick = () => div.remove();
-  imagesContainer.appendChild(div);
+  const input = document.createElement('input');
+  input.type = "url";
+  input.placeholder = "URL изображения";
+  input.className = "w-full p-2 border rounded";
+  input.required = true;
+  input.value = value;
+
+  const del = document.createElement('button');
+  del.type = "button";
+  del.className = "bg-red-500 text-white px-3 rounded";
+  del.textContent = "Удалить";
+  del.onclick = () => div.remove();
+
+  div.append(input, del);
+  return div;
 }
 
-function addFacadeField(value = "") {
+function createFacadeRow(value = "") {
   const div = document.createElement('div');
   div.className = "flex gap-2 mb-2";
-  div.innerHTML = `
-    <input type="text" placeholder="Название фасада" class="w-full p-2 border rounded" value="${value}" required>
-    <button type="button" class="bg-red-500 text-white px-3 rounded">Удалить</button>
-  `;
-  div.querySelector('button').onclick = () => div.remove();
-  facadesContainer.appendChild(div);
+  const input = document.createElement('input');
+  input.type = "text";
+  input.placeholder = "Название фасада";
+  input.className = "w-full p-2 border rounded";
+  input.required = true;
+  input.value = value;
+
+  const del = document.createElement('button');
+  del.type = "button";
+  del.className = "bg-red-500 text-white px-3 rounded";
+  del.textContent = "Удалить";
+  del.onclick = () => div.remove();
+
+  div.append(input, del);
+  return div;
 }
 
-function addColorField(name = "", hex = "#ffffff") {
+function createColorRow(name = "", hex = "#ffffff") {
   const div = document.createElement('div');
   div.className = "flex items-center gap-2 mb-2";
-  div.innerHTML = `
-    <input type="text" placeholder="Название цвета" class="p-2 border rounded w-1/2" value="${name}" required>
-    <input type="color" class="w-10 h-10 border rounded" value="${hex}">
-    <button type="button" class="bg-red-500 text-white px-3 rounded">Удалить</button>
-  `;
-  div.querySelector('button').onclick = () => div.remove();
-  colorsContainer.appendChild(div);
+  const inputName = document.createElement('input');
+  inputName.type = "text";
+  inputName.placeholder = "Название цвета";
+  inputName.className = "p-2 border rounded w-1/2";
+  inputName.required = true;
+  inputName.value = name;
+
+  const inputColor = document.createElement('input');
+  inputColor.type = "color";
+  inputColor.className = "w-10 h-10 border rounded";
+  inputColor.value = hex;
+
+  const del = document.createElement('button');
+  del.type = "button";
+  del.className = "bg-red-500 text-white px-3 rounded";
+  del.textContent = "Удалить";
+  del.onclick = () => div.remove();
+
+  div.append(inputName, inputColor, del);
+  return div;
 }
 
-function addPriceField(facade = "", color = "", price = "") {
+function createPriceRow(facade = "", color = "", price = "") {
   const div = document.createElement('div');
   div.className = "flex gap-2 mb-2";
-  div.innerHTML = `
-    <input type="text" placeholder="Фасад" class="p-2 border rounded w-1/3" value="${facade}" required>
-    <input type="text" placeholder="Цвет" class="p-2 border rounded w-1/3" value="${color}" required>
-    <input type="number" placeholder="Цена" class="p-2 border rounded w-1/3" value="${price}" required>
-    <button type="button" class="bg-red-500 text-white px-3 rounded">Удалить</button>
-  `;
-  div.querySelector('button').onclick = () => div.remove();
-  pricesContainer.appendChild(div);
+  const inFacade = document.createElement('input');
+  inFacade.type = "text";
+  inFacade.placeholder = "Фасад";
+  inFacade.className = "p-2 border rounded w-1/3";
+  inFacade.required = true;
+  inFacade.value = facade;
+
+  const inColor = document.createElement('input');
+  inColor.type = "text";
+  inColor.placeholder = "Цвет";
+  inColor.className = "p-2 border rounded w-1/3";
+  inColor.required = true;
+  inColor.value = color;
+
+  const inPrice = document.createElement('input');
+  inPrice.type = "number";
+  inPrice.placeholder = "Цена";
+  inPrice.className = "p-2 border rounded w-1/3";
+  inPrice.required = true;
+  inPrice.value = price;
+
+  const del = document.createElement('button');
+  del.type = "button";
+  del.className = "bg-red-500 text-white px-3 rounded";
+  del.textContent = "Удалить";
+  del.onclick = () => div.remove();
+
+  div.append(inFacade, inColor, inPrice, del);
+  return div;
 }
 
-// --- Загрузка существующих товаров ---
+// attach UI handlers
+addImageBtn.addEventListener('click', () => imagesContainer.appendChild(createImageRow()));
+addFacadeBtn.addEventListener('click', () => facadesContainer.appendChild(createFacadeRow()));
+addColorBtn.addEventListener('click', () => colorsContainer.appendChild(createColorRow()));
+addPriceBtn.addEventListener('click', () => pricesContainer.appendChild(createPriceRow()));
+
+// --- load existing offers ---
 async function loadOffers() {
   offersList.innerHTML = "<p class='text-gray-500'>Загрузка...</p>";
-  const querySnapshot = await getDocs(collection(db, 'offers'));
-  offersList.innerHTML = "";
+  try {
+    const qSnap = await getDocs(collection(db, 'offers'));
+    offersList.innerHTML = "";
+    qSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      const div = document.createElement('div');
+      div.className = "border p-4 rounded flex justify-between items-center";
+      div.innerHTML = `
+        <div>
+          <p class="font-semibold">${data.title || '(без названия)'}</p>
+          <p class="text-sm text-gray-500">${data.category || '-'}</p>
+        </div>
+        <div class="flex gap-2">
+          <button class="edit-btn bg-blue-500 text-white px-3 py-1 rounded">Редактировать</button>
+          <button class="del-btn bg-red-500 text-white px-3 py-1 rounded">Удалить</button>
+        </div>
+      `;
 
-  querySnapshot.forEach((docSnap) => {
-    const data = docSnap.data();
-    const div = document.createElement('div');
-    div.className = "border p-4 rounded flex justify-between items-center";
-    div.innerHTML = `
-      <div>
-        <p class="font-semibold">${data.title}</p>
-        <p class="text-sm text-gray-500">${data.category}</p>
-      </div>
-      <div class="flex gap-2">
-        <button class="bg-blue-500 text-white px-3 py-1 rounded">Редактировать</button>
-        <button class="bg-red-500 text-white px-3 py-1 rounded">Удалить</button>
-      </div>
-    `;
+      const editBtn = div.querySelector('.edit-btn');
+      const delBtn = div.querySelector('.del-btn');
 
-    // Удаление
-    div.querySelector('.bg-red-500').onclick = async () => {
-      if (confirm(`Удалить товар "${data.title}"?`)) {
-        await deleteDoc(doc(db, 'offers', docSnap.id));
-        loadOffers();
-      }
-    };
+      delBtn.onclick = async () => {
+        if (!confirm(`Удалить товар "${data.title}"?`)) return;
+        try {
+          await deleteDoc(doc(db, 'offers', docSnap.id));
+          await loadOffers();
+        } catch (err) {
+          alert('Ошибка удаления: ' + err.message);
+        }
+      };
 
-    // Редактирование
-    div.querySelector('.bg-blue-500').onclick = async () => {
-      editingId = docSnap.id;
-      alert(`Редактирование товара "${data.title}"`);
+      editBtn.onclick = async () => {
+        editingId = docSnap.id;
+        const snap = await getDoc(doc(db, 'offers', editingId));
+        if (!snap.exists()) return alert('Документ не найден');
+        const offer = snap.data();
 
-      const snap = await getDoc(doc(db, 'offers', editingId));
-      if (!snap.exists()) return;
+        document.getElementById('title').value = offer.title || "";
+        document.getElementById('category').value = offer.category || "Все";
+        document.getElementById('discount').value = offer.discount || 0;
+        document.getElementById('description').value = offer.description || "";
 
-      const offer = snap.data();
+        imagesContainer.innerHTML = "";
+        (offer.images || []).forEach(url => imagesContainer.appendChild(createImageRow(url)));
 
-      // Подставляем данные в форму
-      document.getElementById('title').value = offer.title || "";
-      document.getElementById('category').value = offer.category || "Все";
-      document.getElementById('discount').value = offer.discount || 0;
-      document.getElementById('description').value = offer.description || "";
+        facadesContainer.innerHTML = "";
+        (offer.facades || []).forEach(f => facadesContainer.appendChild(createFacadeRow(f)));
 
-      imagesContainer.innerHTML = "";
-      (offer.images || []).forEach(url => addImageField(url));
+        colorsContainer.innerHTML = "";
+        (offer.colors || []).forEach(c => colorsContainer.appendChild(createColorRow(c.name, c.hex || '#ffffff')));
 
-      facadesContainer.innerHTML = "";
-      (offer.facades || []).forEach(f => addFacadeField(f));
+        pricesContainer.innerHTML = "";
+        (offer.prices || []).forEach(p => pricesContainer.appendChild(createPriceRow(p.facade, p.color, p.price)));
 
-      colorsContainer.innerHTML = "";
-      (offer.colors || []).forEach(c => addColorField(c.name, c.hex || "#ffffff"));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
 
-      pricesContainer.innerHTML = "";
-      (offer.prices || []).forEach(p => addPriceField(p.facade, p.color, p.price));
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    offersList.appendChild(div);
-  });
+      offersList.appendChild(div);
+    });
+  } catch (err) {
+    console.error(err);
+    offersList.innerHTML = '<p class="text-red-500">Ошибка загрузки</p>';
+  }
 }
 
-// --- Сохранение товара ---
+// --- form submit (create/update) ---
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-
-  const offer = {
+  const docData = {
     title: document.getElementById('title').value.trim(),
     category: document.getElementById('category').value,
-    discount: Number(document.getElementById('discount').value),
+    discount: Number(document.getElementById('discount').value) || 0,
     description: document.getElementById('description').value.trim(),
-    images: Array.from(imagesContainer.querySelectorAll('input[type="url"]')).map(i => i.value.trim()),
-    facades: Array.from(facadesContainer.querySelectorAll('input[type="text"]')).map(i => i.value.trim()),
+    images: Array.from(imagesContainer.querySelectorAll('input[type="url"]')).map(i => i.value.trim()).filter(Boolean),
+    facades: Array.from(facadesContainer.querySelectorAll('input[type="text"]')).map(i => i.value.trim()).filter(Boolean),
     colors: Array.from(colorsContainer.children).map(div => ({
       name: div.querySelector('input[type="text"]').value.trim(),
       hex: div.querySelector('input[type="color"]').value
@@ -196,13 +256,13 @@ form.addEventListener('submit', async (e) => {
 
   try {
     if (editingId) {
-      await updateDoc(doc(db, 'offers', editingId), offer);
-      statusMessage.textContent = "✅ Товар успешно обновлён!";
+      await updateDoc(doc(db, 'offers', editingId), docData);
+      statusMessage.textContent = '✅ Товар успешно обновлён!';
       editingId = null;
     } else {
-      offer.createdAt = serverTimestamp();
-      await addDoc(collection(db, 'offers'), offer);
-      statusMessage.textContent = "✅ Новый товар добавлен!";
+      docData.createdAt = serverTimestamp();
+      await addDoc(collection(db, 'offers'), docData);
+      statusMessage.textContent = '✅ Новый товар добавлен!';
     }
 
     statusMessage.className = "status-success text-center py-2 rounded-lg font-medium";
@@ -214,29 +274,28 @@ form.addEventListener('submit', async (e) => {
     colorsContainer.innerHTML = "";
     pricesContainer.innerHTML = "";
 
-    loadOffers();
+    // добавим пустые стартовые строки
+    imagesContainer.appendChild(createImageRow());
+    facadesContainer.appendChild(createFacadeRow());
+    colorsContainer.appendChild(createColorRow());
+    pricesContainer.appendChild(createPriceRow());
+
+    await loadOffers();
   } catch (err) {
     console.error(err);
-    statusMessage.textContent = "❌ Ошибка: " + err.message;
+    statusMessage.textContent = '❌ Ошибка: ' + err.message;
     statusMessage.className = "status-error text-center py-2 rounded-lg font-medium";
     statusMessage.classList.remove('hidden');
   }
 });
 
-// --- Выход из аккаунта ---
 logoutBtn.addEventListener('click', async () => {
   await signOut(auth);
-  window.location.href = "/";
+  window.location.href = '/';
 });
 
-// --- Инициализация ---
-addImageField();
-addFacadeField();
-addColorField();
-addPriceField();
-
-// --- Делаем функции доступными для кнопок HTML ---
-window.addImageField = addImageField;
-window.addFacadeField = addFacadeField;
-window.addColorField = addColorField;
-window.addPriceField = addPriceField;
+// init: add one empty row of each
+imagesContainer.appendChild(createImageRow());
+facadesContainer.appendChild(createFacadeRow());
+colorsContainer.appendChild(createColorRow());
+pricesContainer.appendChild(createPriceRow());
