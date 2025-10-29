@@ -187,7 +187,7 @@ adminLoginBtn.addEventListener('click', () => {
     if (!isAdmin) {
         adminModal.classList.remove('hidden');
     } else {
-        window.location.href = 'admin_panel.html'; // Изменил на admin_panel.html для наглядности
+        window.location.href = 'admin.html'; 
     }
 });
 
@@ -202,7 +202,7 @@ adminLoginFormBtn.addEventListener('click', () => {
             adminModal.classList.add('hidden');
             isAdmin = true;
             adminLoginBtn.textContent = 'Админка';
-            window.location.href = 'admin_panel.html';
+            window.location.href = 'admin.html';
         })
         .catch(err => {
             // Используем console.error вместо alert для лучшего поведения в iframe
