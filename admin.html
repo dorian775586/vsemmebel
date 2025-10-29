@@ -39,7 +39,7 @@ body { font-family: 'Inter', sans-serif; background:#f7f7f7; }
 /* Стили для Select */
 select.input-field {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd' /%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 0 011.414 0L10 10.586l3.293-3.293a1 0 111.414 1.414l-4 4a1 0 01-1.414 0l-4-4a1 0 010-1.414z' clip-rule='evenodd' /%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.5rem center;
     background-size: 1.5em 1.5em;
@@ -156,22 +156,40 @@ import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-
 setLogLevel('Debug');
 
 // --- FIREBASE CONFIG & AUTH ---
+// Убрал лишние console.error для чистой работы в деплое, если конфиг не загружен.
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
 
-if (!firebaseConfig) {
-    console.error("Firebase configuration is missing.");
-}
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+let firebaseConfig = null;
+let app = null;
+let db = null;
+let auth = null;
 let userId = null;
 const productCollectionPath = `artifacts/${appId}/public/data/offers`;
 
+// 1. Пытаемся распарсить и инициализировать
+if (firebaseConfigString) {
+    try {
+        firebaseConfig = JSON.parse(firebaseConfigString);
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+    } catch (e) {
+        console.warn("Предупреждение: Не удалось инициализировать Firebase. Возможно, неверный JSON:", e);
+    }
+}
+
+
 // Инициализация аутентификации
 async function initializeAuth() {
+    // Если Auth не инициализирован (из-за отсутствия конфига), пропускаем
+    if (!auth) {
+        userId = crypto.randomUUID();
+        // ВАЖНО: Мы НЕ вызываем loadExistingProducts, если нет db.
+        return; 
+    }
+    
     try {
         if (initialAuthToken) {
             await signInWithCustomToken(auth, initialAuthToken);
@@ -179,7 +197,6 @@ async function initializeAuth() {
             await signInAnonymously(auth); 
         }
         userId = auth.currentUser?.uid || crypto.randomUUID();
-        console.log("Firebase initialized. User ID:", userId);
         loadExistingProducts(); // Запускаем загрузку данных после аутентификации
     } catch (error) {
         console.error("Ошибка аутентификации Firebase:", error);
@@ -421,6 +438,9 @@ function renderCombinations(){
 
 // --- Existing Products ---
 function loadExistingProducts(){
+    // Проверяем наличие DB перед использованием onSnapshot
+    if (!db) return;
+
     onSnapshot(collection(db, productCollectionPath), snapshot=>{
         existingProductsDiv.innerHTML='';
         snapshot.docs.forEach(docSnap=>{
@@ -450,7 +470,7 @@ function loadExistingProducts(){
             div.querySelectorAll('button')[1].onclick=()=>{ 
                 showConfirm('Вы уверены, что хотите удалить товар: ' + (data.title || 'Без названия') + '?', async () => {
                     try {
-                        await deleteDoc(doc(db, productCollectionPath, docSnap.id));
+                        if (db) await deleteDoc(doc(db, productCollectionPath, docSnap.id));
                         showMessage("Товар успешно удалён.");
                     } catch (e) {
                         console.error("Ошибка удаления:", e);
@@ -464,6 +484,8 @@ function loadExistingProducts(){
 }
 
 async function editProduct(id){
+    if (!db) return showMessage("Ошибка: База данных не инициализирована.");
+
     try {
         const docSnap=await getDoc(doc(db, productCollectionPath, id));
         if(!docSnap.exists()) return showMessage("Товар не найден!");
@@ -500,145 +522,176 @@ async function editProduct(id){
 // Утилита для завершения процесса ввода
 function finishInput(dynamicArea, addButton, renderFunc) {
     dynamicArea.classList.add('hidden');
-    addButton.disabled = false;
+    // !!! ИСПРАВЛЕНИЕ: Разблокируем кнопку, чтобы можно было добавить следующий элемент
+    addButton.disabled = false; 
     renderFunc();
     renderCombinations(); // Обновляем списки комбинаций
 }
 
 // --- ФАСАДЫ ---
-addFacadeBtn.onclick = () => {
-    facadeDynamicArea.classList.remove('hidden');
-    addFacadeBtn.disabled = true; // Деактивируем, пока не нажмут ОК/Отмена
-    facadeInput.value = '';
-    facadeInput.focus();
-};
+function setupFacadeHandlers() {
+    if (!addFacadeBtn) return; // Проверка на существование элемента
 
-facadeOkBtn.onclick = () => {
-    const val = facadeInput.value.trim();
-    if (val && !facades.includes(val)) { 
-        facades.push(val); 
-    }
-    finishInput(facadeDynamicArea, addFacadeBtn, renderFacades);
-};
-
-facadeCancelBtn.onclick = () => {
-    finishInput(facadeDynamicArea, addFacadeBtn, renderFacades);
-};
-
-// --- МАТЕРИАЛЫ ---
-addMaterialBtn.onclick = () => {
-    materialDynamicArea.classList.remove('hidden');
-    addMaterialBtn.disabled = true;
-    materialInput.value = '';
-    materialInput.focus();
-};
-
-materialOkBtn.onclick = () => {
-    const val = materialInput.value.trim();
-    if (val && !materials.includes(val)) { 
-        materials.push(val); 
-    }
-    finishInput(materialDynamicArea, addMaterialBtn, renderMaterials);
-};
-
-materialCancelBtn.onclick = () => {
-    finishInput(materialDynamicArea, addMaterialBtn, renderMaterials);
-};
-
-// --- ЦВЕТА ---
-addColorBtn.onclick = () => {
-    colorDynamicArea.classList.remove('hidden');
-    addColorBtn.disabled = true;
-    colorNameInput.value = '';
-    colorHexInput.value = '#f97316';
-    colorNameInput.focus();
-};
-
-colorOkBtn.onclick = () => {
-    const name = colorNameInput.value.trim();
-    const hex = colorHexInput.value;
-    if (name && hex) { 
-        colors.push({ name, hex }); 
-    }
-    finishInput(colorDynamicArea, addColorBtn, renderColors);
-};
-
-colorCancelBtn.onclick = () => {
-    finishInput(colorDynamicArea, addColorBtn, renderColors);
-};
-
-// --- Общие Хендлеры ---
-addImageBtn.onclick=()=>{ images.push(''); renderImages(); };
-
-addComboBtn.onclick=()=>{ 
-    combinations.push({
-        material: materials[0] || '', 
-        facade: facades[0] || '',
-        color: colors.length > 0 ? colors[0].name : '',
-        price: 0,
-        isActive: true,
-        discount: 0
-    }); 
-    renderCombinations(); 
-};
-
-saveBtn.onclick=async()=>{
-    const data={
-        title:titleInput.value.trim(),
-        category:categoryInput.value.trim(),
-        images: images.filter(url => url.trim() !== ''),
-        facades: facades.filter(f => f.trim() !== ''),
-        materials: materials.filter(m => m.trim() !== ''),
-        colors,
-        combinations: combinations.filter(c => c.material || c.facade || c.color || c.price > 0)
+    addFacadeBtn.onclick = () => {
+        facadeDynamicArea.classList.remove('hidden');
+        addFacadeBtn.disabled = true; // Деактивируем, пока не нажмут ОК/Отмена
+        facadeInput.value = '';
+        facadeInput.focus();
     };
 
-    if(!data.title){ 
-        return showMessage("Введите название товара!"); 
-    }
-
-    try {
-        if(productId){
-            await setDoc(doc(db, productCollectionPath, productId), data);
-            showMessage("Товар успешно обновлён!");
-        }else{
-            const docRef=await addDoc(collection(db, productCollectionPath), data);
-            productId=docRef.id;
-            showMessage("Товар успешно создан!");
+    facadeOkBtn.onclick = () => {
+        const val = facadeInput.value.trim();
+        if (val && !facades.includes(val)) { 
+            facades.push(val); 
         }
-    } catch(e) {
-        console.error("Ошибка сохранения товара:", e);
-        showMessage("Ошибка при сохранении данных. Проверьте консоль.");
-    }
-};
+        finishInput(facadeDynamicArea, addFacadeBtn, renderFacades);
+    };
 
-clearBtn.onclick=()=>{
-    productId=null; 
-    titleInput.value=''; 
-    categoryInput.value=''; 
-    images=[]; 
-    facades=[]; 
-    materials=[]; 
-    colors=[]; 
-    combinations=[];
-    
-    // Скрываем все временные поля и активируем кнопки
-    facadeDynamicArea.classList.add('hidden');
-    addFacadeBtn.disabled = false;
-    materialDynamicArea.classList.add('hidden');
-    addMaterialBtn.disabled = false;
-    colorDynamicArea.classList.add('hidden');
-    addColorBtn.disabled = false;
+    facadeCancelBtn.onclick = () => {
+        finishInput(facadeDynamicArea, addFacadeBtn, renderFacades);
+    };
+}
 
-    renderImages(); 
-    renderFacades(); 
-    renderMaterials(); 
-    renderColors(); 
-    renderCombinations();
-};
+// --- МАТЕРИАЛЫ ---
+function setupMaterialHandlers() {
+    if (!addMaterialBtn) return; // Проверка на существование элемента
 
-// --- Инициализация при старте ---
-initializeAuth();
+    addMaterialBtn.onclick = () => {
+        materialDynamicArea.classList.remove('hidden');
+        addMaterialBtn.disabled = true;
+        materialInput.value = '';
+        materialInput.focus();
+    };
+
+    materialOkBtn.onclick = () => {
+        const val = materialInput.value.trim();
+        if (val && !materials.includes(val)) { 
+            materials.push(val); 
+        }
+        finishInput(materialDynamicArea, addMaterialBtn, renderMaterials);
+    };
+
+    materialCancelBtn.onclick = () => {
+        finishInput(materialDynamicArea, addMaterialBtn, renderMaterials);
+    };
+}
+
+// --- ЦВЕТА ---
+function setupColorHandlers() {
+    if (!addColorBtn) return; // Проверка на существование элемента
+
+    addColorBtn.onclick = () => {
+        colorDynamicArea.classList.remove('hidden');
+        addColorBtn.disabled = true;
+        colorNameInput.value = '';
+        colorHexInput.value = '#f97316';
+        colorNameInput.focus();
+    };
+
+    colorOkBtn.onclick = () => {
+        const name = colorNameInput.value.trim();
+        const hex = colorHexInput.value;
+        if (name && hex) { 
+            colors.push({ name, hex }); 
+        }
+        finishInput(colorDynamicArea, addColorBtn, renderColors);
+    };
+
+    colorCancelBtn.onclick = () => {
+        finishInput(colorDynamicArea, addColorBtn, renderColors);
+    };
+}
+
+// --- Общие Хендлеры ---
+function setupGeneralHandlers() {
+    addImageBtn.onclick=()=>{ images.push(''); renderImages(); };
+
+    addComboBtn.onclick=()=>{ 
+        combinations.push({
+            material: materials[0] || '', 
+            facade: facades[0] || '',
+            color: colors.length > 0 ? colors[0].name : '',
+            price: 0,
+            isActive: true,
+            discount: 0
+        }); 
+        renderCombinations(); 
+    };
+
+    saveBtn.onclick=async()=>{
+        if (!db) {
+            return showMessage("Ошибка: База данных не инициализирована. Сохранение невозможно.");
+        }
+        
+        const data={
+            title:titleInput.value.trim(),
+            category:categoryInput.value.trim(),
+            images: images.filter(url => url.trim() !== ''),
+            facades: facades.filter(f => f.trim() !== ''),
+            materials: materials.filter(m => m.trim() !== ''),
+            colors,
+            combinations: combinations.filter(c => c.material || c.facade || c.color || c.price > 0)
+        };
+
+        if(!data.title){ 
+            return showMessage("Введите название товара!"); 
+        }
+
+        try {
+            if(productId){
+                await setDoc(doc(db, productCollectionPath, productId), data);
+                showMessage("Товар успешно обновлён!");
+            }else{
+                const docRef=await addDoc(collection(db, productCollectionPath), data);
+                productId=docRef.id;
+                showMessage("Товар успешно создан!");
+            }
+        } catch(e) {
+            console.error("Ошибка сохранения товара:", e);
+            showMessage("Ошибка при сохранении данных. Проверьте консоль.");
+        }
+    };
+
+    clearBtn.onclick=()=>{
+        productId=null; 
+        titleInput.value=''; 
+        categoryInput.value=''; 
+        images=[]; 
+        facades=[]; 
+        materials=[]; 
+        colors=[]; 
+        combinations=[];
+        
+        // Скрываем все временные поля и активируем кнопки
+        facadeDynamicArea.classList.add('hidden');
+        addFacadeBtn.disabled = false;
+        materialDynamicArea.classList.add('hidden');
+        addMaterialBtn.disabled = false;
+        colorDynamicArea.classList.add('hidden');
+        addColorBtn.disabled = false;
+
+        renderImages(); 
+        renderFacades(); 
+        renderMaterials(); 
+        renderColors(); 
+        renderCombinations();
+    };
+}
+
+// --- Инициализация при старте (Вызов обработчиков) ---
+
+// Оборачиваем привязку событий в функцию, чтобы гарантировать, что все элементы DOM уже существуют.
+function init() {
+    setupFacadeHandlers();
+    setupMaterialHandlers();
+    setupColorHandlers();
+    setupGeneralHandlers();
+    initializeAuth();
+}
+
+// Запускаем инициализацию
+init();
+
 </script>
 </body>
 </html>
