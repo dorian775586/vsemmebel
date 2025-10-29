@@ -46,13 +46,6 @@ select.input-field {
     background-size: 1.5em 1.5em;
     padding-right: 2.5rem;
 }
-
-/* Стили для загрузки */
-#upload-progress-bar {
-    height: 6px;
-    background-color: #fbd38d; /* Yellow-Orange Light */
-    transition: width 0.3s ease;
-}
 </style>
 </head>
 <body class="p-4 sm:p-6">
@@ -84,18 +77,18 @@ select.input-field {
         </select>
     </div>
     
-    <!-- ОБНОВЛЕННЫЙ БЛОК ИЗОБРАЖЕНИЙ С ЗАГРУЗКОЙ -->
+    <!-- ОБНОВЛЕННЫЙ БЛОК ИЗОБРАЖЕНИЙ (Ввод URL) -->
     <div class="mb-4">
-        <label class="font-semibold text-gray-600">Изображения (Firebase Storage)</label>
+        <label class="font-semibold text-gray-600">Изображения (URL)</label>
         <div id="images-container" class="space-y-2"></div>
-        <div id="upload-progress" class="hidden mt-2">
-            <p class="text-sm text-gray-500 mb-1">Загрузка файла...</p>
-            <div class="w-full bg-gray-200 rounded-full">
-                <div id="upload-progress-bar" class="rounded-full" style="width: 0%"></div>
-            </div>
+        
+        <div id="image-url-input-area" class="flex gap-2 mt-2 hidden">
+            <input id="image-url-input" class="input-field" type="url" placeholder="Вставьте URL изображения (http://...)">
+            <button id="image-url-ok-btn" class="btn btn-save text-sm px-4">ОК</button>
+            <button id="image-url-cancel-btn" class="btn bg-gray-300 text-gray-700 hover:bg-gray-400 text-sm px-4">Отмена</button>
         </div>
-        <input type="file" id="file-upload-input" accept="image/*" class="hidden">
-        <button id="add-image-btn" class="btn mt-2 btn-save">Загрузить изображение</button>
+        
+        <button id="add-image-btn" class="btn mt-2 btn-save">Добавить URL изображения</button>
     </div>
 
     <!-- БЛОК УПРАВЛЕНИЯ ФАСАДАМИ -->
@@ -172,7 +165,7 @@ select.input-field {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, setDoc, doc, onSnapshot, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+// Firebase Storage импорты удалены
 import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // Устанавливаем режим отладки для Firestore
@@ -188,7 +181,7 @@ const HARDCODED_FIREBASE_CONFIG = {
     apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70", 
     authDomain: "vsemmebel-90d48.firebaseapp.com",
     projectId: "vsemmebel-90d48", 
-    storageBucket: "vsemmebel-90d48.appspot.com", // Обновлено для Storage
+    storageBucket: "vsemmebel-90d48.appspot.com", 
     messagingSenderId: "958123504041",
     appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
 };
@@ -198,7 +191,7 @@ let firebaseConfig = null;
 let app = null;
 let db = null;
 let auth = null;
-let storage = null; // Инициализация Storage
+// let storage = null; // Storage больше не нужен
 let userId = null;
 const productCollectionPath = `artifacts/${appId}/public/data/offers`;
 
@@ -223,7 +216,7 @@ function initializeFirebase() {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
-            storage = getStorage(app); // Инициализация Storage
+            // storage = getStorage(app); // Storage больше не инициализируется
             console.log("Firebase успешно инициализирован.");
         } catch (e) {
             console.error("КРИТИЧЕСКАЯ ОШИБКА: Ошибка инициализации Firebase.", e);
@@ -267,10 +260,6 @@ const modalOverlay = document.getElementById('custom-modal');
 const modalMessage = document.getElementById('modal-message');
 const modalConfirmBtn = document.getElementById('modal-btn-confirm');
 const modalCancelBtn = document.getElementById('modal-btn-cancel');
-const progressBar = document.getElementById('upload-progress-bar');
-const progressContainer = document.getElementById('upload-progress');
-const fileInput = document.getElementById('file-upload-input');
-
 
 function closeModal() {
     modalOverlay.classList.add('hidden');
@@ -313,6 +302,13 @@ const categoryInput = document.getElementById('category');
 const imagesContainer = document.getElementById('images-container');
 const addImageBtn = document.getElementById('add-image-btn');
 
+// Новые элементы для ввода URL
+const imageUrlInputArea = document.getElementById('image-url-input-area');
+const imageUrlInput = document.getElementById('image-url-input');
+const imageUrlOkBtn = document.getElementById('image-url-ok-btn');
+const imageUrlCancelBtn = document.getElementById('image-url-cancel-btn');
+
+
 const facadesContainer = document.getElementById('facades-container');
 const addFacadeBtn = document.getElementById('add-facade-btn');
 const facadeDynamicArea = document.getElementById('facade-dynamic-input-area');
@@ -341,56 +337,9 @@ const saveBtn = document.getElementById('save-product-btn');
 const clearBtn = document.getElementById('clear-product-btn');
 const existingProductsDiv = document.getElementById('existing-products');
 
-// --- FIREBASE STORAGE UPLOAD LOGIC ---
+// --- FIREBASE STORAGE UPLOAD LOGIC (УДАЛЕНО) ---
+// function uploadFile... 
 
-async function uploadFile(file) {
-    if (!storage) {
-        showMessage("Ошибка Storage: Сервис не инициализирован. Проверьте консоль.");
-        return null;
-    }
-
-    // Временный ID продукта, если товар новый
-    const currentProductId = productId || 'temp_' + Date.now(); 
-    
-    // Путь: images/{appId}/products/{productId}/имя_файла
-    const storageRef = ref(storage, `images/${appId}/products/${currentProductId}/${Date.now()}_${file.name}`);
-    
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
-    progressContainer.classList.remove('hidden');
-    addImageBtn.disabled = true;
-
-    return new Promise((resolve, reject) => {
-        uploadTask.on('state_changed', 
-            (snapshot) => {
-                // Обновление прогресс-бара
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                progressBar.style.width = progress + '%';
-            }, 
-            (error) => {
-                // Обработка ошибок
-                console.error("Ошибка загрузки:", error);
-                progressContainer.classList.add('hidden');
-                addImageBtn.disabled = false;
-                showMessage(`Ошибка загрузки: ${error.code}`);
-                reject(null);
-            }, 
-            async () => {
-                // Завершение загрузки
-                try {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    progressContainer.classList.add('hidden');
-                    addImageBtn.disabled = false;
-                    progressBar.style.width = '0%';
-                    resolve(downloadURL);
-                } catch (e) {
-                    console.error("Ошибка получения URL:", e);
-                    reject(null);
-                }
-            }
-        );
-    });
-}
 
 // --- Render Functions ---
 
@@ -405,6 +354,7 @@ function renderImages(){
         div.className = "flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-100";
         div.innerHTML = `
             <div class="thumbnail">
+                <!-- Fallback placeholder image used if URL is broken or invalid -->
                 <img src="${url}" onerror="this.src='https://placehold.co/60x60/cccccc/333333?text=Нет'" alt="Превью">
             </div>
             <p class="text-sm flex-grow truncate text-gray-700">${url.substring(0, 50)}...</p>
@@ -561,10 +511,10 @@ function loadExistingProducts(){
             `;
             
             div.innerHTML=`${titleStatus}
-                               <div class="flex gap-2 flex-shrink-0">
-                                 <button class="btn btn-save py-2 px-3 text-sm">Редактировать</button>
-                                 <button class="btn btn-delete py-2 px-3 text-sm">Удалить</button>
-                               </div>`;
+                                <div class="flex gap-2 flex-shrink-0">
+                                   <button class="btn btn-save py-2 px-3 text-sm">Редактировать</button>
+                                   <button class="btn btn-delete py-2 px-3 text-sm">Удалить</button>
+                                </div>`;
             
             div.querySelectorAll('button')[0].onclick=()=>editProduct(docSnap.id);
             div.querySelectorAll('button')[1].onclick=()=>{ 
@@ -606,6 +556,7 @@ async function editProduct(id){
         addFacadeBtn.disabled = false;
         addMaterialBtn.disabled = false;
         addColorBtn.disabled = false;
+        addImageBtn.disabled = false; // Важно для кнопки добавления URL
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
@@ -706,21 +657,39 @@ function setupColorHandlers() {
 
 // --- Общие Хендлеры ---
 function setupGeneralHandlers() {
-    // 1. Обработчик кнопки "Загрузить изображение"
-    addImageBtn.onclick = () => fileInput.click();
-
-    // 2. Обработчик выбора файла
-    fileInput.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const url = await uploadFile(file);
+    // 1. Обработчик кнопки "Добавить URL изображения"
+    addImageBtn.onclick = () => {
+        imageUrlInputArea.classList.remove('hidden');
+        addImageBtn.disabled = true;
+        imageUrlInput.value = '';
+        imageUrlInput.focus();
+    };
+    
+    // 2. Обработчик кнопки "ОК" для URL
+    imageUrlOkBtn.onclick = () => {
+        const url = imageUrlInput.value.trim();
         if (url) {
-            images.push(url);
-            renderImages();
+            // Простая проверка URL, можно добавить более строгую, если нужно
+            if (url.startsWith('http')) {
+                if (!images.includes(url)) {
+                    images.push(url);
+                } else {
+                    showMessage("Этот URL уже добавлен.");
+                }
+            } else {
+                showMessage("Пожалуйста, введите корректный URL, начинающийся с 'http'.");
+            }
         }
-        // Сброс поля, чтобы можно было загрузить тот же файл снова
-        fileInput.value = null; 
+        imageUrlInputArea.classList.add('hidden');
+        addImageBtn.disabled = false;
+        renderImages();
+    };
+    
+    // 3. Обработчик кнопки "Отмена" для URL
+    imageUrlCancelBtn.onclick = () => {
+        imageUrlInputArea.classList.add('hidden');
+        addImageBtn.disabled = false;
+        imageUrlInput.value = ''; // Очищаем поле
     };
 
 
@@ -783,39 +752,34 @@ function setupGeneralHandlers() {
         materials=[]; 
         colors=[]; 
         combinations=[];
-        
-        document.querySelectorAll('[id$="-dynamic-input-area"]').forEach(el => el.classList.add('hidden'));
-        addFacadeBtn.disabled = false;
-        addMaterialBtn.disabled = false;
-        addColorBtn.disabled = false;
-
-        renderImages(); 
-        renderFacades(); 
-        renderMaterials(); 
-        renderColors(); 
+        renderImages();
+        renderFacades();
+        renderMaterials();
+        renderColors();
         renderCombinations();
+        showMessage("Форма очищена. Вы готовы к созданию нового товара.");
     };
 }
 
-// --- Инициализация при старте (Вызов обработчиков) ---
 
-function init() {
+// --- RUNTIME INITIATION ---
+window.onload = () => {
     initializeFirebase();
+    initializeAuth(); 
+    
+    // Инициализация всех обработчиков после загрузки DOM
     setupFacadeHandlers();
     setupMaterialHandlers();
     setupColorHandlers();
     setupGeneralHandlers();
-    initializeAuth();
     
-    renderImages(); 
-    renderFacades(); 
-    renderMaterials(); 
-    renderColors(); 
+    // Первичный рендер пустых списков
+    renderImages();
+    renderFacades();
+    renderMaterials();
+    renderColors();
     renderCombinations();
-}
-
-// Запускаем инициализацию
-init();
+};
 
 </script>
 </body>
