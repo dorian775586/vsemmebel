@@ -7,261 +7,638 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 body { font-family: 'Inter', sans-serif; background:#f7f7f7; }
-.input-field { border:2px solid #ddd; padding:0.5rem; border-radius:0.5rem; width:100%; }
-.section { background:white; padding:1.5rem; border-radius:1rem; margin-bottom:1.5rem; box-shadow:0 4px 12px rgba(0,0,0,0.05); }
-.btn { padding:0.5rem 1rem; border-radius:0.5rem; font-weight:600; cursor:pointer; transition:0.3s; }
+.input-field { border:2px solid #ddd; padding:0.5rem; border-radius:0.5rem; width:100%; transition: border-color 0.2s; }
+.input-field:focus { border-color: #f97316; outline: none; }
+.section { background:white; padding:1.5rem; border-radius:1rem; margin-bottom:1.5rem; box-shadow:0 6px 15px rgba(0,0,0,0.08); }
+.btn { padding:0.6rem 1.2rem; border-radius:0.5rem; font-weight:600; cursor:pointer; transition:0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap; }
 .btn-save { background:#f97316;color:white; }
-.btn-save:hover { background:#ea580c; }
+.btn-save:hover:not(:disabled) { background:#ea580c; box-shadow: 0 4px 6px rgba(234,88,12,0.3); }
+.btn-save:disabled { background:#fcd34d; cursor: not-allowed; } /* Отключенная кнопка */
 .btn-delete { background:#ef4444;color:white; }
-.btn-delete:hover { background:#b91c1c; }
-.option-btn { border:2px solid #f97316; background:#ffedd5; padding:0.3rem 0.8rem; margin-right:0.3rem; border-radius:0.5rem; cursor:pointer; transition:0.2s; }
-.option-btn.active { background:#f97316;color:white; box-shadow:0 2px 5px rgba(249,115,22,0.3); }
-.thumbnail { width:50px;height:50px;object-fit:cover;border:2px solid #ddd;border-radius:0.5rem;margin-right:0.5rem; }
-.thumbnail img { width:100%; height:100%; object-fit:cover; border-radius:0.5rem; }
+.btn-delete:hover { background:#b91c1c; box-shadow: 0 4px 6px rgba(239,68,68,0.3); }
+.option-btn { border:2px solid #f97316; background:#ffedd5; padding:0.3rem 0.8rem; margin-right:0.3rem; margin-bottom:0.3rem; border-radius:0.5rem; cursor:pointer; transition:0.2s; white-space: nowrap; display: inline-flex; align-items: center; }
+.option-btn:hover { background: #f97316; color: white; }
+.thumbnail { width:50px;height:50px;object-fit:cover;border:2px solid #ddd;border-radius:0.5rem;flex-shrink: 0;}
+.thumbnail img { width:100%; height:100%; object-fit:cover; border-radius:0.3rem; }
+
+/* Modal styles */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 1000;
+}
+.modal-content {
+    background: white; padding: 1.5rem; border-radius: 1rem;
+    max-width: 400px; width: 90%;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Стили для Select */
+select.input-field {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd' /%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
 </style>
 </head>
-<body class="p-6">
+<body class="p-4 sm:p-6">
 
-<h1 class="text-3xl font-bold mb-6">Админка Mebel.by</h1>
+<h1 class="text-3xl font-bold mb-6 text-gray-800">Админка Mebel.by</h1>
 
 <div class="section">
-    <h2 class="text-xl font-bold mb-4">Создание / Редактирование товара</h2>
+    <h2 class="text-xl font-bold mb-4 text-gray-700">Создание / Редактирование товара</h2>
 
     <div class="mb-4">
-        <label class="font-semibold">Название</label>
+        <label class="font-semibold text-gray-600">Название</label>
         <input id="title" class="input-field" type="text" placeholder="Название товара">
     </div>
 
     <div class="mb-4">
-        <label class="font-semibold">Категория</label>
+        <label class="font-semibold text-gray-600">Категория</label>
         <input id="category" class="input-field" type="text" placeholder="Категория">
     </div>
-
-    <div class="mb-4 flex items-center gap-3">
-        <input type="checkbox" id="active">
-        <label for="active">Активно</label>
-    </div>
-
+    
     <div class="mb-4">
-        <label class="font-semibold">Скидка (%)</label>
-        <input id="discount" class="input-field" type="number" min="0" max="100" value="0">
-    </div>
-
-    <div class="mb-4">
-        <label class="font-semibold">Изображения</label>
+        <label class="font-semibold text-gray-600">Изображения</label>
         <div id="images-container"></div>
         <button id="add-image-btn" class="btn mt-2 btn-save">Добавить изображение</button>
     </div>
 
+    <!-- БЛОК УПРАВЛЕНИЯ ФАСАДАМИ -->
     <div class="mb-4">
-        <label class="font-semibold">Фасады</label>
-        <div id="facades-container" class="flex gap-2 flex-wrap"></div>
-        <input id="facade-input" class="input-field mt-2" placeholder="Новый фасад">
-        <button id="add-facade-btn" class="btn btn-save mt-1">Добавить фасад</button>
+        <label class="font-semibold text-gray-600">Фасады</label>
+        <div id="facades-container" class="flex gap-2 flex-wrap mt-2 mb-2"></div>
+        
+        <!-- Динамическая область ввода Фасада -->
+        <div id="facade-dynamic-input-area" class="flex gap-2 mt-2 hidden">
+            <input id="facade-input" class="input-field" placeholder="Новый фасад (например, Глянец)">
+            <button id="facade-ok-btn" class="btn btn-save text-sm px-4">ОК (Сохранить)</button>
+            <button id="facade-cancel-btn" class="btn bg-gray-300 text-gray-700 hover:bg-gray-400 text-sm px-4">Отмена</button>
+        </div>
+        
+        <!-- Кнопка "Добавить" остается видимой, но становится неактивной при открытии поля -->
+        <button id="add-facade-btn" class="btn btn-save mt-2">Добавить фасад</button>
+    </div>
+    
+    <!-- БЛОК УПРАВЛЕНИЯ МАТЕРИАЛАМИ -->
+    <div class="mb-4">
+        <label class="font-semibold text-gray-600">Материалы</label>
+        <div id="materials-container" class="flex gap-2 flex-wrap mt-2 mb-2"></div>
+
+        <!-- Динамическая область ввода Материала -->
+        <div id="material-dynamic-input-area" class="flex gap-2 mt-2 hidden">
+            <input id="material-input" class="input-field" placeholder="Новый материал (например, МДФ)">
+            <button id="material-ok-btn" class="btn btn-save text-sm px-4">ОК (Сохранить)</button>
+            <button id="material-cancel-btn" class="btn bg-gray-300 text-gray-700 hover:bg-gray-400 text-sm px-4">Отмена</button>
+        </div>
+        
+        <button id="add-material-btn" class="btn btn-save mt-2">Добавить материал</button>
     </div>
 
+    <!-- БЛОК УПРАВЛЕНИЯ ЦВЕТАМИ -->
     <div class="mb-4">
-        <label class="font-semibold">Материал</label>
-        <input id="material" class="input-field" placeholder="Материал">
+        <label class="font-semibold text-gray-600">Цвета</label>
+        <div id="colors-container" class="flex gap-2 flex-wrap mt-2 mb-2"></div>
+
+        <!-- Динамическая область ввода Цвета -->
+        <div id="color-dynamic-input-area" class="flex flex-col sm:flex-row gap-2 mt-2 hidden p-3 border border-gray-100 rounded-lg bg-gray-50">
+            <input id="color-name" class="input-field" placeholder="Название цвета">
+            <input id="color-hex" class="w-full sm:w-16 h-10 border-2 border-gray-300 rounded-lg p-0" type="color" value="#f97316">
+            <div class="flex gap-2 justify-end w-full sm:w-auto">
+                <button id="color-ok-btn" class="btn btn-save text-sm px-4">ОК (Сохранить)</button>
+                <button id="color-cancel-btn" class="btn bg-gray-300 text-gray-700 hover:bg-gray-400 text-sm px-4">Отмена</button>
+            </div>
+        </div>
+        
+        <button id="add-color-btn" class="btn btn-save mt-2">Добавить цвет</button>
     </div>
 
+    <!-- БЛОК УПРАВЛЕНИЯ КОМБИНАЦИЯМИ -->
     <div class="mb-4">
-        <label class="font-semibold">Цвета</label>
-        <div id="colors-container" class="flex gap-2 flex-wrap"></div>
-        <input id="color-name" class="input-field mt-2" placeholder="Название цвета">
-        <input id="color-hex" class="input-field mt-2" type="color">
-        <button id="add-color-btn" class="btn btn-save mt-1">Добавить цвет</button>
-    </div>
-
-    <div class="mb-4">
-        <label class="font-semibold">Комбинации (Материал-Фасад-Цвет-Цена)</label>
+        <label class="font-semibold text-gray-600">Варианты товара (Комбинации Материал - Фасад - Цвет)</label>
         <div id="combinations-container"></div>
         <button id="add-combo-btn" class="btn btn-save mt-2">Добавить комбинацию</button>
     </div>
 
-    <div class="flex gap-3">
-        <button id="save-product-btn" class="btn btn-save">Сохранить</button>
-        <button id="clear-product-btn" class="btn btn-delete">Очистить</button>
+    <div class="flex gap-3 pt-4 border-t border-gray-100">
+        <button id="save-product-btn" class="btn btn-save">Сохранить товар</button>
+        <button id="clear-product-btn" class="btn btn-delete">Очистить форму</button>
     </div>
 </div>
 
-<h2 class="text-xl font-bold mb-4">Существующие товары</h2>
-<div id="existing-products" class="space-y-2"></div>
+<h2 class="text-xl font-bold mb-4 text-gray-700">Существующие товары</h2>
+<div id="existing-products" class="space-y-3"></div>
+
+<!-- Custom Message Modal -->
+<div id="custom-modal" class="modal-overlay hidden" onclick="if(event.target.id === 'custom-modal') closeModal()">
+    <div class="modal-content" id="modal-content" onclick="event.stopPropagation()">
+        <p id="modal-message" class="text-gray-700 mb-4"></p>
+        <div id="modal-buttons" class="flex justify-end gap-3">
+            <button id="modal-btn-cancel" class="btn px-4 bg-gray-200 text-gray-700 hover:bg-gray-300">Отмена</button>
+            <button id="modal-btn-confirm" class="btn btn-save">OK</button>
+        </div>
+    </div>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, setDoc, doc, onSnapshot, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
-    authDomain: "vsemmebel-90d48.firebaseapp.com",
-    projectId: "vsemmebel-90d48",
-    storageBucket: "vsemmebel-90d48.firebasestorage.app",
-    messagingSenderId: "958123504041",
-    appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
-};
+// Устанавливаем режим отладки для Firestore
+setLogLevel('Debug');
+
+// --- FIREBASE CONFIG & AUTH ---
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+if (!firebaseConfig) {
+    console.error("Firebase configuration is missing.");
+}
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+let userId = null;
+const productCollectionPath = `artifacts/${appId}/public/data/offers`;
 
-// DOM
+// Инициализация аутентификации
+async function initializeAuth() {
+    try {
+        if (initialAuthToken) {
+            await signInWithCustomToken(auth, initialAuthToken);
+        } else {
+            await signInAnonymously(auth); 
+        }
+        userId = auth.currentUser?.uid || crypto.randomUUID();
+        console.log("Firebase initialized. User ID:", userId);
+        loadExistingProducts(); // Запускаем загрузку данных после аутентификации
+    } catch (error) {
+        console.error("Ошибка аутентификации Firebase:", error);
+    }
+}
+
+// --- CUSTOM MODAL IMPLEMENTATION (Replaces alert/confirm) ---
+const modalOverlay = document.getElementById('custom-modal');
+const modalMessage = document.getElementById('modal-message');
+const modalConfirmBtn = document.getElementById('modal-btn-confirm');
+const modalCancelBtn = document.getElementById('modal-btn-cancel');
+
+function closeModal() {
+    modalOverlay.classList.add('hidden');
+    modalConfirmBtn.onclick = null;
+    modalCancelBtn.onclick = null;
+}
+
+function showMessage(message) {
+    modalMessage.textContent = message;
+    modalCancelBtn.classList.add('hidden');
+    modalConfirmBtn.textContent = 'ОК';
+    modalConfirmBtn.onclick = closeModal;
+    modalOverlay.classList.remove('hidden');
+}
+
+function showConfirm(message, onConfirm) {
+    modalMessage.textContent = message;
+    modalCancelBtn.classList.remove('hidden');
+    modalConfirmBtn.textContent = 'Подтвердить';
+
+    modalConfirmBtn.onclick = () => {
+        closeModal();
+        if (onConfirm) onConfirm();
+    };
+    modalCancelBtn.onclick = closeModal;
+    modalOverlay.classList.remove('hidden');
+}
+
+// --- GLOBAL STATE ---
+let productId = null;
+let images = [];
+let facades = [];
+let materials = []; 
+let colors = [];
+let combinations = []; 
+
+// --- DOM ELEMENTS (Привязка элементов) ---
 const titleInput = document.getElementById('title');
 const categoryInput = document.getElementById('category');
-const activeInput = document.getElementById('active');
-const discountInput = document.getElementById('discount');
 const imagesContainer = document.getElementById('images-container');
 const addImageBtn = document.getElementById('add-image-btn');
+
 const facadesContainer = document.getElementById('facades-container');
-const facadeInput = document.getElementById('facade-input');
 const addFacadeBtn = document.getElementById('add-facade-btn');
-const materialInput = document.getElementById('material');
+const facadeDynamicArea = document.getElementById('facade-dynamic-input-area');
+const facadeInput = document.getElementById('facade-input');
+const facadeOkBtn = document.getElementById('facade-ok-btn');
+const facadeCancelBtn = document.getElementById('facade-cancel-btn');
+
+const materialsContainer = document.getElementById('materials-container');
+const addMaterialBtn = document.getElementById('add-material-btn');
+const materialDynamicArea = document.getElementById('material-dynamic-input-area');
+const materialInput = document.getElementById('material-input');
+const materialOkBtn = document.getElementById('material-ok-btn');
+const materialCancelBtn = document.getElementById('material-cancel-btn');
+
 const colorsContainer = document.getElementById('colors-container');
+const addColorBtn = document.getElementById('add-color-btn');
+const colorDynamicArea = document.getElementById('color-dynamic-input-area');
 const colorNameInput = document.getElementById('color-name');
 const colorHexInput = document.getElementById('color-hex');
-const addColorBtn = document.getElementById('add-color-btn');
+const colorOkBtn = document.getElementById('color-ok-btn');
+const colorCancelBtn = document.getElementById('color-cancel-btn');
+
 const combinationsContainer = document.getElementById('combinations-container');
 const addComboBtn = document.getElementById('add-combo-btn');
 const saveBtn = document.getElementById('save-product-btn');
 const clearBtn = document.getElementById('clear-product-btn');
 const existingProductsDiv = document.getElementById('existing-products');
 
-let productId = null;
-let images = [];
-let facades = [];
-let colors = [];
-let combinations = [];
 
 // --- Render Functions ---
 function renderImages(){
     imagesContainer.innerHTML="";
     images.forEach((url,i)=>{
         const div = document.createElement('div');
-        div.className="flex items-center gap-2 mb-1";
-        div.innerHTML=`<input type="text" class="input-field" value="${url}" placeholder="URL изображения">
-                       <button class="btn btn-delete">Удалить</button>`;
+        div.className="flex items-center gap-2 mb-2";
+        div.innerHTML=`
+            <div class="thumbnail">
+                <img id="img-preview-${i}" src="${url}" onerror="this.src='https://placehold.co/50x50/cccccc/333333?text=Нет'" alt="Превью">
+            </div>
+            <input type="text" class="input-field flex-grow" value="${url}" placeholder="URL изображения">
+            <button class="btn btn-delete flex-shrink-0 py-2 px-3 text-sm">Удалить</button>
+        `;
         const input = div.querySelector('input');
-        input.oninput=e=>images[i]=e.target.value;
-        div.querySelector('button').onclick=()=>{ images.splice(i,1); renderImages(); };
+        const preview = div.querySelector(`#img-preview-${i}`);
+        
+        input.oninput=e=>{
+            images[i]=e.target.value;
+            preview.src = e.target.value;
+            preview.onerror = () => preview.src='https://placehold.co/50x50/cccccc/333333?text=Нет';
+        };
+        div.querySelector('.btn-delete').onclick=()=>{ images.splice(i,1); renderImages(); };
         imagesContainer.appendChild(div);
     });
 }
-addImageBtn.onclick=()=>{ images.push(''); renderImages(); };
 
+
+function createOptionBtn(text, index, list, renderFunction) {
+    const btn=document.createElement('button');
+    btn.className="option-btn";
+    btn.textContent=text;
+    // Кнопка, при нажатии на которую удаляется опция
+    btn.onclick=()=>{ 
+        list.splice(index,1); 
+        renderFunction(); 
+        renderCombinations(); 
+    };
+    return btn;
+}
+
+// Рендеринг Фасадов
 function renderFacades(){
     facadesContainer.innerHTML="";
     facades.forEach((f,i)=>{
-        const btn=document.createElement('button');
-        btn.className="option-btn";
-        btn.textContent=f;
-        btn.onclick=()=>{ facades.splice(i,1); renderFacades(); };
-        facadesContainer.appendChild(btn);
+        facadesContainer.appendChild(createOptionBtn(f, i, facades, renderFacades));
     });
 }
-addFacadeBtn.onclick=()=>{ if(facadeInput.value.trim()){ facades.push(facadeInput.value.trim()); facadeInput.value=''; renderFacades(); } };
 
+// Рендеринг Материалов
+function renderMaterials(){
+    materialsContainer.innerHTML="";
+    materials.forEach((m,i)=>{
+        materialsContainer.appendChild(createOptionBtn(m, i, materials, renderMaterials));
+    });
+}
+
+// Рендеринг Цветов
 function renderColors(){
     colorsContainer.innerHTML="";
     colors.forEach((c,i)=>{
         const btn=document.createElement('button');
-        btn.className="option-btn";
-        btn.textContent=c.name;
-        btn.style.background=c.hex;
-        btn.onclick=()=>{ colors.splice(i,1); renderColors(); };
+        btn.className="option-btn text-gray-800"; 
+        btn.innerHTML = `<span style="background-color: ${c.hex}; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #ccc; display: inline-block; margin-right: 6px;"></span> ${c.name}`;
+        
+        btn.onclick=()=>{ 
+            colors.splice(i,1); 
+            renderColors(); 
+            renderCombinations(); 
+        };
         colorsContainer.appendChild(btn);
     });
 }
-addColorBtn.onclick=()=>{ if(colorNameInput.value.trim() && colorHexInput.value){ colors.push({name: colorNameInput.value.trim(), hex: colorHexInput.value}); colorNameInput.value=''; colorHexInput.value='#ffffff'; renderColors(); } };
 
+// Рендеринг Комбинаций (Вариантов товара)
 function renderCombinations(){
     combinationsContainer.innerHTML="";
+    const colorNames = colors.map(c => c.name);
+
     combinations.forEach((c,i)=>{
         const div=document.createElement('div');
-        div.className="flex gap-2 mb-1 items-center";
-        div.innerHTML=`<input type="text" class="input-field" value="${c.material}" placeholder="Материал">
-                       <input type="text" class="input-field" value="${c.facade}" placeholder="Фасад">
-                       <input type="text" class="input-field" value="${c.color}" placeholder="Цвет">
-                       <input type="number" class="input-field" value="${c.price}" placeholder="Цена">
-                       <button class="btn btn-delete">Удалить</button>`;
-        const inputs=div.querySelectorAll('input');
-        inputs[0].oninput=e=>c.material=e.target.value;
-        inputs[1].oninput=e=>c.facade=e.target.value;
-        inputs[2].oninput=e=>c.color=e.target.value;
-        inputs[3].oninput=e=>c.price=parseFloat(e.target.value)||0;
-        div.querySelector('button').onclick=()=>{ combinations.splice(i,1); renderCombinations(); };
+        div.className="flex flex-col sm:flex-row gap-2 mb-3 p-3 bg-gray-50 border border-gray-200 rounded-lg items-start sm:items-center";
+
+        // Функция для создания SELECT
+        const createSelect = (field, options, currentValue) => {
+            const select = document.createElement('select');
+            select.name = field;
+            select.className = "input-field flex-grow";
+            select.innerHTML = `<option value="">-- Выберите ${field} --</option>`;
+            options.forEach(opt => {
+                select.innerHTML += `<option value="${opt}" ${opt === currentValue ? 'selected' : ''}>${opt}</option>`;
+            });
+            select.onchange = e => {
+                // Используем нижний регистр для ключей
+                const key = field.toLowerCase(); 
+                c[key] = e.target.value;
+            };
+            return select;
+        };
+
+        // Блок выбора опций (Материал, Фасад, Цвет)
+        const optionsDiv = document.createElement('div');
+        optionsDiv.className = "flex w-full sm:w-8/12 gap-2 flex-wrap sm:flex-nowrap";
+        optionsDiv.appendChild(createSelect('Материал', materials, c.material));
+        optionsDiv.appendChild(createSelect('Фасад', facades, c.facade));
+        optionsDiv.appendChild(createSelect('Цвет', colorNames, c.color));
+
+        // Блок Цена, Активность и Скидка
+        const priceActiveDiv = document.createElement('div');
+        priceActiveDiv.className = "flex w-full sm:w-4/12 gap-2 items-center";
+        
+        // Поле Цены
+        const priceInput = document.createElement('input');
+        priceInput.type = 'number';
+        priceInput.className = "input-field w-24 flex-grow-0";
+        priceInput.value = c.price || 0;
+        priceInput.placeholder = "Цена";
+        priceInput.oninput = e => c.price = parseFloat(e.target.value) || 0;
+
+        // Чекбокс Активно
+        const activeContainer = document.createElement('div');
+        activeContainer.className = "flex items-center space-x-1";
+        const activeInput = document.createElement('input');
+        activeInput.type = 'checkbox';
+        activeInput.className = 'h-5 w-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500';
+        activeInput.checked = !!c.isActive;
+        activeInput.onchange = e => {
+            c.isActive = e.target.checked;
+            renderCombinations(); // Перерендеринг для блокировки скидки
+        };
+        const activeLabel = document.createElement('label');
+        activeLabel.textContent = 'Активно';
+        activeLabel.className = 'text-sm text-gray-600';
+        activeContainer.append(activeInput, activeLabel);
+
+        // Поле Скидки (Блокируется, если не активно)
+        const discountInput = document.createElement('input');
+        discountInput.type = 'number';
+        discountInput.className = `input-field w-20 flex-grow-0 transition duration-150 ${!c.isActive ? 'bg-gray-200 cursor-not-allowed' : ''}`;
+        discountInput.value = c.discount || 0;
+        discountInput.placeholder = "Скидка %";
+        discountInput.disabled = !c.isActive; // Логика блокировки!
+        discountInput.oninput = e => c.discount = parseInt(e.target.value) || 0;
+
+        // Кнопка Удалить
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = "btn btn-delete py-2 px-3 text-sm flex-shrink-0";
+        deleteBtn.textContent = 'X';
+        deleteBtn.onclick = () => { combinations.splice(i,1); renderCombinations(); };
+
+        priceActiveDiv.append(priceInput, activeContainer, discountInput, deleteBtn);
+        
+        div.append(optionsDiv, priceActiveDiv);
         combinationsContainer.appendChild(div);
     });
 }
-addComboBtn.onclick=()=>{ combinations.push({material:'',facade:'',color:'',price:0}); renderCombinations(); };
 
-// --- Save / Clear ---
-saveBtn.onclick=async()=>{
-    const data={
-        title:titleInput.value.trim(),
-        category:categoryInput.value.trim(),
-        active:activeInput.checked,
-        discount:parseInt(discountInput.value)||0,
-        images,
-        facades,
-        material:materialInput.value.trim(),
-        colors,
-        combinations
-    };
-    if(!data.title){ return alert("Введите название!"); }
-    if(productId){
-        await setDoc(doc(db,'offers',productId),data);
-        alert("Товар обновлён!");
-    }else{
-        const docRef=await addDoc(collection(db,'offers'),data);
-        productId=docRef.id;
-        alert("Товар создан!");
-    }
-    loadExistingProducts();
-};
-
-clearBtn.onclick=()=>{
-    productId=null; titleInput.value=''; categoryInput.value=''; activeInput.checked=false;
-    discountInput.value=0; images=[]; facades=[]; colors=[]; combinations=[];
-    materialInput.value='';
-    renderImages(); renderFacades(); renderColors(); renderCombinations();
-};
 
 // --- Existing Products ---
 function loadExistingProducts(){
-    onSnapshot(collection(db,'offers'), snapshot=>{
+    onSnapshot(collection(db, productCollectionPath), snapshot=>{
         existingProductsDiv.innerHTML='';
         snapshot.docs.forEach(docSnap=>{
             const data=docSnap.data();
+            const firstActiveCombo = data.combinations ? data.combinations.find(c => c.isActive) : null;
+            const overallActive = !!firstActiveCombo;
+
             const div=document.createElement('div');
-            div.className="flex justify-between items-center bg-white p-3 rounded-md shadow-sm";
-            div.innerHTML=`<span>${data.title||"Без названия"}</span>
-                           <div class="flex gap-2">
-                             <button class="btn btn-save">Редактировать</button>
-                             <button class="btn btn-delete">Удалить</button>
+            div.className="flex justify-between items-center bg-white p-3 rounded-xl shadow-md border-l-4" + (overallActive ? ' border-green-500' : ' border-red-500');
+            
+            const titleStatus = `
+                <div class="flex items-center">
+                    <span class="font-semibold text-gray-800 mr-3">${data.title||"Без названия"}</span>
+                    <span class="text-xs font-medium px-2 py-0.5 rounded-full ${overallActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                        ${overallActive ? 'Активен (комбинации)' : 'Неактивен'}
+                    </span>
+                </div>
+            `;
+            
+            div.innerHTML=`${titleStatus}
+                           <div class="flex gap-2 flex-shrink-0">
+                             <button class="btn btn-save py-2 px-3 text-sm">Редактировать</button>
+                             <button class="btn btn-delete py-2 px-3 text-sm">Удалить</button>
                            </div>`;
+            
             div.querySelectorAll('button')[0].onclick=()=>editProduct(docSnap.id);
-            div.querySelectorAll('button')[1].onclick=async()=>{ if(confirm('Удалить товар?')){ await deleteDoc(doc(db,'offers',docSnap.id)); } };
+            div.querySelectorAll('button')[1].onclick=()=>{ 
+                showConfirm('Вы уверены, что хотите удалить товар: ' + (data.title || 'Без названия') + '?', async () => {
+                    try {
+                        await deleteDoc(doc(db, productCollectionPath, docSnap.id));
+                        showMessage("Товар успешно удалён.");
+                    } catch (e) {
+                        console.error("Ошибка удаления:", e);
+                        showMessage("Ошибка при удалении товара.");
+                    }
+                });
+            };
             existingProductsDiv.appendChild(div);
         });
     });
 }
 
 async function editProduct(id){
-    const docSnap=await getDoc(doc(db,'offers',id));
-    if(!docSnap.exists()) return alert("Товар не найден!");
-    const data=docSnap.data();
-    productId=id;
-    titleInput.value=data.title||'';
-    categoryInput.value=data.category||'';
-    activeInput.checked=!!data.active;
-    discountInput.value=data.discount||0;
-    images=data.images||[]; renderImages();
-    facades=data.facades||[]; renderFacades();
-    colors=data.colors||[]; renderColors();
-    materialInput.value=data.material||'';
-    combinations=data.combinations||[]; renderCombinations();
+    try {
+        const docSnap=await getDoc(doc(db, productCollectionPath, id));
+        if(!docSnap.exists()) return showMessage("Товар не найден!");
+        
+        const data=docSnap.data();
+        productId=id;
+        titleInput.value=data.title||'';
+        categoryInput.value=data.category||'';
+        
+        images=data.images||[]; renderImages();
+        facades=data.facades||[]; renderFacades();
+        materials=data.materials||[]; renderMaterials(); 
+        colors=data.colors||[]; renderColors();
+        combinations=data.combinations||[]; renderCombinations();
+        
+        // Скрываем динамические области ввода и активируем кнопки
+        facadeDynamicArea.classList.add('hidden');
+        addFacadeBtn.disabled = false;
+        materialDynamicArea.classList.add('hidden');
+        addMaterialBtn.disabled = false;
+        colorDynamicArea.classList.add('hidden');
+        addColorBtn.disabled = false;
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+        console.error("Ошибка при загрузке товара для редактирования:", e);
+        showMessage("Не удалось загрузить данные товара.");
+    }
 }
 
-// --- Init ---
-loadExistingProducts();
+
+// --- Event Handlers for Dynamic Inputs ---
+
+// Утилита для завершения процесса ввода
+function finishInput(dynamicArea, addButton, renderFunc) {
+    dynamicArea.classList.add('hidden');
+    addButton.disabled = false;
+    renderFunc();
+    renderCombinations(); // Обновляем списки комбинаций
+}
+
+// --- ФАСАДЫ ---
+addFacadeBtn.onclick = () => {
+    facadeDynamicArea.classList.remove('hidden');
+    addFacadeBtn.disabled = true; // Деактивируем, пока не нажмут ОК/Отмена
+    facadeInput.value = '';
+    facadeInput.focus();
+};
+
+facadeOkBtn.onclick = () => {
+    const val = facadeInput.value.trim();
+    if (val && !facades.includes(val)) { 
+        facades.push(val); 
+    }
+    finishInput(facadeDynamicArea, addFacadeBtn, renderFacades);
+};
+
+facadeCancelBtn.onclick = () => {
+    finishInput(facadeDynamicArea, addFacadeBtn, renderFacades);
+};
+
+// --- МАТЕРИАЛЫ ---
+addMaterialBtn.onclick = () => {
+    materialDynamicArea.classList.remove('hidden');
+    addMaterialBtn.disabled = true;
+    materialInput.value = '';
+    materialInput.focus();
+};
+
+materialOkBtn.onclick = () => {
+    const val = materialInput.value.trim();
+    if (val && !materials.includes(val)) { 
+        materials.push(val); 
+    }
+    finishInput(materialDynamicArea, addMaterialBtn, renderMaterials);
+};
+
+materialCancelBtn.onclick = () => {
+    finishInput(materialDynamicArea, addMaterialBtn, renderMaterials);
+};
+
+// --- ЦВЕТА ---
+addColorBtn.onclick = () => {
+    colorDynamicArea.classList.remove('hidden');
+    addColorBtn.disabled = true;
+    colorNameInput.value = '';
+    colorHexInput.value = '#f97316';
+    colorNameInput.focus();
+};
+
+colorOkBtn.onclick = () => {
+    const name = colorNameInput.value.trim();
+    const hex = colorHexInput.value;
+    if (name && hex) { 
+        colors.push({ name, hex }); 
+    }
+    finishInput(colorDynamicArea, addColorBtn, renderColors);
+};
+
+colorCancelBtn.onclick = () => {
+    finishInput(colorDynamicArea, addColorBtn, renderColors);
+};
+
+// --- Общие Хендлеры ---
+addImageBtn.onclick=()=>{ images.push(''); renderImages(); };
+
+addComboBtn.onclick=()=>{ 
+    combinations.push({
+        material: materials[0] || '', 
+        facade: facades[0] || '',
+        color: colors.length > 0 ? colors[0].name : '',
+        price: 0,
+        isActive: true,
+        discount: 0
+    }); 
+    renderCombinations(); 
+};
+
+saveBtn.onclick=async()=>{
+    const data={
+        title:titleInput.value.trim(),
+        category:categoryInput.value.trim(),
+        images: images.filter(url => url.trim() !== ''),
+        facades: facades.filter(f => f.trim() !== ''),
+        materials: materials.filter(m => m.trim() !== ''),
+        colors,
+        combinations: combinations.filter(c => c.material || c.facade || c.color || c.price > 0)
+    };
+
+    if(!data.title){ 
+        return showMessage("Введите название товара!"); 
+    }
+
+    try {
+        if(productId){
+            await setDoc(doc(db, productCollectionPath, productId), data);
+            showMessage("Товар успешно обновлён!");
+        }else{
+            const docRef=await addDoc(collection(db, productCollectionPath), data);
+            productId=docRef.id;
+            showMessage("Товар успешно создан!");
+        }
+    } catch(e) {
+        console.error("Ошибка сохранения товара:", e);
+        showMessage("Ошибка при сохранении данных. Проверьте консоль.");
+    }
+};
+
+clearBtn.onclick=()=>{
+    productId=null; 
+    titleInput.value=''; 
+    categoryInput.value=''; 
+    images=[]; 
+    facades=[]; 
+    materials=[]; 
+    colors=[]; 
+    combinations=[];
+    
+    // Скрываем все временные поля и активируем кнопки
+    facadeDynamicArea.classList.add('hidden');
+    addFacadeBtn.disabled = false;
+    materialDynamicArea.classList.add('hidden');
+    addMaterialBtn.disabled = false;
+    colorDynamicArea.classList.add('hidden');
+    addColorBtn.disabled = false;
+
+    renderImages(); 
+    renderFacades(); 
+    renderMaterials(); 
+    renderColors(); 
+    renderCombinations();
+};
+
+// --- Инициализация при старте ---
+initializeAuth();
 </script>
 </body>
 </html>
