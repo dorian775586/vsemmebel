@@ -16,6 +16,7 @@
             padding: 0.6rem 1.4rem; border: 2px solid #ffedd5; background-color: #ffffff;
             border-radius: 9999px; font-weight: 600; color: #4b5563; transition: all 0.3s ease;
             cursor: pointer; text-align: center; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            font-size: 0.95rem; /* Немного уменьшил размер шрифта */
         }
         .category-button.active, .category-button:hover {
             border-color: #f97316; background-color: #f97316; color: #ffffff;
@@ -36,7 +37,7 @@
         .card-button:hover { background-color: #ea580c; }
     </style>
 </head>
-<body> <!-- Удален класс pb-20 -->
+<body>
 
     <!-- Верхняя навигация -->
     <header class="sticky top-0 header-bg z-20">
@@ -81,12 +82,15 @@
 
         <!-- Категории -->
         <h3 class="text-2xl font-bold text-gray-800 mb-4">Каталог</h3>
-        <div id="category-filter" class="flex flex-nowrap overflow-x-auto space-x-3 pb-4 scrollbar-hide"></div>
+        <div id="category-filter" class="flex flex-nowrap overflow-x-auto space-x-3 pb-4 scrollbar-hide">
+            <!-- Категории будут загружены сюда JavaScript'ом -->
+        </div>
 
         <!-- Предложения -->
         <h3 class="text-2xl font-bold text-gray-800 my-6">Выгодные предложения</h3>
         <div id="offers-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
             <div id="no-offers" class="col-span-full text-center text-gray-500 hidden p-8">Предложений по вашему запросу не найдено.</div>
+            <!-- Карточки товаров будут загружены сюда JavaScript'ом -->
         </div>
     </main>
 
@@ -106,9 +110,328 @@
             <button id="admin-close" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">&times;</button>
         </div>
     </div>
+    
+    <div id="custom-message-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full relative text-center">
+            <p id="custom-message-text" class="text-gray-700 mb-4"></p>
+            <button id="custom-message-close" class="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition">ОК</button>
+        </div>
+    </div>
 
-    <!-- УДАЛЕНА Нижняя мобильная навигация -->
+    <!-- JavaScript логика -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <script type="module" src="./main.js"></script>
+        // Устанавливаем режим отладки для Firestore
+        setLogLevel('Debug');
+
+        // --- FIREBASE CONFIGURATION & AUTH VARIABLES ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+
+        // --- FALLBACK: HARDCODED CONFIGURATION (Используется для надежности) ---
+        const HARDCODED_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70", 
+            authDomain: "vsemmebel-90d48.firebaseapp.com",
+            projectId: "vsemmebel-90d48", 
+            storageBucket: "vsemmebel-90d48.appspot.com", 
+            messagingSenderId: "958123504041",
+            appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
+        };
+        // ------------------------------------------
+
+        let firebaseConfig = null;
+        let app = null;
+        let db = null;
+        let auth = null;
+        let userId = null;
+        const productCollectionPath = `artifacts/${appId}/public/data/offers`;
+
+        // 1. Инициализация Firebase
+        function initializeFirebase() {
+            if (firebaseConfigString) {
+                try {
+                    firebaseConfig = JSON.parse(firebaseConfigString);
+                } catch (e) {
+                    console.error("ОШИБКА: Не удалось распарсить JSON из переменной хостинга.", e);
+                }
+            } 
+
+            if (!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey === "ВАШ_API_KEY") {
+                firebaseConfig = HARDCODED_FIREBASE_CONFIG;
+                console.warn("ВНИМАНИЕ: Используется хардкодированная конфигурация Firebase.");
+            }
+
+            if (firebaseConfig && firebaseConfig.apiKey) {
+                try {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    console.log("Firebase успешно инициализирован.");
+                } catch (e) {
+                    console.error("КРИТИЧЕСКАЯ ОШИБКА: Ошибка инициализации Firebase.", e);
+                    db = null; 
+                }
+            } else {
+                console.error("КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase недействительна.");
+                db = null;
+            }
+        }
+
+        // 2. Инициализация аутентификации
+        async function initializeAuth() {
+            if (!auth) {
+                userId = crypto.randomUUID();
+                return; 
+            }
+            
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth); 
+                }
+                userId = auth.currentUser?.uid || crypto.randomUUID();
+                console.log("Аутентификация успешна. UID:", userId);
+                // Запуск загрузки данных после успешной аутентификации
+                setupRealtimeOffersListener();
+            } catch (error) {
+                console.error("Ошибка аутентификации Firebase:", error);
+                showCustomMessage("Ошибка аутентификации. Проверьте консоль для деталей.");
+            }
+        }
+
+        // --- Custom Message Modal (Замена alert/confirm) ---
+        const customModal = document.getElementById('custom-message-modal');
+        const customMessageText = document.getElementById('custom-message-text');
+        const customMessageCloseBtn = document.getElementById('custom-message-close');
+
+        function closeCustomMessage() {
+            customModal.classList.add('hidden');
+        }
+
+        function showCustomMessage(message) {
+            customMessageText.textContent = message;
+            customModal.classList.remove('hidden');
+        }
+
+        customMessageCloseBtn.onclick = closeCustomMessage;
+
+        // --- Admin Login Modal Logic ---
+        const adminModal = document.getElementById('admin-modal');
+        const adminLoginBtn = document.getElementById('admin-login-btn');
+        const adminCloseBtn = document.getElementById('admin-close');
+        const adminEmailInput = document.getElementById('admin-email');
+        const adminPasswordInput = document.getElementById('admin-password');
+        const adminLogin = document.getElementById('admin-login');
+        const adminRegister = document.getElementById('admin-register');
+        const adminMessageDiv = document.getElementById('admin-message');
+
+        adminLoginBtn.onclick = () => adminModal.classList.remove('hidden');
+        adminCloseBtn.onclick = () => adminModal.classList.add('hidden');
+
+        function showAdminMessage(message, isError = false) {
+            adminMessageDiv.textContent = message;
+            adminMessageDiv.classList.remove('hidden');
+            if (isError) {
+                adminMessageDiv.className = 'text-sm text-center font-medium my-2 p-2 rounded bg-red-100 text-red-700';
+            } else {
+                adminMessageDiv.className = 'text-sm text-center font-medium my-2 p-2 rounded bg-green-100 text-green-700';
+            }
+        }
+
+        adminLogin.onclick = async () => {
+            const email = adminEmailInput.value;
+            const password = adminPasswordInput.value;
+            if (!email || !password) return showAdminMessage('Введите email и пароль', true);
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                adminModal.classList.add('hidden');
+                showCustomMessage('Администратор успешно вошел. Перейдите в раздел "Админка" для управления товарами.');
+                // В реальном приложении здесь должен быть переход на страницу админки
+                console.log("Админ вошел.");
+            } catch (error) {
+                console.error("Ошибка входа админа:", error);
+                showAdminMessage('Ошибка входа. Проверьте данные. Код ошибки: ' + error.code, true);
+            }
+        };
+
+        adminRegister.onclick = async () => {
+            const email = adminEmailInput.value;
+            const password = adminPasswordInput.value;
+            if (!email || !password) return showAdminMessage('Введите email и пароль', true);
+
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                adminModal.classList.add('hidden');
+                showCustomMessage('Администратор успешно зарегистрирован и вошел.');
+            } catch (error) {
+                console.error("Ошибка регистрации админа:", error);
+                showAdminMessage('Ошибка регистрации. Возможно, пользователь уже существует или пароль слишком простой. Код ошибки: ' + error.code, true);
+            }
+        };
+
+
+        // --- MAIN APPLICATION LOGIC ---
+
+        // Категории из Админки + "Все товары"
+        const CATEGORIES = ["Все товары", "Диваны", "Кровати", "Шкафы", "Столы и Стулья", "Кухни"];
+
+        let currentCategory = "Все товары";
+        let allOffers = []; // Будет хранить все загруженные товары
+        let searchTerm = "";
+
+        const categoryFilterDiv = document.getElementById('category-filter');
+        const offersListDiv = document.getElementById('offers-list');
+        const searchInput = document.getElementById('search-input');
+        const noOffersDiv = document.getElementById('no-offers');
+
+
+        // --- Data Loading and Filtering ---
+
+        // 3. Установка слушателя Firestore для получения данных
+        function setupRealtimeOffersListener() {
+            if (!db) return;
+
+            const offersRef = collection(db, productCollectionPath);
+            // Запрашиваем только те товары, у которых есть хотя бы одна активная комбинация
+            const q = query(offersRef);
+
+            onSnapshot(q, (snapshot) => {
+                const fetchedOffers = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const activeCombo = data.combinations?.find(c => c.isActive);
+                    
+                    // Добавляем только активные товары
+                    if (activeCombo) {
+                        fetchedOffers.push({
+                            id: doc.id,
+                            title: data.title || 'Товар без названия',
+                            category: data.category || 'Прочее',
+                            imageUrl: data.images?.[0] || 'https://placehold.co/400x300/f3f4f6/4b5563?text=Нет+Фото',
+                            price: activeCombo.price,
+                            discount: activeCombo.discount,
+                            originalPrice: activeCombo.price, // Сохраняем начальную цену
+                            finalPrice: activeCombo.discount > 0 ? activeCombo.price * (1 - activeCombo.discount / 100) : activeCombo.price
+                        });
+                    }
+                });
+                
+                allOffers = fetchedOffers;
+                console.log(`Загружено ${allOffers.length} активных товаров.`);
+                // Перерисовываем при получении новых данных
+                renderOffers(); 
+            }, (error) => {
+                console.error("Ошибка получения товаров из Firestore:", error);
+                showCustomMessage("Не удалось загрузить товары. Проверьте подключение к базе данных.");
+            });
+        }
+
+        // --- Render Functions ---
+
+        function renderCategories() {
+            categoryFilterDiv.innerHTML = '';
+            CATEGORIES.forEach(category => {
+                const button = document.createElement('button');
+                button.className = `category-button ${category === currentCategory ? 'active' : ''}`;
+                button.textContent = category;
+                button.onclick = () => {
+                    setActiveCategory(category);
+                };
+                categoryFilterDiv.appendChild(button);
+            });
+        }
+
+        function setActiveCategory(category) {
+            currentCategory = category;
+            renderCategories(); // Обновить стили кнопок
+            renderOffers();    // Применить фильтр
+        }
+
+        function renderOffers() {
+            offersListDiv.innerHTML = '';
+            
+            // 1. Фильтр по категории
+            const filteredByCategory = currentCategory === "Все товары"
+                ? allOffers
+                : allOffers.filter(offer => offer.category === currentCategory);
+
+            // 2. Фильтр по поисковому запросу
+            const filteredBySearch = searchTerm.trim().toLowerCase();
+            const finalOffers = filteredByCategory.filter(offer => 
+                offer.title.toLowerCase().includes(filteredBySearch) || 
+                offer.category.toLowerCase().includes(filteredBySearch)
+            );
+
+            if (finalOffers.length === 0) {
+                noOffersDiv.classList.remove('hidden');
+                return;
+            }
+            noOffersDiv.classList.add('hidden');
+
+            // 3. Рендеринг карточек
+            finalOffers.forEach(offer => {
+                const card = document.createElement('div');
+                card.className = 'offer-card flex flex-col';
+
+                const priceDisplay = offer.discount > 0 ? 
+                    `
+                    <p class="text-xl font-extrabold text-red-600">${Math.round(offer.finalPrice)} ₽</p>
+                    <p class="text-sm text-gray-400 line-through">${Math.round(offer.originalPrice)} ₽</p>
+                    ` : 
+                    `<p class="text-xl font-extrabold text-gray-900">${Math.round(offer.finalPrice)} ₽</p>`;
+
+                card.innerHTML = `
+                    <div class="h-48 overflow-hidden relative">
+                        <!-- Изображение с заглушкой -->
+                        <img 
+                            src="${offer.imageUrl}" 
+                            alt="${offer.title}" 
+                            class="w-full h-full object-cover transition duration-500 ease-in-out hover:scale-105"
+                            onerror="this.onerror=null; this.src='https://placehold.co/400x300/f3f4f6/4b5563?text=Нет+Фото';"
+                        >
+                        ${offer.discount > 0 ? `<div class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">- ${offer.discount}%</div>` : ''}
+                    </div>
+                    <div class="p-5 flex flex-col flex-grow">
+                        <p class="text-sm font-semibold text-orange-600 mb-1">${offer.category}</p>
+                        <h4 class="text-lg font-bold text-gray-900 mb-3 flex-grow">${offer.title}</h4>
+                        <div class="flex items-end justify-between mt-auto">
+                            <div class="flex items-center space-x-2">
+                                ${priceDisplay}
+                            </div>
+                            <button class="card-button text-white text-sm font-bold py-2 px-4 rounded-full transition">
+                                Заказать
+                            </button>
+                        </div>
+                    </div>
+                `;
+                offersListDiv.appendChild(card);
+            });
+        }
+
+
+        // --- Event Listeners ---
+
+        searchInput.addEventListener('input', (e) => {
+            searchTerm = e.target.value;
+            renderOffers();
+        });
+
+
+        // --- Initialization ---
+
+        window.onload = () => {
+            initializeFirebase();
+            initializeAuth(); // Аутентификация -> setupRealtimeOffersListener
+            renderCategories(); // Рендерим кнопки категорий сразу
+        };
+
+    </script>
 </body>
 </html>
