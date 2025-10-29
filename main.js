@@ -4,7 +4,6 @@ import { getFirestore, collection, onSnapshot, query } from "https://www.gstatic
 // Добавляем импорт для установки уровня логирования
 import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-
 // Устанавливаем уровень логирования для отладки Firestore (полезно для проверки)
 setLogLevel('debug');
 
@@ -69,7 +68,8 @@ function displayAuthError(message, isError = true) {
 // --- Функции отображения ---
 function createOfferCard(offer) {
     const card = document.createElement('div');
-    card.className = "offer-card";
+    // NOTE: Добавляем класс, если товар неактивен, для визуального выделения
+    card.className = "offer-card relative " + (offer.is_active === false ? 'opacity-60 border-red-500 border-2' : '');
 
     // Логика извлечения цены из комбинаций
     // Фильтруем только активные комбинации с ценой > 0
@@ -88,6 +88,7 @@ function createOfferCard(offer) {
     card.innerHTML = `
         <div class="relative">
             <img src="${imageUrl}" onerror="this.onerror=null;this.src='https://placehold.co/400x250/F97316/FFFFFF?text=Нет+Фото';" alt="${offer.title}" class="w-full h-48 object-cover">
+            ${offer.is_active === false ? '<span class="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">НЕАКТИВЕН</span>' : ''}
         </div>
         <div class="p-5">
             <p class="text-xs font-semibold text-orange-600 uppercase mb-1">${offer.category || 'Без категории'}</p>
@@ -120,26 +121,21 @@ function createOfferCard(offer) {
 function renderOffers(offers) {
     offersListElement.innerHTML = '';
     
-    // Фильтруем для отображения только активных товаров
-    const activeOffers = offers.filter(o => o.is_active === true); 
-
-    if (!activeOffers.length) {
+    // ИЗМЕНЕНИЕ: Отображаем ВСЕ товары, не фильтруя по is_active
+    if (!offers.length) {
         noOffersElement.classList.remove('hidden');
     } else {
         noOffersElement.classList.add('hidden');
-        activeOffers.forEach(o => offersListElement.appendChild(createOfferCard(o)));
+        offers.forEach(o => offersListElement.appendChild(createOfferCard(o)));
     }
 }
 
 function renderCategories() {
     categoryFilterElement.innerHTML = '';
     
-    // ИСПРАВЛЕНО: Более строгая фильтрация для категорий: 
-    // 1. is_active === true
-    // 2. category существует, является строкой и не пустой (нет только "Все")
-    const activeCategories = allOffers
+    // ИЗМЕНЕНИЕ: Собираем категории из ВСЕХ товаров, независимо от is_active
+    const allExistingCategories = allOffers
         .filter(o => 
-            o.is_active === true && 
             o.category && 
             typeof o.category === 'string' && 
             o.category.trim() !== ''
@@ -147,7 +143,7 @@ function renderCategories() {
         .map(o => o.category);
         
     // Получаем уникальные категории и добавляем "Все"
-    allCategories = ['Все', ...new Set(activeCategories)];
+    allCategories = ['Все', ...new Set(allExistingCategories)];
 
     allCategories.forEach(category => {
         const button = document.createElement('button');
@@ -167,13 +163,13 @@ function renderCategories() {
 function applyFilters() {
     const searchTerm = searchInput.value.toLowerCase().trim();
     
-    // Фильтруем сначала по активности (хотя это уже сделано в renderOffers, делаем для полноты)
-    const activeOffers = allOffers.filter(o => o.is_active === true);
+    // ИЗМЕНЕНИЕ: Используем allOffers без фильтрации по активности
+    let filteredOffers = allOffers;
 
     // Фильтрация по выбранной категории
     const filteredByCategory = currentFilter === 'Все' 
-        ? activeOffers 
-        : activeOffers.filter(o => o.category === currentFilter);
+        ? filteredOffers 
+        : filteredOffers.filter(o => o.category === currentFilter);
 
     // Фильтрация по поисковому запросу
     const finalFiltered = filteredByCategory.filter(o =>
