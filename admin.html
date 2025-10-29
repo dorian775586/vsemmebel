@@ -1,99 +1,274 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Админ-панель</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-    .container-card { max-width: 1000px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); margin-bottom:2rem; }
-    .btn-primary { background-color: #4f46e5; transition: background-color 0.2s; }
-    .btn-primary:hover { background-color: #4338ca; }
-    .status-success { background-color: #d1fae5; color: #065f46; }
-    .status-error { background-color: #fee2e2; color: #991b1b; }
-    .color-box { width: 25px; height: 25px; border:1px solid #ccc; display:inline-block; margin-right:5px; vertical-align:middle; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админка Mebel.by</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body { font-family: 'Inter', sans-serif; background:#f7f7f7; }
+.input-field { border:2px solid #ddd; padding:0.5rem; border-radius:0.5rem; width:100%; }
+.section { background:white; padding:1.5rem; border-radius:1rem; margin-bottom:1.5rem; box-shadow:0 4px 12px rgba(0,0,0,0.05); }
+.btn { padding:0.5rem 1rem; border-radius:0.5rem; font-weight:600; cursor:pointer; transition:0.3s; }
+.btn-save { background:#f97316;color:white; }
+.btn-save:hover { background:#ea580c; }
+.btn-delete { background:#ef4444;color:white; }
+.btn-delete:hover { background:#b91c1c; }
+.option-btn { border:2px solid #f97316; background:#ffedd5; padding:0.3rem 0.8rem; margin-right:0.3rem; border-radius:0.5rem; cursor:pointer; transition:0.2s; }
+.option-btn.active { background:#f97316;color:white; box-shadow:0 2px 5px rgba(249,115,22,0.3); }
+</style>
 </head>
-<body class="p-4 sm:p-8">
+<body class="p-6">
 
-  <div id="accessDenied" class="hidden container-card mx-auto bg-red-100 text-red-700 p-6 rounded-xl text-center font-bold">
-    У вас нет прав администратора. Пожалуйста, войдите как админ.
-  </div>
+<h1 class="text-3xl font-bold mb-6">Админка Mebel.by</h1>
 
-  <div id="adminPanel" class="container-card mx-auto bg-white p-6 rounded-xl hidden">
-    <div id="breadcrumb-container" class="mb-4 text-gray-700 font-medium"></div>
+<div class="section">
+    <h2 class="text-xl font-bold mb-4">Создание / Редактирование товара</h2>
 
-    <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">Админ-панель: Товары</h1>
-
-    <form id="addOfferForm" class="space-y-4">
-
-      <!-- Комнаты, категории, подкатегории будут вставлены динамически перед формой -->
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Название товара</label>
-        <input type="text" id="title" class="w-full p-2 border rounded-lg" required>
-      </div>
-
-      <!-- Галочка включения скидки -->
-      <div class="flex items-center gap-2">
-        <input type="checkbox" id="discount-checkbox" class="mt-1"> 
-        <label class="block text-sm font-medium text-gray-700 mb-1">Включить скидку</label>
+    <div class="mb-4">
+        <label class="font-semibold">Название</label>
+        <input id="title" class="input-field" type="text" placeholder="Название товара">
     </div>
-      <div>
-        <input type="number" id="discount" min="0" max="100" class="w-full p-2 border rounded-lg" disabled>
-      </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
-        <textarea id="description" rows="3" class="w-full p-2 border rounded-lg"></textarea>
-      </div>
+    <div class="mb-4">
+        <label class="font-semibold">Категория</label>
+        <input id="category" class="input-field" type="text" placeholder="Категория">
+    </div>
 
-      <!-- Картинки -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Картинки</label>
-        <div id="images-container" class="mb-2"></div>
-        <button id="add-image-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить картинку</button>
-      </div>
+    <div class="mb-4 flex items-center gap-3">
+        <input type="checkbox" id="active">
+        <label for="active">Активно</label>
+    </div>
 
-      <!-- Фасады -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Фасады</label>
-        <div id="facades-container" class="mb-2"></div>
-        <button id="add-facade-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить фасад</button>
-      </div>
+    <div class="mb-4">
+        <label class="font-semibold">Скидка (%)</label>
+        <input id="discount" class="input-field" type="number" min="0" max="100" value="0">
+    </div>
 
-      <!-- Цвета -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Цвета</label>
-        <div id="colors-container" class="mb-2"></div>
-        <button id="add-color-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить цвет</button>
-      </div>
+    <div class="mb-4">
+        <label class="font-semibold">Изображения</label>
+        <div id="images-container"></div>
+        <button id="add-image-btn" class="btn mt-2 btn-save">Добавить изображение</button>
+    </div>
 
-      <!-- Материалы -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Материалы</label>
-        <div id="materials-container" class="mb-2"></div>
-        <button id="add-material-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить материал</button>
-      </div>
+    <div class="mb-4">
+        <label class="font-semibold">Фасады</label>
+        <div id="facades-container" class="flex gap-2 flex-wrap"></div>
+        <input id="facade-input" class="input-field mt-2" placeholder="Новый фасад">
+        <button id="add-facade-btn" class="btn btn-save mt-1">Добавить фасад</button>
+    </div>
 
-      <!-- Цены -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Цены для комбинаций фасад+цвет+материал</label>
-        <div id="prices-container" class="mb-2"></div>
-        <button id="add-price-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Сгенерировать все пары</button>
-      </div>
+    <div class="mb-4">
+        <label class="font-semibold">Материал</label>
+        <input id="material" class="input-field" placeholder="Материал">
+    </div>
 
-      <button id="save-btn" type="submit" class="w-full btn-primary text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg">Сохранить</button>
-      <p id="statusMessage" class="hidden text-center py-2 rounded-lg font-medium"></p>
-    </form>
+    <div class="mb-4">
+        <label class="font-semibold">Цвета</label>
+        <div id="colors-container" class="flex gap-2 flex-wrap"></div>
+        <input id="color-name" class="input-field mt-2" placeholder="Название цвета">
+        <input id="color-hex" class="input-field mt-2" type="color">
+        <button id="add-color-btn" class="btn btn-save mt-1">Добавить цвет</button>
+    </div>
 
-    <button id="logoutBtn" class="mt-6 w-full bg-red-500 text-white font-semibold py-2 rounded-lg hover:bg-red-600 transition">Выйти</button>
+    <div class="mb-4">
+        <label class="font-semibold">Комбинации (Материал-Фасад-Цвет-Цена)</label>
+        <div id="combinations-container"></div>
+        <button id="add-combo-btn" class="btn btn-save mt-2">Добавить комбинацию</button>
+    </div>
 
-    <h2 class="text-2xl font-bold mt-8 mb-4">Существующие товары</h2>
-    <div id="offers-list" class="space-y-2"></div>
-  </div>
+    <div class="flex gap-3">
+        <button id="save-product-btn" class="btn btn-save">Сохранить</button>
+        <button id="clear-product-btn" class="btn btn-delete">Очистить</button>
+    </div>
+</div>
 
-  <script type="module" src="./admin.js"></script>
+<h2 class="text-xl font-bold mb-4">Существующие товары</h2>
+<div id="existing-products" class="space-y-2"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getFirestore, collection, addDoc, setDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
+    authDomain: "vsemmebel-90d48.firebaseapp.com",
+    projectId: "vsemmebel-90d48",
+    storageBucket: "vsemmebel-90d48.firebasestorage.app",
+    messagingSenderId: "958123504041",
+    appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// --- DOM ---
+const titleInput = document.getElementById('title');
+const categoryInput = document.getElementById('category');
+const activeInput = document.getElementById('active');
+const discountInput = document.getElementById('discount');
+const imagesContainer = document.getElementById('images-container');
+const addImageBtn = document.getElementById('add-image-btn');
+const facadesContainer = document.getElementById('facades-container');
+const facadeInput = document.getElementById('facade-input');
+const addFacadeBtn = document.getElementById('add-facade-btn');
+const materialInput = document.getElementById('material');
+const colorsContainer = document.getElementById('colors-container');
+const colorNameInput = document.getElementById('color-name');
+const colorHexInput = document.getElementById('color-hex');
+const addColorBtn = document.getElementById('add-color-btn');
+const combinationsContainer = document.getElementById('combinations-container');
+const addComboBtn = document.getElementById('add-combo-btn');
+const saveBtn = document.getElementById('save-product-btn');
+const clearBtn = document.getElementById('clear-product-btn');
+const existingProductsDiv = document.getElementById('existing-products');
+
+let productId = null;
+let images = [];
+let facades = [];
+let colors = [];
+let combinations = [];
+
+// --- Функции ---
+function renderImages() {
+    imagesContainer.innerHTML = "";
+    images.forEach((url, i)=>{
+        const div = document.createElement('div');
+        div.className = "flex items-center gap-2 mb-1";
+        div.innerHTML = `<input type="text" class="input-field" value="${url}" placeholder="URL изображения">
+                         <button class="btn btn-delete">Удалить</button>`;
+        const input = div.querySelector('input');
+        input.oninput = e=>images[i]=e.target.value;
+        div.querySelector('button').onclick = ()=>{ images.splice(i,1); renderImages(); };
+        imagesContainer.appendChild(div);
+    });
+}
+
+addImageBtn.onclick = ()=>{ images.push(''); renderImages(); };
+
+function renderFacades() {
+    facadesContainer.innerHTML = "";
+    facades.forEach((f,i)=>{
+        const btn = document.createElement('button');
+        btn.className = "option-btn";
+        btn.textContent = f;
+        btn.onclick = ()=>{ facades.splice(i,1); renderFacades(); };
+        facadesContainer.appendChild(btn);
+    });
+}
+
+addFacadeBtn.onclick = ()=>{
+    if(facadeInput.value.trim()){ facades.push(facadeInput.value.trim()); facadeInput.value=''; renderFacades(); }
+};
+
+function renderColors() {
+    colorsContainer.innerHTML = "";
+    colors.forEach((c,i)=>{
+        const btn = document.createElement('button');
+        btn.className="option-btn";
+        btn.textContent = c.name;
+        btn.style.background = c.hex;
+        btn.onclick = ()=>{ colors.splice(i,1); renderColors(); };
+        colorsContainer.appendChild(btn);
+    });
+}
+
+addColorBtn.onclick = ()=>{
+    if(colorNameInput.value.trim() && colorHexInput.value){
+        colors.push({name: colorNameInput.value.trim(), hex: colorHexInput.value});
+        colorNameInput.value=''; colorHexInput.value='#ffffff';
+        renderColors();
+    }
+};
+
+function renderCombinations() {
+    combinationsContainer.innerHTML="";
+    combinations.forEach((c,i)=>{
+        const div = document.createElement('div');
+        div.className="flex gap-2 mb-1 items-center";
+        div.innerHTML = `<input type="text" class="input-field" value="${c.material}" placeholder="Материал">
+                         <input type="text" class="input-field" value="${c.facade}" placeholder="Фасад">
+                         <input type="text" class="input-field" value="${c.color}" placeholder="Цвет">
+                         <input type="number" class="input-field" value="${c.price}" placeholder="Цена">
+                         <button class="btn btn-delete">Удалить</button>`;
+        const inputs = div.querySelectorAll('input');
+        inputs[0].oninput = e=>c.material=e.target.value;
+        inputs[1].oninput = e=>c.facade=e.target.value;
+        inputs[2].oninput = e=>c.color=e.target.value;
+        inputs[3].oninput = e=>c.price=parseFloat(e.target.value)||0;
+        div.querySelector('button').onclick = ()=>{ combinations.splice(i,1); renderCombinations(); };
+        combinationsContainer.appendChild(div);
+    });
+}
+
+addComboBtn.onclick = ()=>{
+    combinations.push({material:'',facade:'',color:'',price:0});
+    renderCombinations();
+};
+
+saveBtn.onclick = async ()=>{
+    const data = {
+        title: titleInput.value.trim(),
+        category: categoryInput.value.trim(),
+        active: activeInput.checked,
+        discount: parseInt(discountInput.value)||0,
+        images,
+        facades,
+        material: materialInput.value.trim(),
+        colors,
+        combinations
+    };
+    if(productId){
+        await setDoc(doc(db,'offers',productId), data);
+        alert("Товар обновлён!");
+    } else {
+        const docRef = await addDoc(collection(db,'offers'), data);
+        productId = docRef.id;
+        alert("Товар создан!");
+    }
+    loadExistingProducts();
+};
+
+clearBtn.onclick = ()=>{
+    productId=null; titleInput.value=''; categoryInput.value=''; activeInput.checked=false;
+    discountInput.value=0; images=[]; facades=[]; colors=[]; combinations=[];
+    renderImages(); renderFacades(); renderColors(); renderCombinations();
+    materialInput.value='';
+};
+
+function loadExistingProducts(){
+    onSnapshot(collection(db,'offers'), snapshot=>{
+        existingProductsDiv.innerHTML='';
+        snapshot.docs.forEach(docSnap=>{
+            const data = docSnap.data();
+            const div = document.createElement('div');
+            div.className="flex justify-between items-center bg-white p-3 rounded-md shadow-sm";
+            div.innerHTML = `<span>${data.title||"Без названия"}</span>
+                             <button class="btn btn-save">Редактировать</button>`;
+            div.querySelector('button').onclick = ()=>editProduct(docSnap.id);
+            existingProductsDiv.appendChild(div);
+        });
+    });
+}
+
+async function editProduct(id){
+    const docSnap = await getDoc(doc(db,'offers',id));
+    if(!docSnap.exists()) return alert("Товар не найден!");
+    const data = docSnap.data();
+    productId=id;
+    titleInput.value=data.title||'';
+    categoryInput.value=data.category||'';
+    activeInput.checked=!!data.active;
+    discountInput.value=data.discount||0;
+    images=data.images||[]; renderImages();
+    facades=data.facades||[]; renderFacades();
+    colors=data.colors||[]; renderColors();
+    materialInput.value=data.material||'';
+    combinations=data.combinations||[]; renderCombinations();
+}
+
+// Инициализация
+loadExistingProducts();
+
+</script>
 </body>
 </html>
