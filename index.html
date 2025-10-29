@@ -127,12 +127,29 @@
         // --- FIREBASE CONFIGURATION & AUTH VARIABLES ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        let firebaseConfig = null;
+        
+        // Предоставленная пользователем конфигурация в качестве резервной
+        const USER_FALLBACK_CONFIG = {
+            apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
+            authDomain: "vsemmebel-90d48.firebaseapp.com",
+            projectId: "vsemmebel-90d48",
+            storageBucket: "vsemmebel-90d48.firebasestorage.app",
+            messagingSenderId: "958123504041",
+            appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
+        };
+        
+        let firebaseConfig = USER_FALLBACK_CONFIG; // Начинаем с резервной конфигурации
 
         try {
-            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+            // Попытка использовать конфигурацию из переменной хостинга
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                const envConfig = JSON.parse(__firebase_config);
+                if (typeof envConfig === 'object' && envConfig !== null && envConfig.projectId) {
+                    firebaseConfig = envConfig;
+                }
+            }
         } catch (e) {
-            console.error("ОШИБКА: Не удалось распарсить JSON из переменной хостинга.", e);
+            console.warn("Предупреждение: Не удалось распарсить JSON из переменной хостинга. Используется предоставленная конфигурация.", e);
         }
 
         let app = null;
@@ -143,7 +160,7 @@
 
         // 1. Инициализация Firebase
         function initializeFirebase() {
-            if (!firebaseConfig) {
+            if (!firebaseConfig || !firebaseConfig.projectId) {
                 console.error("КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase недоступна.");
                 return;
             }
@@ -151,17 +168,18 @@
             try {
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
-                auth = getAuth(app);
+                auth = getAuth(app); // <-- auth устанавливается здесь
                 console.log("Firebase успешно инициализирован.");
             } catch (e) {
                 console.error("КРИТИЧЕСКАЯ ОШИБКА: Ошибка инициализации Firebase.", e);
-                db = null; 
+                db = null; db = null; auth = null; // Обеспечиваем, что переменные null в случае ошибки
             }
         }
 
         // 2. Инициализация аутентификации (вход анонимно или по токену)
         async function initializeAuth() {
             if (!auth) {
+                // Если Auth не инициализирован (initializeFirebase не сработал), используем рандомный ID
                 userId = crypto.randomUUID();
                 return; 
             }
@@ -181,13 +199,12 @@
                 showCustomMessage("Ошибка аутентификации. Проверьте консоль для деталей.");
             }
         }
-
+        
         // --- Custom Message Modal (Замена alert/confirm) ---
         const customModal = document.getElementById('custom-message-modal');
         const customMessageText = document.getElementById('custom-message-text');
         const customMessageCloseBtn = document.getElementById('custom-message-close');
         
-        // Используем одну функцию для закрытия модалок
         function closeCustomMessage() {
             customModal.classList.add('hidden');
         }
@@ -228,10 +245,14 @@
             const email = adminEmailInput.value;
             const password = adminPasswordInput.value;
             if (!email || !password) return showAdminMessage('Введите email и пароль', true);
-            if (!auth) return showAdminMessage('Ошибка: Firebase Auth не инициализирован.', true);
+            
+            // КЛЮЧЕВОЙ МОМЕНТ: Проверяем, что auth инициализирован
+            if (!auth) {
+                console.error("Ошибка: Firebase Auth не инициализирован. Попробуйте обновить страницу.");
+                return showAdminMessage('Ошибка: Firebase Auth не инициализирован. Проверьте консоль.', true);
+            }
 
             try {
-                // Используем стандартный вход через Email/Password
                 await signInWithEmailAndPassword(auth, email, password);
                 adminModal.classList.add('hidden');
                 showCustomMessage(`Администратор успешно вошел (${auth.currentUser.uid}).`);
@@ -253,10 +274,14 @@
             const email = adminEmailInput.value;
             const password = adminPasswordInput.value;
             if (!email || !password) return showAdminMessage('Введите email и пароль', true);
-            if (!auth) return showAdminMessage('Ошибка: Firebase Auth не инициализирован.', true);
+            
+            // КЛЮЧЕВОЙ МОМЕНТ: Проверяем, что auth инициализирован
+            if (!auth) {
+                console.error("Ошибка: Firebase Auth не инициализирован. Попробуйте обновить страницу.");
+                return showAdminMessage('Ошибка: Firebase Auth не инициализирован. Проверьте консоль.', true);
+            }
 
             try {
-                // Используем стандартную регистрацию через Email/Password
                 await createUserWithEmailAndPassword(auth, email, password);
                 adminModal.classList.add('hidden');
                 showCustomMessage(`Администратор успешно зарегистрирован и вошел (${auth.currentUser.uid}).`);
@@ -421,10 +446,13 @@
 
         // --- Initialization ---
 
+        // 1. Запускаем инициализацию Firebase и Auth НЕМЕДЛЕННО
+        initializeFirebase();
+        initializeAuth(); // Аутентификация -> setupRealtimeOffersListener
+
+        // 2. DOM-зависимые функции запускаем после полной загрузки страницы
         window.onload = () => {
-            initializeFirebase();
-            initializeAuth(); // Аутентификация -> setupRealtimeOffersListener
-            renderCategories(); // Рендерим кнопки категорий сразу
+            renderCategories(); // Рендерим кнопки категорий
         };
 
     </script>
