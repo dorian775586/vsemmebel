@@ -6,6 +6,7 @@
 <title>Админка Mebel.by</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
+/* ... Стили CSS остаются прежними ... */
 body { font-family: 'Inter', sans-serif; background:#f7f7f7; }
 .input-field { border:2px solid #ddd; padding:0.5rem; border-radius:0.5rem; width:100%; transition: border-color 0.2s; }
 .input-field:focus { border-color: #f97316; outline: none; }
@@ -39,7 +40,7 @@ body { font-family: 'Inter', sans-serif; background:#f7f7f7; }
 /* Стили для Select */
 select.input-field {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 0 011.414 0L10 10.586l3.293-3.293a1 0 111.414 1.414l-4 4a1 0 01-1.414 0l-4-4a1 0 010-1.414z' clip-rule='evenodd' /%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 011.414 0L10 10.586l3.293-3.293a1 1 011.414 1.414l-4 4a1 1 01-1.414 0l-4-4a1 1 010-1.414z' clip-rule='evenodd' /%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.5rem center;
     background-size: 1.5em 1.5em;
@@ -156,7 +157,6 @@ import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-
 setLogLevel('Debug');
 
 // --- FIREBASE CONFIG & AUTH ---
-// Убрал лишние console.error для чистой работы в деплое, если конфиг не загружен.
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
@@ -172,12 +172,17 @@ const productCollectionPath = `artifacts/${appId}/public/data/offers`;
 if (firebaseConfigString) {
     try {
         firebaseConfig = JSON.parse(firebaseConfigString);
+        console.log("Конфигурация Firebase УСПЕШНО загружена и распарсена:", firebaseConfig); // <-- СМОТРИМ ЭТО СООБЩЕНИЕ!
+        
         app = initializeApp(firebaseConfig);
         db = getFirestore(app);
         auth = getAuth(app);
     } catch (e) {
-        console.warn("Предупреждение: Не удалось инициализировать Firebase. Возможно, неверный JSON:", e);
+        console.error("ОШИБКА: Не удалось распарсить JSON конфигурации Firebase:", e); // <-- СМОТРИМ ЭТО СООБЩЕНИЕ!
+        console.error("Исходная строка, которая вызвала ошибку:", firebaseConfigString); // <-- СМОТРИМ ЭТО СООБЩЕНИЕ!
     }
+} else {
+    console.error("КРИТИЧЕСКАЯ ОШИБКА: Переменная __firebase_config отсутствует (null/undefined)."); // <-- СМОТРИМ ЭТО СООБЩЕНИЕ!
 }
 
 
@@ -619,6 +624,7 @@ function setupGeneralHandlers() {
     };
 
     saveBtn.onclick=async()=>{
+        // Здесь происходит проверка!
         if (!db) {
             return showMessage("Ошибка: База данных не инициализирована. Сохранение невозможно.");
         }
@@ -687,6 +693,13 @@ function init() {
     setupColorHandlers();
     setupGeneralHandlers();
     initializeAuth();
+    
+    // Начальный рендеринг пустых списков
+    renderImages(); 
+    renderFacades(); 
+    renderMaterials(); 
+    renderColors(); 
+    renderCombinations();
 }
 
 // Запускаем инициализацию
