@@ -227,6 +227,8 @@
         const adminRegister = document.getElementById('admin-register');
         const adminMessageDiv = document.getElementById('admin-message');
 
+        const ADMIN_REDIRECT_URL = 'https://vsemmebel-1.onrender.com/admin.html';
+
         adminLoginBtn.onclick = () => adminModal.classList.remove('hidden');
         adminCloseBtn.onclick = () => adminModal.classList.add('hidden');
 
@@ -254,9 +256,10 @@
 
             try {
                 await signInWithEmailAndPassword(auth, email, password);
-                adminModal.classList.add('hidden');
-                showCustomMessage(`Администратор успешно вошел (${auth.currentUser.uid}).`);
-                console.log("Админ вошел. UID:", auth.currentUser.uid);
+                // УСПЕХ: Редирект без сообщения
+                console.log("Админ вошел. Перенаправление на admin.html");
+                window.location.href = ADMIN_REDIRECT_URL;
+                
             } catch (error) {
                 console.error("Ошибка входа админа:", error);
                 let errorMessage = 'Ошибка входа. Проверьте данные.';
@@ -283,9 +286,10 @@
 
             try {
                 await createUserWithEmailAndPassword(auth, email, password);
-                adminModal.classList.add('hidden');
-                showCustomMessage(`Администратор успешно зарегистрирован и вошел (${auth.currentUser.uid}).`);
-                console.log("Админ зарегистрирован и вошел. UID:", auth.currentUser.uid);
+                // УСПЕХ: Редирект без сообщения
+                console.log("Админ зарегистрирован. Перенаправление на admin.html");
+                window.location.href = ADMIN_REDIRECT_URL;
+                
             } catch (error) {
                 console.error("Ошибка регистрации админа:", error);
                 let errorMessage = 'Ошибка регистрации.';
