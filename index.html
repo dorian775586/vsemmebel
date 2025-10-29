@@ -92,6 +92,9 @@
     <div id="admin-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
         <div class="bg-white rounded-2xl p-6 w-80 relative">
             <h3 class="text-xl font-bold mb-4">Вход Админа</h3>
+            <!-- Контейнер для сообщений об ошибках -->
+            <div id="admin-message" class="text-sm text-center font-medium my-2 hidden p-2 rounded"></div>
+            
             <input type="email" id="admin-email" placeholder="Email" class="w-full mb-3 p-2 border rounded-lg" />
             <input type="password" id="admin-password" placeholder="Пароль" class="w-full mb-3 p-2 border rounded-lg" />
             <div class="flex justify-between">
