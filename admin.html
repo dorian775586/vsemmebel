@@ -3,22 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тест Развертывания v3</title>
+    <title>Приложение Готово!</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-10 rounded-xl shadow-lg text-center max-w-md w-full border-b-8 border-green-500">
-        <h1 class="text-3xl font-extrabold text-gray-800 mb-4">📢 Третья попытка!</h1>
-        <p class="text-xl text-gray-700">
-            Если вы видите это, развертывание успешно!
+<body class="bg-gray-900 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 sm:p-12 rounded-3xl shadow-2xl text-center max-w-lg w-full transform transition duration-500 hover:shadow-indigo-500/50">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#4F46E5" class="w-16 h-16 mx-auto mb-4 animate-bounce">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">Успешный Сброс</h1>
+        <p class="text-lg text-gray-700 mb-6">
+            Этот файл готов к работе в вашем новом, чистом сеансе.
         </p>
-        <p class="text-sm text-gray-400 mt-4">
-            Файл: <span class="font-mono text-xs">app.html</span>.
-        </p>
+        <div class="bg-indigo-50 p-4 rounded-xl">
+            <p class="text-indigo-700 font-medium">Можете начинать разработку здесь!</p>
+        </div>
     </div>
 </body>
 </html>
