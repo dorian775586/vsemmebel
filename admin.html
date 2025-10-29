@@ -156,19 +156,20 @@ import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-
 // Устанавливаем режим отладки для Firestore
 setLogLevel('Debug');
 
-// --- FIREBASE CONFIGURATION & AUTH VARIABLES ---
+// --- FIREBASE CONFIGURATION & AUTH ---
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
 
-// --- FALLBACK: HARDCODED CONFIGURATION (ВСТАВЛЕНЫ ВАШИ КЛЮЧИ) ---
+// --- FALLBACK: HARDCODED CONFIGURATION (ОБЯЗАТЕЛЬНО ЗАМЕНИТЕ ЭТИ ЗНАЧЕНИЯ!) ---
+// Если хостинг не передает переменные, мы используем эту структуру.
 const HARDCODED_FIREBASE_CONFIG = {
-    apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70", 
-    authDomain: "vsemmebel-90d48.firebaseapp.com",
-    projectId: "vsemmebel-90d48", 
-    storageBucket: "vsemmebel-90d48.firebasestorage.app", 
-    messagingSenderId: "958123504041",
-    appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
+  apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
+  authDomain: "vsemmebel-90d48.firebaseapp.com",
+  projectId: "vsemmebel-90d48",
+  storageBucket: "vsemmebel-90d48.firebasestorage.app",
+  messagingSenderId: "958123504041",
+  appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
 };
 // ------------------------------------------
 
@@ -190,32 +191,32 @@ if (firebaseConfigString) {
     }
 } 
 
-// 2. Если не удалось, используем хардкодированную версию
-if (!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey === "ВАШ_API_KEY") {
+// 2. Если не удалось (или переменная отсутствовала), используем хардкодированную версию
+if (!firebaseConfig) {
     firebaseConfig = HARDCODED_FIREBASE_CONFIG;
-    console.warn("ВНИМАНИЕ: Используется хардкодированная конфигурация Firebase.");
+    console.warn("ВНИМАНИЕ: Используется хардкодированная конфигурация Firebase. Замените заполнители!");
 }
 
 // 3. Финальная проверка и инициализация
-if (firebaseConfig && firebaseConfig.apiKey) {
+if (firebaseConfig && firebaseConfig.apiKey !== "ВАШ_API_KEY") {
     try {
         app = initializeApp(firebaseConfig);
         db = getFirestore(app);
         auth = getAuth(app);
-        console.log("Firebase успешно инициализирован с предоставленными ключами.");
     } catch (e) {
-        console.error("КРИТИЧЕСКАЯ ОШИБКА: Ошибка инициализации Firebase. Проверьте ваш API Key и projectId.", e);
+        console.error("Ошибка инициализации Firebase:", e);
+        // Если инициализация не удалась, обнуляем db, чтобы предотвратить ошибки сохранения
         db = null; 
     }
-} else {
-    console.error("КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase недействительна.");
+} else if (firebaseConfig && firebaseConfig.apiKey === "ВАШ_API_KEY") {
+    console.error("КРИТИЧЕСКАЯ ОШИБКА: Вы используете конфигурацию по умолчанию. ЗАМЕНИТЕ ВАШИ ДАННЫЕ!");
     db = null;
 }
 
 
 // Инициализация аутентификации
 async function initializeAuth() {
-    // Если auth не инициализирован (из-за плохих ключей), пропускаем
+    // Если Auth не инициализирован (из-за отсутствия конфига), пропускаем
     if (!auth) {
         userId = crypto.randomUUID();
         return; 
@@ -225,20 +226,12 @@ async function initializeAuth() {
         if (initialAuthToken) {
             await signInWithCustomToken(auth, initialAuthToken);
         } else {
-            // Здесь происходит анонимный вход, который требует включения в Firebase
             await signInAnonymously(auth); 
         }
         userId = auth.currentUser?.uid || crypto.randomUUID();
-        console.log("Аутентификация успешна. UID:", userId);
         loadExistingProducts(); // Запускаем загрузку данных после аутентификации
     } catch (error) {
         console.error("Ошибка аутентификации Firebase:", error);
-        // Сообщение о критической ошибке аутентификации
-        if (error.code === 'auth/admin-restricted-operation' || error.code === 'auth/operation-not-allowed') {
-             showMessage("Критическая ошибка: Включите 'Анонимную аутентификацию' в консоли Firebase (раздел Authentication -> Sign-in method).");
-        } else {
-             showMessage("Ошибка аутентификации. Проверьте консоль для деталей.");
-        }
     }
 }
 
@@ -523,6 +516,7 @@ function loadExistingProducts(){
 }
 
 async function editProduct(id){
+    // Проверка на db остаётся, но теперь db должен быть инициализирован
     if (!db) return showMessage("Ошибка: База данных не инициализирована.");
 
     try {
@@ -658,7 +652,7 @@ function setupGeneralHandlers() {
 
     saveBtn.onclick=async()=>{
         if (!db) {
-            return showMessage("Ошибка: База данных не инициализирована. Сохранение невозможно. Проверьте конфигурацию Firebase и включите анонимную аутентификацию!");
+            return showMessage("Ошибка: База данных не инициализирована. Сохранение невозможно.");
         }
         
         const data={
