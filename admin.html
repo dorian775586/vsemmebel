@@ -1,307 +1,107 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ-панель | Управление данными</title>
-    <!-- Подключение Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb;
-        }
-        .card {
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s;
-        }
-        .card:hover {
-            transform: translateY(-2px);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Админ-панель</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+    .container-card { max-width: 1200px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); margin-bottom:2rem; }
+    .btn-primary { background-color: #4f46e5; transition: background-color 0.2s; }
+    .btn-primary:hover { background-color: #4338ca; }
+    .status-success { background-color: #d1fae5; color: #065f46; }
+    .status-error { background-color: #fee2e2; color: #991b1b; }
+    .color-box { width: 25px; height: 25px; border:1px solid #ccc; display:inline-block; margin-right:5px; vertical-align:middle; }
+    select, input, textarea { font-family: 'Inter', sans-serif; }
+  </style>
 </head>
-<body class="p-4 md:p-8 min-h-screen">
+<body class="p-4 sm:p-8">
 
-    <div id="loading-indicator" class="fixed inset-0 bg-gray-100 bg-opacity-75 flex items-center justify-center z-50">
-        <div class="text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-            <p class="mt-4 text-indigo-700 font-semibold">Загрузка и аутентификация...</p>
+  <div id="accessDenied" class="hidden container-card mx-auto bg-red-100 text-red-700 p-6 rounded-xl text-center font-bold">
+    У вас нет прав администратора. Пожалуйста, войдите как админ.
+  </div>
+
+  <div id="adminPanel" class="container-card mx-auto bg-white p-6 rounded-xl hidden">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">Админ-панель: Товары</h1>
+
+    <!-- Хлебные крошки -->
+    <div id="breadcrumb-container" class="mb-4 text-sm text-gray-500"></div>
+
+    <form id="addOfferForm" class="space-y-4">
+
+      <!-- Селекторы комнаты/категории/подкатегории -->
+      <label class="block text-sm font-medium text-gray-700">Комната</label>
+      <div id="roomSelectContainer"></div>
+      <label class="block text-sm font-medium text-gray-700">Категория</label>
+      <div id="categorySelectContainer"></div>
+      <label class="block text-sm font-medium text-gray-700">Подкатегория</label>
+      <div id="subcategorySelectContainer"></div>
+
+      <!-- Название и описание -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Название товара</label>
+        <input type="text" id="title" class="w-full p-2 border rounded-lg" required>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Скидка (%)</label>
+        <input type="number" id="discount" min="0" max="100" class="w-full p-2 border rounded-lg">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+        <textarea id="description" rows="3" class="w-full p-2 border rounded-lg"></textarea>
+      </div>
+
+      <!-- Картинки -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Картинки</label>
+        <div id="images-container" class="mb-2"></div>
+        <button id="add-image-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить картинку</button>
+      </div>
+
+      <!-- Фасады -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Фасады</label>
+        <div id="facades-container" class="mb-2"></div>
+        <button id="add-facade-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить фасад</button>
+      </div>
+
+      <!-- Цвета -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Цвета</label>
+        <div id="colors-container" class="mb-2"></div>
+        <button id="add-color-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить цвет</button>
+      </div>
+
+      <!-- Цены -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Цены по комбинациям</label>
+        <div class="flex gap-2 mb-2">
+          <button id="generate-combinations-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Сгенерировать все пары</button>
+          <button id="add-price-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить строку</button>
         </div>
+        <div id="prices-container" class="mb-2"></div>
+      </div>
+
+      <button id="save-btn" type="submit" class="w-full btn-primary text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg">Сохранить</button>
+      <p id="statusMessage" class="hidden text-center py-2 rounded-lg font-medium"></p>
+    </form>
+
+    <!-- Структура комнат/категорий -->
+    <div class="mt-8">
+      <h2 class="text-2xl font-bold mb-4">Управление комнатами и категориями</h2>
+      <div id="rooms-container" class="space-y-4"></div>
     </div>
 
-    <div id="app-container" class="max-w-4xl mx-auto" style="display: none;">
-        <header class="mb-8">
-            <h1 class="text-3xl font-extrabold text-gray-900">Админ-панель</h1>
-            <p class="text-gray-500">Управление системными сообщениями и статусом соединения.</p>
-        </header>
+    <!-- Список существующих товаров -->
+    <h2 class="text-2xl font-bold mt-8 mb-4">Существующие товары</h2>
+    <div id="offers-list" class="space-y-2"></div>
 
-        <div id="status-message" class="card p-4 mb-6 border-l-4 border-indigo-500">
-            <p id="auth-status" class="text-sm font-medium text-gray-700">Статус аутентификации: <span class="font-bold text-gray-500">Ожидание...</span></p>
-            <p id="user-id-display" class="text-xs text-gray-500 mt-1">ID пользователя: <span class="font-mono text-xs text-gray-600">N/A</span></p>
-        </div>
+    <button id="logoutBtn" class="mt-6 w-full bg-red-500 text-white font-semibold py-2 rounded-lg hover:bg-red-600 transition">Выйти</button>
+  </div>
 
-        <!-- Секция управления сообщениями -->
-        <section class="mb-8">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Системные Сообщения (Публичная коллекция)</h2>
-            <div class="card p-6">
-                <div class="flex flex-col md:flex-row gap-4 mb-6">
-                    <input type="text" id="message-input" placeholder="Введите новое сообщение для системы" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-                    <button id="add-message-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition duration-150 ease-in-out disabled:opacity-50">
-                        Добавить Сообщение
-                    </button>
-                </div>
-                
-                <ul id="messages-list" class="space-y-3">
-                    <li class="text-gray-500 italic">Сообщения загружаются...</li>
-                </ul>
-            </div>
-        </section>
-        
-        <!-- Секция отладки (для проверки конфигурации) -->
-        <section class="mt-10 pt-6 border-t border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-800 mb-3">Техническая информация</h2>
-            <div class="card p-4 text-xs text-gray-600 space-y-2 bg-gray-50">
-                <p>App ID: <span id="display-app-id" class="font-mono">...</span></p>
-                <p>Firebase Config Status: <span id="config-status" class="font-mono">...</span></p>
-            </div>
-        </section>
-    </div>
-
-    <!-- Модальное окно для ошибок (вместо alert()) -->
-    <div id="error-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
-        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
-            <h3 class="text-lg font-bold text-red-600 mb-4">Ошибка</h3>
-            <p id="error-modal-text" class="text-gray-700 mb-4"></p>
-            <button onclick="document.getElementById('error-modal').classList.add('hidden')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg">Закрыть</button>
-        </div>
-    </div>
-
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Глобальные переменные для доступа в скрипте
-        let app = null;
-        let db = null;
-        let auth = null;
-        let userId = null;
-        let appId = null;
-
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const appContainer = document.getElementById('app-container');
-        const authStatusSpan = document.getElementById('auth-status').querySelector('span');
-        const userIdDisplay = document.getElementById('user-id-display').querySelector('span');
-        const displayAppId = document.getElementById('display-app-id');
-        const configStatus = document.getElementById('config-status');
-        const messagesList = document.getElementById('messages-list');
-        const messageInput = document.getElementById('message-input');
-        const addMessageBtn = document.getElementById('add-message-btn');
-        
-        // Включение режима отладки Firestore для подробных логов
-        setLogLevel('debug');
-
-
-        /**
-         * Отображает модальное окно ошибки.
-         * @param {string} message Сообщение об ошибке.
-         */
-        function showError(message) {
-            console.error("APP ERROR:", message);
-            document.getElementById('error-modal-text').textContent = message;
-            document.getElementById('error-modal').classList.remove('hidden');
-            loadingIndicator.classList.add('hidden');
-        }
-
-        /**
-         * Инициализация Firebase и аутентификация.
-         */
-        async function initializeFirebase() {
-            try {
-                // 1. Получение и проверка конфигурации
-                let firebaseConfig;
-                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                    firebaseConfig = JSON.parse(__firebase_config);
-                    configStatus.textContent = 'Успешно загружена из __firebase_config.';
-                } else {
-                    // FALLBACK: Анонимная/запасная конфигурация для работы в тестовом режиме
-                    console.warn("Firebase config not found. Using fallback placeholder.");
-                    configStatus.textContent = 'НЕ НАЙДЕНА. Использована заглушка.';
-                    firebaseConfig = { apiKey: "dummy", authDomain: "dummy", projectId: "dummy" };
-                    showError("Критическая ошибка: Конфигурация Firebase не найдена. Приложение может работать некорректно.");
-                }
-
-                appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                displayAppId.textContent = appId;
-
-                // 2. Инициализация приложения
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                
-                // 3. Установка персистентности (опционально, но рекомендуется)
-                await setPersistence(auth, browserSessionPersistence);
-
-
-                // 4. Аутентификация
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    // Если токен не предоставлен, входим анонимно
-                    await signInAnonymously(auth);
-                }
-
-                // 5. Наблюдение за состоянием аутентификации
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        authStatusSpan.textContent = 'Подключено';
-                        authStatusSpan.classList.remove('text-gray-500', 'text-red-500');
-                        authStatusSpan.classList.add('text-green-600');
-                        userIdDisplay.textContent = userId;
-                        
-                        // Если аутентификация успешна, запускаем слушатели Firestore
-                        setupFirestoreListeners();
-
-                        loadingIndicator.classList.add('hidden');
-                        appContainer.style.display = 'block';
-
-                    } else {
-                        userId = 'anonymous_' + crypto.randomUUID(); // Запасной ID для неаутентифицированных
-                        authStatusSpan.textContent = 'Не подключено';
-                        authStatusSpan.classList.add('text-red-500');
-                        userIdDisplay.textContent = userId + " (Анонимный/Fallback)";
-
-                        loadingIndicator.classList.add('hidden');
-                        appContainer.style.display = 'block';
-                    }
-                });
-
-            } catch (error) {
-                showError(`Ошибка инициализации: ${error.message}. Пожалуйста, проверьте консоль.`);
-            }
-        }
-
-        /**
-         * Настройка прослушивания Firestore.
-         */
-        function setupFirestoreListeners() {
-            if (!db || !userId || !appId) return;
-
-            // Используем публичную коллекцию: /artifacts/{appId}/public/data/admin_messages
-            const publicCollectionPath = `artifacts/${appId}/public/data/admin_messages`;
-            const messagesRef = collection(db, publicCollectionPath);
-            const q = query(messagesRef);
-
-            // Наблюдатель в реальном времени
-            onSnapshot(q, (snapshot) => {
-                messagesList.innerHTML = '';
-                if (snapshot.empty) {
-                    messagesList.innerHTML = '<li class="text-gray-500 italic">Сообщений пока нет.</li>';
-                    return;
-                }
-
-                // Сортируем в памяти по полю 'timestamp', так как orderBy() может требовать индексы
-                const messagesData = [];
-                snapshot.forEach(doc => {
-                    messagesData.push({ id: doc.id, ...doc.data() });
-                });
-                
-                messagesData.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
-
-
-                messagesData.forEach(msg => {
-                    const li = document.createElement('li');
-                    li.className = 'flex justify-between items-center p-3 border border-gray-100 rounded-lg bg-white shadow-sm';
-                    
-                    const time = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleTimeString('ru-RU') : 'N/A';
-                    
-                    li.innerHTML = `
-                        <span class="text-gray-800">${msg.text || 'Нет текста'}</span>
-                        <span class="flex items-center space-x-2">
-                            <span class="text-xs text-gray-400">${time}</span>
-                            <button data-id="${msg.id}" class="delete-btn text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition duration-150 ease-in-out">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3h6z"></path></svg>
-                            </button>
-                        </span>
-                    `;
-                    messagesList.appendChild(li);
-                });
-
-                // Добавляем обработчики для кнопок удаления после обновления списка
-                messagesList.querySelectorAll('.delete-btn').forEach(button => {
-                    button.addEventListener('click', handleDeleteMessage);
-                });
-
-            }, (error) => {
-                showError(`Ошибка прослушивания Firestore: ${error.message}`);
-            });
-        }
-        
-        /**
-         * Добавление нового сообщения в коллекцию.
-         */
-        async function handleAddMessage() {
-            const text = messageInput.value.trim();
-            if (!text) return;
-
-            addMessageBtn.disabled = true;
-            addMessageBtn.textContent = 'Сохранение...';
-
-            try {
-                const publicCollectionPath = `artifacts/${appId}/public/data/admin_messages`;
-                const messagesRef = collection(db, publicCollectionPath);
-
-                await addDoc(messagesRef, {
-                    text: text,
-                    timestamp: serverTimestamp(),
-                    authorId: userId,
-                });
-
-                messageInput.value = ''; // Очистка после успешного добавления
-            } catch (e) {
-                showError(`Не удалось добавить сообщение: ${e.message}`);
-            } finally {
-                addMessageBtn.disabled = false;
-                addMessageBtn.textContent = 'Добавить Сообщение';
-            }
-        }
-        
-        /**
-         * Удаление сообщения.
-         */
-        async function handleDeleteMessage(event) {
-            const messageId = event.currentTarget.dataset.id;
-            if (!messageId) return;
-
-            try {
-                const docPath = `artifacts/${appId}/public/data/admin_messages/${messageId}`;
-                // Используем setDoc с пустым объектом, чтобы имитировать удаление, 
-                // если нет прав на прямое deleteDoc, или для упрощения.
-                // В данном случае лучше использовать setDoc(..., {deleted: true}),
-                // но для простоты админки используем setDoc для пометки или doc() для пути.
-                // NOTE: Для полноценного удаления нужен deleteDoc, но тут простота:
-                // В этой среде deleteDoc разрешен для публичных коллекций, поэтому используем его.
-                const docRef = doc(db, docPath);
-                await setDoc(docRef, { deleted: true, timestamp: serverTimestamp() }, { merge: true });
-                
-                // Для данной демонстрации, просто удалим его напрямую:
-                // import { deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-                // await deleteDoc(docRef); 
-
-            } catch (e) {
-                showError(`Не удалось удалить сообщение: ${e.message}`);
-            }
-        }
-
-        // Запуск инициализации при загрузке окна
-        window.onload = initializeFirebase;
-        addMessageBtn.addEventListener('click', handleAddMessage);
-
-    </script>
+  <script type="module" src="./admin.js"></script>
 </body>
 </html>
