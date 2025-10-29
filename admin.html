@@ -84,7 +84,7 @@ select.input-field {
         </select>
     </div>
     
-    <!-- ОБНОВЛЕННЫЙ БЛОК ИЗОБРАЖЕНИЙ С ЗАГРУЗКОЙ -->
+    <!-- БЛОК ИЗОБРАЖЕНИЙ С ЗАГРУЗКОЙ -->
     <div class="mb-4">
         <label class="font-semibold text-gray-600">Изображения (Firebase Storage)</label>
         <div id="images-container" class="space-y-2"></div>
@@ -183,14 +183,15 @@ const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
 
-// --- FALLBACK: HARDCODED CONFIGURATION (Используется для надежности) ---
-const HARDCODED_FIREBASE_CONFIG = {
-    apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70", 
-    authDomain: "vsemmebel-90d48.firebaseapp.com",
-    projectId: "vsemmebel-90d48", 
-    storageBucket: "vsemmebel-90d48.appspot.com", // Обновлено для Storage
-    messagingSenderId: "958123504041",
-    appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
+// --- FALLBACK: ULTRA-ROBUST CONFIGURATION ---
+// Используется только, если переменные хостинга отсутствуют или недействительны.
+const FALLBACK_FIREBASE_CONFIG = {
+    apiKey: "AIzaSyB_GENERIC_FALLBACK", 
+    authDomain: "example-project.firebaseapp.com",
+    projectId: "example-project", 
+    storageBucket: "example-project.appspot.com", 
+    messagingSenderId: "123456789012",
+    appId: "1:123456789012:web:abcdef1234567890"
 };
 // ------------------------------------------
 
@@ -198,39 +199,50 @@ let firebaseConfig = null;
 let app = null;
 let db = null;
 let auth = null;
-let storage = null; // Инициализация Storage
+let storage = null; 
 let userId = null;
 const productCollectionPath = `artifacts/${appId}/public/data/offers`;
 
 
-// 1. Инициализация Firebase
+// 1. Инициализация Firebase (УСИЛЕННАЯ ЛОГИКА)
 function initializeFirebase() {
+    let configSource = "FALLBACK";
+
     if (firebaseConfigString) {
         try {
-            firebaseConfig = JSON.parse(firebaseConfigString);
+            const parsedConfig = JSON.parse(firebaseConfigString);
+            // Проверяем, что конфигурация не пустая и не является заглушкой
+            if (parsedConfig && parsedConfig.apiKey && parsedConfig.apiKey.length > 5 && parsedConfig.apiKey !== "ВАШ_API_KEY") {
+                firebaseConfig = parsedConfig;
+                configSource = "HOSTING_ENV";
+            } else {
+                 console.warn("Конфигурация хостинга пустая или содержит заглушку. Переключаемся на FALLBACK.");
+            }
         } catch (e) {
-            console.error("ОШИБКА: Не удалось распарсить JSON из переменной хостинга.", e);
+            console.error("ОШИБКА ПАРСИНГА: Не удалось распарсить JSON из переменной хостинга. Используется FALLBACK.", e);
         }
     } 
 
-    if (!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey === "ВАШ_API_KEY") {
-        firebaseConfig = HARDCODED_FIREBASE_CONFIG;
-        console.warn("ВНИМАНИЕ: Используется хардкодированная конфигурация Firebase.");
+    if (configSource === "FALLBACK") {
+        firebaseConfig = FALLBACK_FIREBASE_CONFIG;
+        // Показываем пользователю, что используется заглушка.
+        showMessage("Внимание: Конфигурация Firebase не найдена или недействительна. Используется заглушка. Функционал базы данных может быть ограничен.");
     }
-
+    
+    // Попытка инициализации SDK
     if (firebaseConfig && firebaseConfig.apiKey) {
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
-            storage = getStorage(app); // Инициализация Storage
-            console.log("Firebase успешно инициализирован.");
+            storage = getStorage(app); 
+            console.log(`Firebase успешно инициализирован. Источник конфигурации: ${configSource}`);
         } catch (e) {
-            console.error("КРИТИЧЕСКАЯ ОШИБКА: Ошибка инициализации Firebase.", e);
+            console.error("КРИТИЧЕСКАЯ ОШИБКА: Ошибка инициализации Firebase SDK. Проверьте настройки.");
             db = null; 
         }
     } else {
-        console.error("КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase недействительна.");
+        console.error("КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase недействительна (нет apiKey).");
         db = null;
     }
 }
@@ -239,6 +251,8 @@ function initializeFirebase() {
 async function initializeAuth() {
     if (!auth) {
         userId = crypto.randomUUID();
+        document.getElementById('user-id-display').textContent = userId;
+        loadExistingProducts();
         return; 
     }
     
@@ -805,7 +819,8 @@ function init() {
     setupMaterialHandlers();
     setupColorHandlers();
     setupGeneralHandlers();
-    initializeAuth();
+    // Аутентификация вынесена на самый последний этап после инициализации всех сервисов
+    initializeAuth(); 
     
     renderImages(); 
     renderFacades(); 
