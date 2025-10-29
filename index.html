@@ -128,9 +128,6 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
-        // --- КЛЮЧЕВАЯ КОНСТАНТА ПЕРЕНАПРАВЛЕНИЯ ---
-        const ADMIN_DASHBOARD_URL = 'admin.html'; // Путь к админке
-
         // Предоставленная пользователем конфигурация в качестве резервной
         const USER_FALLBACK_CONFIG = {
             apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
@@ -175,7 +172,7 @@
                 console.log("Firebase успешно инициализирован.");
             } catch (e) {
                 console.error("КРИТИЧЕСКАЯ ОШИБКА: Ошибка инициализации Firebase.", e);
-                db = null; auth = null; // Обеспечиваем, что переменные null в случае ошибки
+                db = null; db = null; auth = null; // Обеспечиваем, что переменные null в случае ошибки
             }
         }
 
@@ -243,7 +240,7 @@
             }
         }
 
-        // --- ЛОГИКА АДМИНА: ВХОД ЧЕРЕЗ EMAIL/ПАРОЛЬ (ИСПРАВЛЕНО ПЕРЕНАПРАВЛЕНИЕ) ---
+        // --- ЛОГИКА АДМИНА: ВХОД ЧЕРЕЗ EMAIL/ПАРОЛЬ ---
         adminLogin.onclick = async () => {
             const email = adminEmailInput.value;
             const password = adminPasswordInput.value;
@@ -258,16 +255,8 @@
             try {
                 await signInWithEmailAndPassword(auth, email, password);
                 adminModal.classList.add('hidden');
-                
-                // 1. Отображаем сообщение об успехе
-                showCustomMessage(`Администратор успешно вошел (${auth.currentUser.uid}). Перенаправление...`);
+                showCustomMessage(`Администратор успешно вошел (${auth.currentUser.uid}).`);
                 console.log("Админ вошел. UID:", auth.currentUser.uid);
-                
-                // 2. ВАЖНО: Команда перенаправления
-                setTimeout(() => {
-                    window.location.href = ADMIN_DASHBOARD_URL;
-                }, 100); // Небольшая задержка, чтобы пользователь успел увидеть сообщение
-                
             } catch (error) {
                 console.error("Ошибка входа админа:", error);
                 let errorMessage = 'Ошибка входа. Проверьте данные.';
@@ -280,7 +269,7 @@
             }
         };
 
-        // --- ЛОГИКА АДМИНА: РЕГИСТРАЦИЯ ЧЕРЕЗ EMAIL/ПАРОЛЬ (ИСПРАВЛЕНО ПЕРЕНАПРАВЛЕНИЕ) ---
+        // --- ЛОГИКА АДМИНА: РЕГИСТРАЦИЯ ЧЕРЕЗ EMAIL/ПАРОЛЬ ---
         adminRegister.onclick = async () => {
             const email = adminEmailInput.value;
             const password = adminPasswordInput.value;
@@ -295,16 +284,8 @@
             try {
                 await createUserWithEmailAndPassword(auth, email, password);
                 adminModal.classList.add('hidden');
-                
-                // 1. Отображаем сообщение об успехе
-                showCustomMessage(`Администратор успешно зарегистрирован и вошел (${auth.currentUser.uid}). Перенаправление...`);
+                showCustomMessage(`Администратор успешно зарегистрирован и вошел (${auth.currentUser.uid}).`);
                 console.log("Админ зарегистрирован и вошел. UID:", auth.currentUser.uid);
-                
-                // 2. ВАЖНО: Команда перенаправления
-                setTimeout(() => {
-                    window.location.href = ADMIN_DASHBOARD_URL;
-                }, 100); // Небольшая задержка, чтобы пользователь успел увидеть сообщение
-                
             } catch (error) {
                 console.error("Ошибка регистрации админа:", error);
                 let errorMessage = 'Ошибка регистрации.';
