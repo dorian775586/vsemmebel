@@ -156,10 +156,22 @@ import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-
 // Устанавливаем режим отладки для Firestore
 setLogLevel('Debug');
 
-// --- FIREBASE CONFIG & AUTH ---
+// --- FIREBASE CONFIGURATION & AUTH ---
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+
+// --- FALLBACK: HARDCODED CONFIGURATION (ОБЯЗАТЕЛЬНО ЗАМЕНИТЕ ЭТИ ЗНАЧЕНИЯ!) ---
+// Если хостинг не передает переменные, мы используем эту структуру.
+const HARDCODED_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
+  authDomain: "vsemmebel-90d48.firebaseapp.com",
+  projectId: "vsemmebel-90d48",
+  storageBucket: "vsemmebel-90d48.firebasestorage.app",
+  messagingSenderId: "958123504041",
+  appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
+};
+// ------------------------------------------
 
 let firebaseConfig = null;
 let app = null;
@@ -168,21 +180,37 @@ let auth = null;
 let userId = null;
 const productCollectionPath = `artifacts/${appId}/public/data/offers`;
 
-// 1. Пытаемся распарсить и инициализировать
+
+// 1. Пытаемся получить конфиг из переменной хостинга
 if (firebaseConfigString) {
     try {
         firebaseConfig = JSON.parse(firebaseConfigString);
-        console.log("Конфигурация Firebase УСПЕШНО загружена и распарсена:", firebaseConfig); // <-- СМОТРИМ ЭТО СООБЩЕНИЕ!
-        
+        console.log("Конфигурация Firebase загружена через переменную хостинга.");
+    } catch (e) {
+        console.error("ОШИБКА: Не удалось распарсить JSON из переменной хостинга.", e);
+    }
+} 
+
+// 2. Если не удалось (или переменная отсутствовала), используем хардкодированную версию
+if (!firebaseConfig) {
+    firebaseConfig = HARDCODED_FIREBASE_CONFIG;
+    console.warn("ВНИМАНИЕ: Используется хардкодированная конфигурация Firebase. Замените заполнители!");
+}
+
+// 3. Финальная проверка и инициализация
+if (firebaseConfig && firebaseConfig.apiKey !== "ВАШ_API_KEY") {
+    try {
         app = initializeApp(firebaseConfig);
         db = getFirestore(app);
         auth = getAuth(app);
     } catch (e) {
-        console.error("ОШИБКА: Не удалось распарсить JSON конфигурации Firebase:", e); // <-- СМОТРИМ ЭТО СООБЩЕНИЕ!
-        console.error("Исходная строка, которая вызвала ошибку:", firebaseConfigString); // <-- СМОТРИМ ЭТО СООБЩЕНИЕ!
+        console.error("Ошибка инициализации Firebase:", e);
+        // Если инициализация не удалась, обнуляем db, чтобы предотвратить ошибки сохранения
+        db = null; 
     }
-} else {
-    console.error("КРИТИЧЕСКАЯ ОШИБКА: Переменная __firebase_config отсутствует (null/undefined)."); // <-- СМОТРИМ ЭТО СООБЩЕНИЕ!
+} else if (firebaseConfig && firebaseConfig.apiKey === "ВАШ_API_KEY") {
+    console.error("КРИТИЧЕСКАЯ ОШИБКА: Вы используете конфигурацию по умолчанию. ЗАМЕНИТЕ ВАШИ ДАННЫЕ!");
+    db = null;
 }
 
 
@@ -191,7 +219,6 @@ async function initializeAuth() {
     // Если Auth не инициализирован (из-за отсутствия конфига), пропускаем
     if (!auth) {
         userId = crypto.randomUUID();
-        // ВАЖНО: Мы НЕ вызываем loadExistingProducts, если нет db.
         return; 
     }
     
@@ -489,6 +516,7 @@ function loadExistingProducts(){
 }
 
 async function editProduct(id){
+    // Проверка на db остаётся, но теперь db должен быть инициализирован
     if (!db) return showMessage("Ошибка: База данных не инициализирована.");
 
     try {
@@ -527,7 +555,6 @@ async function editProduct(id){
 // Утилита для завершения процесса ввода
 function finishInput(dynamicArea, addButton, renderFunc) {
     dynamicArea.classList.add('hidden');
-    // !!! ИСПРАВЛЕНИЕ: Разблокируем кнопку, чтобы можно было добавить следующий элемент
     addButton.disabled = false; 
     renderFunc();
     renderCombinations(); // Обновляем списки комбинаций
@@ -535,11 +562,11 @@ function finishInput(dynamicArea, addButton, renderFunc) {
 
 // --- ФАСАДЫ ---
 function setupFacadeHandlers() {
-    if (!addFacadeBtn) return; // Проверка на существование элемента
+    if (!addFacadeBtn) return; 
 
     addFacadeBtn.onclick = () => {
         facadeDynamicArea.classList.remove('hidden');
-        addFacadeBtn.disabled = true; // Деактивируем, пока не нажмут ОК/Отмена
+        addFacadeBtn.disabled = true; 
         facadeInput.value = '';
         facadeInput.focus();
     };
@@ -559,7 +586,7 @@ function setupFacadeHandlers() {
 
 // --- МАТЕРИАЛЫ ---
 function setupMaterialHandlers() {
-    if (!addMaterialBtn) return; // Проверка на существование элемента
+    if (!addMaterialBtn) return; 
 
     addMaterialBtn.onclick = () => {
         materialDynamicArea.classList.remove('hidden');
@@ -583,7 +610,7 @@ function setupMaterialHandlers() {
 
 // --- ЦВЕТА ---
 function setupColorHandlers() {
-    if (!addColorBtn) return; // Проверка на существование элемента
+    if (!addColorBtn) return; 
 
     addColorBtn.onclick = () => {
         colorDynamicArea.classList.remove('hidden');
@@ -624,7 +651,6 @@ function setupGeneralHandlers() {
     };
 
     saveBtn.onclick=async()=>{
-        // Здесь происходит проверка!
         if (!db) {
             return showMessage("Ошибка: База данных не инициализирована. Сохранение невозможно.");
         }
