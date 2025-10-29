@@ -16,6 +16,8 @@ body { font-family: 'Inter', sans-serif; background:#f7f7f7; }
 .btn-delete:hover { background:#b91c1c; }
 .option-btn { border:2px solid #f97316; background:#ffedd5; padding:0.3rem 0.8rem; margin-right:0.3rem; border-radius:0.5rem; cursor:pointer; transition:0.2s; }
 .option-btn.active { background:#f97316;color:white; box-shadow:0 2px 5px rgba(249,115,22,0.3); }
+.thumbnail { width:50px;height:50px;object-fit:cover;border:2px solid #ddd;border-radius:0.5rem;margin-right:0.5rem; }
+.thumbnail img { width:100%; height:100%; object-fit:cover; border-radius:0.5rem; }
 </style>
 </head>
 <body class="p-6">
@@ -88,7 +90,7 @@ body { font-family: 'Inter', sans-serif; background:#f7f7f7; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, setDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, setDoc, doc, onSnapshot, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
@@ -101,7 +103,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- DOM ---
+// DOM
 const titleInput = document.getElementById('title');
 const categoryInput = document.getElementById('category');
 const activeInput = document.getElementById('active');
@@ -128,132 +130,124 @@ let facades = [];
 let colors = [];
 let combinations = [];
 
-// --- Функции ---
-function renderImages() {
-    imagesContainer.innerHTML = "";
-    images.forEach((url, i)=>{
+// --- Render Functions ---
+function renderImages(){
+    imagesContainer.innerHTML="";
+    images.forEach((url,i)=>{
         const div = document.createElement('div');
-        div.className = "flex items-center gap-2 mb-1";
-        div.innerHTML = `<input type="text" class="input-field" value="${url}" placeholder="URL изображения">
-                         <button class="btn btn-delete">Удалить</button>`;
+        div.className="flex items-center gap-2 mb-1";
+        div.innerHTML=`<input type="text" class="input-field" value="${url}" placeholder="URL изображения">
+                       <button class="btn btn-delete">Удалить</button>`;
         const input = div.querySelector('input');
-        input.oninput = e=>images[i]=e.target.value;
-        div.querySelector('button').onclick = ()=>{ images.splice(i,1); renderImages(); };
+        input.oninput=e=>images[i]=e.target.value;
+        div.querySelector('button').onclick=()=>{ images.splice(i,1); renderImages(); };
         imagesContainer.appendChild(div);
     });
 }
+addImageBtn.onclick=()=>{ images.push(''); renderImages(); };
 
-addImageBtn.onclick = ()=>{ images.push(''); renderImages(); };
-
-function renderFacades() {
-    facadesContainer.innerHTML = "";
+function renderFacades(){
+    facadesContainer.innerHTML="";
     facades.forEach((f,i)=>{
-        const btn = document.createElement('button');
-        btn.className = "option-btn";
-        btn.textContent = f;
-        btn.onclick = ()=>{ facades.splice(i,1); renderFacades(); };
+        const btn=document.createElement('button');
+        btn.className="option-btn";
+        btn.textContent=f;
+        btn.onclick=()=>{ facades.splice(i,1); renderFacades(); };
         facadesContainer.appendChild(btn);
     });
 }
+addFacadeBtn.onclick=()=>{ if(facadeInput.value.trim()){ facades.push(facadeInput.value.trim()); facadeInput.value=''; renderFacades(); } };
 
-addFacadeBtn.onclick = ()=>{
-    if(facadeInput.value.trim()){ facades.push(facadeInput.value.trim()); facadeInput.value=''; renderFacades(); }
-};
-
-function renderColors() {
-    colorsContainer.innerHTML = "";
+function renderColors(){
+    colorsContainer.innerHTML="";
     colors.forEach((c,i)=>{
-        const btn = document.createElement('button');
+        const btn=document.createElement('button');
         btn.className="option-btn";
-        btn.textContent = c.name;
-        btn.style.background = c.hex;
-        btn.onclick = ()=>{ colors.splice(i,1); renderColors(); };
+        btn.textContent=c.name;
+        btn.style.background=c.hex;
+        btn.onclick=()=>{ colors.splice(i,1); renderColors(); };
         colorsContainer.appendChild(btn);
     });
 }
+addColorBtn.onclick=()=>{ if(colorNameInput.value.trim() && colorHexInput.value){ colors.push({name: colorNameInput.value.trim(), hex: colorHexInput.value}); colorNameInput.value=''; colorHexInput.value='#ffffff'; renderColors(); } };
 
-addColorBtn.onclick = ()=>{
-    if(colorNameInput.value.trim() && colorHexInput.value){
-        colors.push({name: colorNameInput.value.trim(), hex: colorHexInput.value});
-        colorNameInput.value=''; colorHexInput.value='#ffffff';
-        renderColors();
-    }
-};
-
-function renderCombinations() {
+function renderCombinations(){
     combinationsContainer.innerHTML="";
     combinations.forEach((c,i)=>{
-        const div = document.createElement('div');
+        const div=document.createElement('div');
         div.className="flex gap-2 mb-1 items-center";
-        div.innerHTML = `<input type="text" class="input-field" value="${c.material}" placeholder="Материал">
-                         <input type="text" class="input-field" value="${c.facade}" placeholder="Фасад">
-                         <input type="text" class="input-field" value="${c.color}" placeholder="Цвет">
-                         <input type="number" class="input-field" value="${c.price}" placeholder="Цена">
-                         <button class="btn btn-delete">Удалить</button>`;
-        const inputs = div.querySelectorAll('input');
-        inputs[0].oninput = e=>c.material=e.target.value;
-        inputs[1].oninput = e=>c.facade=e.target.value;
-        inputs[2].oninput = e=>c.color=e.target.value;
-        inputs[3].oninput = e=>c.price=parseFloat(e.target.value)||0;
-        div.querySelector('button').onclick = ()=>{ combinations.splice(i,1); renderCombinations(); };
+        div.innerHTML=`<input type="text" class="input-field" value="${c.material}" placeholder="Материал">
+                       <input type="text" class="input-field" value="${c.facade}" placeholder="Фасад">
+                       <input type="text" class="input-field" value="${c.color}" placeholder="Цвет">
+                       <input type="number" class="input-field" value="${c.price}" placeholder="Цена">
+                       <button class="btn btn-delete">Удалить</button>`;
+        const inputs=div.querySelectorAll('input');
+        inputs[0].oninput=e=>c.material=e.target.value;
+        inputs[1].oninput=e=>c.facade=e.target.value;
+        inputs[2].oninput=e=>c.color=e.target.value;
+        inputs[3].oninput=e=>c.price=parseFloat(e.target.value)||0;
+        div.querySelector('button').onclick=()=>{ combinations.splice(i,1); renderCombinations(); };
         combinationsContainer.appendChild(div);
     });
 }
+addComboBtn.onclick=()=>{ combinations.push({material:'',facade:'',color:'',price:0}); renderCombinations(); };
 
-addComboBtn.onclick = ()=>{
-    combinations.push({material:'',facade:'',color:'',price:0});
-    renderCombinations();
-};
-
-saveBtn.onclick = async ()=>{
-    const data = {
-        title: titleInput.value.trim(),
-        category: categoryInput.value.trim(),
-        active: activeInput.checked,
-        discount: parseInt(discountInput.value)||0,
+// --- Save / Clear ---
+saveBtn.onclick=async()=>{
+    const data={
+        title:titleInput.value.trim(),
+        category:categoryInput.value.trim(),
+        active:activeInput.checked,
+        discount:parseInt(discountInput.value)||0,
         images,
         facades,
-        material: materialInput.value.trim(),
+        material:materialInput.value.trim(),
         colors,
         combinations
     };
+    if(!data.title){ return alert("Введите название!"); }
     if(productId){
-        await setDoc(doc(db,'offers',productId), data);
+        await setDoc(doc(db,'offers',productId),data);
         alert("Товар обновлён!");
-    } else {
-        const docRef = await addDoc(collection(db,'offers'), data);
-        productId = docRef.id;
+    }else{
+        const docRef=await addDoc(collection(db,'offers'),data);
+        productId=docRef.id;
         alert("Товар создан!");
     }
     loadExistingProducts();
 };
 
-clearBtn.onclick = ()=>{
+clearBtn.onclick=()=>{
     productId=null; titleInput.value=''; categoryInput.value=''; activeInput.checked=false;
     discountInput.value=0; images=[]; facades=[]; colors=[]; combinations=[];
-    renderImages(); renderFacades(); renderColors(); renderCombinations();
     materialInput.value='';
+    renderImages(); renderFacades(); renderColors(); renderCombinations();
 };
 
+// --- Existing Products ---
 function loadExistingProducts(){
     onSnapshot(collection(db,'offers'), snapshot=>{
         existingProductsDiv.innerHTML='';
         snapshot.docs.forEach(docSnap=>{
-            const data = docSnap.data();
-            const div = document.createElement('div');
+            const data=docSnap.data();
+            const div=document.createElement('div');
             div.className="flex justify-between items-center bg-white p-3 rounded-md shadow-sm";
-            div.innerHTML = `<span>${data.title||"Без названия"}</span>
-                             <button class="btn btn-save">Редактировать</button>`;
-            div.querySelector('button').onclick = ()=>editProduct(docSnap.id);
+            div.innerHTML=`<span>${data.title||"Без названия"}</span>
+                           <div class="flex gap-2">
+                             <button class="btn btn-save">Редактировать</button>
+                             <button class="btn btn-delete">Удалить</button>
+                           </div>`;
+            div.querySelectorAll('button')[0].onclick=()=>editProduct(docSnap.id);
+            div.querySelectorAll('button')[1].onclick=async()=>{ if(confirm('Удалить товар?')){ await deleteDoc(doc(db,'offers',docSnap.id)); } };
             existingProductsDiv.appendChild(div);
         });
     });
 }
 
 async function editProduct(id){
-    const docSnap = await getDoc(doc(db,'offers',id));
+    const docSnap=await getDoc(doc(db,'offers',id));
     if(!docSnap.exists()) return alert("Товар не найден!");
-    const data = docSnap.data();
+    const data=docSnap.data();
     productId=id;
     titleInput.value=data.title||'';
     categoryInput.value=data.category||'';
@@ -266,9 +260,8 @@ async function editProduct(id){
     combinations=data.combinations||[]; renderCombinations();
 }
 
-// Инициализация
+// --- Init ---
 loadExistingProducts();
-
 </script>
 </body>
 </html>
