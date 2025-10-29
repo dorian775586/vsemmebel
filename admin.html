@@ -60,9 +60,17 @@ select.input-field {
         <input id="title" class="input-field" type="text" placeholder="Название товара">
     </div>
 
+    <!-- ОБНОВЛЕННЫЙ БЛОК КАТЕГОРИИ -->
     <div class="mb-4">
         <label class="font-semibold text-gray-600">Категория</label>
-        <input id="category" class="input-field" type="text" placeholder="Категория">
+        <select id="category" class="input-field">
+            <option value="" disabled selected>-- Выберите категорию --</option>
+            <option value="Диваны">Диваны</option>
+            <option value="Кровати">Кровати</option>
+            <option value="Шкафы">Шкафы</option>
+            <option value="Столы">Столы и Стулья</option>
+            <option value="Кухни">Кухни</option>
+        </select>
     </div>
     
     <div class="mb-4">
@@ -235,9 +243,9 @@ async function initializeAuth() {
         console.error("Ошибка аутентификации Firebase:", error);
         // Сообщение о критической ошибке аутентификации
         if (error.code === 'auth/admin-restricted-operation' || error.code === 'auth/operation-not-allowed') {
-             showMessage("Критическая ошибка: Включите 'Анонимную аутентификацию' в консоли Firebase (раздел Authentication -> Sign-in method).");
+            showMessage("Критическая ошибка: Включите 'Анонимную аутентификацию' в консоли Firebase (раздел Authentication -> Sign-in method).");
         } else {
-             showMessage("Ошибка аутентификации. Проверьте консоль для деталей.");
+            showMessage("Ошибка аутентификации. Проверьте консоль для деталей.");
         }
     }
 }
@@ -285,7 +293,7 @@ let combinations = [];
 
 // --- DOM ELEMENTS (Привязка элементов) ---
 const titleInput = document.getElementById('title');
-const categoryInput = document.getElementById('category');
+const categoryInput = document.getElementById('category'); // Теперь это SELECT
 const imagesContainer = document.getElementById('images-container');
 const addImageBtn = document.getElementById('add-image-btn');
 
@@ -500,10 +508,10 @@ function loadExistingProducts(){
             `;
             
             div.innerHTML=`${titleStatus}
-                           <div class="flex gap-2 flex-shrink-0">
-                             <button class="btn btn-save py-2 px-3 text-sm">Редактировать</button>
-                             <button class="btn btn-delete py-2 px-3 text-sm">Удалить</button>
-                           </div>`;
+                               <div class="flex gap-2 flex-shrink-0">
+                                 <button class="btn btn-save py-2 px-3 text-sm">Редактировать</button>
+                                 <button class="btn btn-delete py-2 px-3 text-sm">Удалить</button>
+                               </div>`;
             
             div.querySelectorAll('button')[0].onclick=()=>editProduct(docSnap.id);
             div.querySelectorAll('button')[1].onclick=()=>{ 
@@ -547,7 +555,7 @@ async function editProduct(id){
         addMaterialBtn.disabled = false;
         colorDynamicArea.classList.add('hidden');
         addColorBtn.disabled = false;
-        
+
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
         console.error("Ошибка при загрузке товара для редактирования:", e);
@@ -674,6 +682,10 @@ function setupGeneralHandlers() {
         if(!data.title){ 
             return showMessage("Введите название товара!"); 
         }
+        if(!data.category){ 
+            return showMessage("Выберите категорию товара!"); 
+        }
+
 
         try {
             if(productId){
@@ -693,7 +705,7 @@ function setupGeneralHandlers() {
     clearBtn.onclick=()=>{
         productId=null; 
         titleInput.value=''; 
-        categoryInput.value=''; 
+        categoryInput.value=''; // Устанавливает выбранное значение в "" (что соответствует опции "Выберите категорию")
         images=[]; 
         facades=[]; 
         materials=[]; 
