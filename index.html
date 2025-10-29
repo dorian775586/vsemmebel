@@ -3,20 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mebel.bel</title>
+    <title>Mebel.by - Выгодные предложения</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* Убран pb-20 из body */
         body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 100vh; } 
         .header-bg { background-color: #ffffff; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); }
-        /* mobile-nav больше не нужен, но оставляем на случай, если вы добавите его позже */
-        .mobile-nav { box-shadow: 0 -8px 15px -3px rgba(0,0,0,0.05); } 
         .category-button {
             padding: 0.6rem 1.4rem; border: 2px solid #ffedd5; background-color: #ffffff;
             border-radius: 9999px; font-weight: 600; color: #4b5563; transition: all 0.3s ease;
             cursor: pointer; text-align: center; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            font-size: 0.95rem; /* Немного уменьшил размер шрифта */
+            font-size: 0.95rem; 
         }
         .category-button.active, .category-button:hover {
             border-color: #f97316; background-color: #f97316; color: #ffffff;
@@ -101,18 +98,18 @@
             <!-- Контейнер для сообщений об ошибках -->
             <div id="admin-message" class="text-sm text-center font-medium my-2 hidden p-2 rounded"></div>
             
-            <input type="email" id="admin-email" placeholder="Email" class="w-full mb-3 p-2 border rounded-lg" />
-            <input type="password" id="admin-password" placeholder="Пароль" class="w-full mb-3 p-2 border rounded-lg" />
+            <input type="email" id="admin-email" placeholder="Email" class="w-full mb-3 p-2 border rounded-lg focus:ring-orange-500 focus:border-orange-500 transition" />
+            <input type="password" id="admin-password" placeholder="Пароль" class="w-full mb-3 p-2 border rounded-lg focus:ring-orange-500 focus:border-orange-500 transition" />
             <div class="flex justify-between">
                 <button id="admin-register" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">Регистрация</button>
                 <button id="admin-login" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">Войти</button>
             </div>
-            <button id="admin-close" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">&times;</button>
+            <button id="admin-close" class="absolute top-3 right-3 text-2xl text-gray-400 hover:text-gray-600 leading-none">&times;</button>
         </div>
     </div>
     
     <div id="custom-message-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full relative text-center">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full relative text-center shadow-xl">
             <p id="custom-message-text" class="text-gray-700 mb-4"></p>
             <button id="custom-message-close" class="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition">ОК</button>
         </div>
@@ -122,8 +119,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Устанавливаем режим отладки для Firestore
         setLogLevel('Debug');
@@ -131,20 +127,14 @@
         // --- FIREBASE CONFIGURATION & AUTH VARIABLES ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-
-        // --- FALLBACK: HARDCODED CONFIGURATION (Используется для надежности) ---
-        const HARDCODED_FIREBASE_CONFIG = {
-            apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70", 
-            authDomain: "vsemmebel-90d48.firebaseapp.com",
-            projectId: "vsemmebel-90d48", 
-            storageBucket: "vsemmebel-90d48.appspot.com", 
-            messagingSenderId: "958123504041",
-            appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
-        };
-        // ------------------------------------------
-
         let firebaseConfig = null;
+
+        try {
+            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        } catch (e) {
+            console.error("ОШИБКА: Не удалось распарсить JSON из переменной хостинга.", e);
+        }
+
         let app = null;
         let db = null;
         let auth = null;
@@ -153,36 +143,23 @@
 
         // 1. Инициализация Firebase
         function initializeFirebase() {
-            if (firebaseConfigString) {
-                try {
-                    firebaseConfig = JSON.parse(firebaseConfigString);
-                } catch (e) {
-                    console.error("ОШИБКА: Не удалось распарсить JSON из переменной хостинга.", e);
-                }
-            } 
-
-            if (!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey === "ВАШ_API_KEY") {
-                firebaseConfig = HARDCODED_FIREBASE_CONFIG;
-                console.warn("ВНИМАНИЕ: Используется хардкодированная конфигурация Firebase.");
+            if (!firebaseConfig) {
+                console.error("КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase недоступна.");
+                return;
             }
 
-            if (firebaseConfig && firebaseConfig.apiKey) {
-                try {
-                    app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
-                    console.log("Firebase успешно инициализирован.");
-                } catch (e) {
-                    console.error("КРИТИЧЕСКАЯ ОШИБКА: Ошибка инициализации Firebase.", e);
-                    db = null; 
-                }
-            } else {
-                console.error("КРИТИЧЕСКАЯ ОШИБКА: Конфигурация Firebase недействительна.");
-                db = null;
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                console.log("Firebase успешно инициализирован.");
+            } catch (e) {
+                console.error("КРИТИЧЕСКАЯ ОШИБКА: Ошибка инициализации Firebase.", e);
+                db = null; 
             }
         }
 
-        // 2. Инициализация аутентификации
+        // 2. Инициализация аутентификации (вход анонимно или по токену)
         async function initializeAuth() {
             if (!auth) {
                 userId = crypto.randomUUID();
@@ -209,7 +186,8 @@
         const customModal = document.getElementById('custom-message-modal');
         const customMessageText = document.getElementById('custom-message-text');
         const customMessageCloseBtn = document.getElementById('custom-message-close');
-
+        
+        // Используем одну функцию для закрытия модалок
         function closeCustomMessage() {
             customModal.classList.add('hidden');
         }
@@ -220,6 +198,7 @@
         }
 
         customMessageCloseBtn.onclick = closeCustomMessage;
+
 
         // --- Admin Login Modal Logic ---
         const adminModal = document.getElementById('admin-modal');
@@ -244,42 +223,60 @@
             }
         }
 
+        // --- ЛОГИКА АДМИНА: ВХОД ЧЕРЕЗ EMAIL/ПАРОЛЬ ---
         adminLogin.onclick = async () => {
             const email = adminEmailInput.value;
             const password = adminPasswordInput.value;
             if (!email || !password) return showAdminMessage('Введите email и пароль', true);
+            if (!auth) return showAdminMessage('Ошибка: Firebase Auth не инициализирован.', true);
 
             try {
+                // Используем стандартный вход через Email/Password
                 await signInWithEmailAndPassword(auth, email, password);
                 adminModal.classList.add('hidden');
-                showCustomMessage('Администратор успешно вошел. Перейдите в раздел "Админка" для управления товарами.');
-                // В реальном приложении здесь должен быть переход на страницу админки
-                console.log("Админ вошел.");
+                showCustomMessage(`Администратор успешно вошел (${auth.currentUser.uid}).`);
+                console.log("Админ вошел. UID:", auth.currentUser.uid);
             } catch (error) {
                 console.error("Ошибка входа админа:", error);
-                showAdminMessage('Ошибка входа. Проверьте данные. Код ошибки: ' + error.code, true);
+                let errorMessage = 'Ошибка входа. Проверьте данные.';
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage = 'Пользователь с таким email не найден.';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage = 'Неверный пароль.';
+                }
+                showAdminMessage(errorMessage, true);
             }
         };
 
+        // --- ЛОГИКА АДМИНА: РЕГИСТРАЦИЯ ЧЕРЕЗ EMAIL/ПАРОЛЬ ---
         adminRegister.onclick = async () => {
             const email = adminEmailInput.value;
             const password = adminPasswordInput.value;
             if (!email || !password) return showAdminMessage('Введите email и пароль', true);
+            if (!auth) return showAdminMessage('Ошибка: Firebase Auth не инициализирован.', true);
 
             try {
+                // Используем стандартную регистрацию через Email/Password
                 await createUserWithEmailAndPassword(auth, email, password);
                 adminModal.classList.add('hidden');
-                showCustomMessage('Администратор успешно зарегистрирован и вошел.');
+                showCustomMessage(`Администратор успешно зарегистрирован и вошел (${auth.currentUser.uid}).`);
+                console.log("Админ зарегистрирован и вошел. UID:", auth.currentUser.uid);
             } catch (error) {
                 console.error("Ошибка регистрации админа:", error);
-                showAdminMessage('Ошибка регистрации. Возможно, пользователь уже существует или пароль слишком простой. Код ошибки: ' + error.code, true);
+                let errorMessage = 'Ошибка регистрации.';
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = 'Этот email уже используется.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = 'Пароль должен быть не менее 6 символов.';
+                }
+                showAdminMessage(errorMessage, true);
             }
         };
 
 
         // --- MAIN APPLICATION LOGIC ---
 
-        // Категории из Админки + "Все товары"
+        // Категории (заглушка)
         const CATEGORIES = ["Все товары", "Диваны", "Кровати", "Шкафы", "Столы и Стулья", "Кухни"];
 
         let currentCategory = "Все товары";
@@ -299,26 +296,24 @@
             if (!db) return;
 
             const offersRef = collection(db, productCollectionPath);
-            // Запрашиваем только те товары, у которых есть хотя бы одна активная комбинация
             const q = query(offersRef);
 
             onSnapshot(q, (snapshot) => {
                 const fetchedOffers = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
+                    // Временно используем первую комбинацию для цены, если она активна
                     const activeCombo = data.combinations?.find(c => c.isActive);
                     
-                    // Добавляем только активные товары
                     if (activeCombo) {
                         fetchedOffers.push({
                             id: doc.id,
                             title: data.title || 'Товар без названия',
                             category: data.category || 'Прочее',
-                            imageUrl: data.images?.[0] || 'https://placehold.co/400x300/f3f4f6/4b5563?text=Нет+Фото',
-                            price: activeCombo.price,
-                            discount: activeCombo.discount,
-                            originalPrice: activeCombo.price, // Сохраняем начальную цену
-                            finalPrice: activeCombo.discount > 0 ? activeCombo.price * (1 - activeCombo.discount / 100) : activeCombo.price
+                            imageUrl: data.images?.[0] || `https://placehold.co/400x300/f3f4f6/4b5563?text=${encodeURIComponent(data.title || 'Нет Фото')}`,
+                            discount: data.discount || 0,
+                            originalPrice: activeCombo.price || 0, 
+                            finalPrice: activeCombo.price * (1 - (data.discount || 0) / 100),
                         });
                     }
                 });
@@ -329,7 +324,7 @@
                 renderOffers(); 
             }, (error) => {
                 console.error("Ошибка получения товаров из Firestore:", error);
-                showCustomMessage("Не удалось загрузить товары. Проверьте подключение к базе данных.");
+                showCustomMessage("Не удалось загрузить товары. Проверьте консоль.");
             });
         }
 
