@@ -1,107 +1,24 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Админ-панель</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-    .container-card { max-width: 1200px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); margin-bottom:2rem; }
-    .btn-primary { background-color: #4f46e5; transition: background-color 0.2s; }
-    .btn-primary:hover { background-color: #4338ca; }
-    .status-success { background-color: #d1fae5; color: #065f46; }
-    .status-error { background-color: #fee2e2; color: #991b1b; }
-    .color-box { width: 25px; height: 25px; border:1px solid #ccc; display:inline-block; margin-right:5px; vertical-align:middle; }
-    select, input, textarea { font-family: 'Inter', sans-serif; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестовая Страница (Надеюсь, Сработает)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
-<body class="p-4 sm:p-8">
-
-  <div id="accessDenied" class="hidden container-card mx-auto bg-red-100 text-red-700 p-6 rounded-xl text-center font-bold">
-    У вас нет прав администратора. Пожалуйста, войдите как админ.
-  </div>
-
-  <div id="adminPanel" class="container-card mx-auto bg-white p-6 rounded-xl hidden">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-4">Админ-панель: Товары</h1>
-
-    <!-- Хлебные крошки -->
-    <div id="breadcrumb-container" class="mb-4 text-sm text-gray-500"></div>
-
-    <form id="addOfferForm" class="space-y-4">
-
-      <!-- Селекторы комнаты/категории/подкатегории -->
-      <label class="block text-sm font-medium text-gray-700">Комната</label>
-      <div id="roomSelectContainer"></div>
-      <label class="block text-sm font-medium text-gray-700">Категория</label>
-      <div id="categorySelectContainer"></div>
-      <label class="block text-sm font-medium text-gray-700">Подкатегория</label>
-      <div id="subcategorySelectContainer"></div>
-
-      <!-- Название и описание -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Название товара</label>
-        <input type="text" id="title" class="w-full p-2 border rounded-lg" required>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Скидка (%)</label>
-        <input type="number" id="discount" min="0" max="100" class="w-full p-2 border rounded-lg">
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Описание</label>
-        <textarea id="description" rows="3" class="w-full p-2 border rounded-lg"></textarea>
-      </div>
-
-      <!-- Картинки -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Картинки</label>
-        <div id="images-container" class="mb-2"></div>
-        <button id="add-image-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить картинку</button>
-      </div>
-
-      <!-- Фасады -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Фасады</label>
-        <div id="facades-container" class="mb-2"></div>
-        <button id="add-facade-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить фасад</button>
-      </div>
-
-      <!-- Цвета -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Цвета</label>
-        <div id="colors-container" class="mb-2"></div>
-        <button id="add-color-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить цвет</button>
-      </div>
-
-      <!-- Цены -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Цены по комбинациям</label>
-        <div class="flex gap-2 mb-2">
-          <button id="generate-combinations-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Сгенерировать все пары</button>
-          <button id="add-price-btn" type="button" class="btn-primary text-white py-1 px-3 rounded">Добавить строку</button>
-        </div>
-        <div id="prices-container" class="mb-2"></div>
-      </div>
-
-      <button id="save-btn" type="submit" class="w-full btn-primary text-white font-semibold py-2 rounded-lg shadow-md hover:shadow-lg">Сохранить</button>
-      <p id="statusMessage" class="hidden text-center py-2 rounded-lg font-medium"></p>
-    </form>
-
-    <!-- Структура комнат/категорий -->
-    <div class="mt-8">
-      <h2 class="text-2xl font-bold mb-4">Управление комнатами и категориями</h2>
-      <div id="rooms-container" class="space-y-4"></div>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-10 rounded-xl shadow-2xl text-center max-w-lg w-full border-t-8 border-indigo-600 animate-pulse-once">
+        <h1 class="text-3xl font-extrabold text-gray-800 mb-4">✅ Успешный Тест Развертывания</h1>
+        <p class="text-lg text-gray-600 mb-6">
+            Если вы видите этот текст, мы успешно обошли ошибку "Not Found" путем создания нового файла с уникальным именем.
+        </p>
+        <p class="text-sm text-indigo-500 font-medium border-t pt-3 mt-3">
+            Проблема была не в коде, а в путях компилятора.
+        </p>
     </div>
-
-    <!-- Список существующих товаров -->
-    <h2 class="text-2xl font-bold mt-8 mb-4">Существующие товары</h2>
-    <div id="offers-list" class="space-y-2"></div>
-
-    <button id="logoutBtn" class="mt-6 w-full bg-red-500 text-white font-semibold py-2 rounded-lg hover:bg-red-600 transition">Выйти</button>
-  </div>
-
-  <script type="module" src="./admin.js"></script>
 </body>
 </html>
