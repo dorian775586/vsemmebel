@@ -413,10 +413,10 @@
 
                 const priceDisplay = offer.discount > 0 ? 
                     `
-                    <p class="text-xl font-extrabold text-red-600">${Math.round(finalPrice)} ₽</p>
-                    <p class="text-sm text-gray-400 line-through">${Math.round(originalPrice)} ₽</p>
+                    <p class="text-xl font-extrabold text-red-600">${Math.round(finalPrice)} BYN</p>
+                    <p class="text-sm text-gray-400 line-through">${Math.round(originalPrice)} BYN</p>
                     ` : 
-                    `<p class="text-xl font-extrabold text-gray-900">${Math.round(finalPrice)} ₽</p>`;
+                    `<p class="text-xl font-extrabold text-gray-900">${Math.round(finalPrice)} BYN</p>`;
 
                 card.innerHTML = `
                     <div class="h-48 overflow-hidden relative">

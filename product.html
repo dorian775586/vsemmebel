@@ -296,35 +296,44 @@ function initializeProductView(data) {
 }
 
 function updateProductView() {
-  if (!productData) return;
-  const combo = findCombination();
-  if (!combo) return;
+    if (!productData) return;
 
-  updateOptionButtons("material-options", selectedMaterial);
-  updateOptionButtons("facade-options", selectedFacade);
-  updateOptionButtons("color-options", selectedColor);
+    // Находим комбинацию для выбранных опций
+    const combo = findCombination();
+    if (!combo) return;
 
-  const buyButton = document.getElementById("buy-button");
-  const errorMessage = document.getElementById("error-message");
+    // Обновляем кнопки выбора
+    updateOptionButtons("material-options", selectedMaterial);
+    updateOptionButtons("facade-options", selectedFacade);
+    updateOptionButtons("color-options", selectedColor);
 
-  const basePrice = combo.price || 0;
-  const discount = combo.discount || 0;
+    const buyButton = document.getElementById("buy-button");
+    const errorMessage = document.getElementById("error-message");
 
-  errorMessage.classList.add("hidden");
+    errorMessage.classList.add("hidden");
 
-  const oldPriceEl = document.getElementById("old-price");
-  const newPriceEl = document.getElementById("new-price");
-  oldPriceEl.textContent = formatPrice(basePrice);
-  newPriceEl.textContent = formatPrice(Math.round(basePrice*(1-discount/100)));
-  oldPriceEl.style.display = discount>0?"inline":"none";
+    // Обновляем цены
+    const basePrice = combo.price || 0;
+    const discount = combo.discount || 0;
+    const oldPriceEl = document.getElementById("old-price");
+    const newPriceEl = document.getElementById("new-price");
+    oldPriceEl.textContent = formatPrice(basePrice);
+    newPriceEl.textContent = formatPrice(Math.round(basePrice * (1 - discount / 100)));
+    oldPriceEl.style.display = discount > 0 ? "inline" : "none";
 
-  const mainImage = document.getElementById("main-product-image");
-  mainImage.style.opacity = 0;
-  setTimeout(()=>{ mainImage.src = combo.colorImage||productData.images?.[0]||"https://placehold.co/800x600?text=Нет+изображения"; mainImage.style.opacity=1; },150);
+    // Обновляем главное изображение по выбранному цвету
+    const mainImage = document.getElementById("main-product-image");
+    mainImage.style.opacity = 0;
+    setTimeout(() => {
+        // Если combo.colorImage есть, показываем его, иначе первое изображение из галереи
+        mainImage.src = combo.colorImage || (productData.images?.[0] || "https://placehold.co/800x600?text=Нет+изображения");
+        mainImage.style.opacity = 1;
+    }, 150);
 
-  buyButton.disabled = false;
-  buyButton.textContent = "Купить";
+    buyButton.disabled = false;
+    buyButton.textContent = "Купить";
 }
+
 
 function updateOptionButtons(containerId, value) {
   const container = document.getElementById(containerId);
