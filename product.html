@@ -178,9 +178,10 @@ async function loadProduct(id) {
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
     productData = docSnap.data();
-    showMessage(`Товар "${productData.title || 'загружен'}" успешно загружен.`, false);
     initializeProductView(productData);
-  } else findFirstAvailableProduct();
+  } else {
+    findFirstAvailableProduct();
+  }
 }
 
 function renderGallery(images) {
