@@ -25,6 +25,7 @@
             background-color: white; border-radius: 1.25rem; overflow: hidden;
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05),0 10px 10px -5px rgba(0,0,0,0.04);
             transition: transform 0.3s cubic-bezier(0.25,0.8,0.25,1); border: 1px solid #f3f4f6;
+            cursor: pointer; /* Добавлено, чтобы показать кликабельность */
         }
         .offer-card:hover {
             transform: translateY(-6px);
@@ -32,6 +33,9 @@
         }
         .card-button { background-color: #f97316; box-shadow: 0 4px 10px rgba(249,115,22,0.4); }
         .card-button:hover { background-color: #ea580c; }
+        
+        /* Стили для галереи на странице деталей */
+        .thumb-active { border: 3px solid #f97316; }
     </style>
 </head>
 <body>
@@ -39,7 +43,7 @@
     <!-- Верхняя навигация -->
     <header class="sticky top-0 header-bg z-20">
         <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-3xl font-black text-gray-900 tracking-tight">Mebel.by</h1>
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight cursor-pointer" onclick="hideProductDetails()">Mebel.by</h1>
             <div class="flex items-center space-x-4">
                 <div class="flex items-center space-x-2 text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
                     <span id="current-city" class="font-bold text-gray-700">Гомель</span>
@@ -56,41 +60,58 @@
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 mt-6">
-        <!-- Баннер -->
-        <div class="p-8 md:p-12 rounded-3xl bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-2xl mb-8 relative overflow-hidden">
-            <div class="relative z-10 text-center">
-                <p class="text-xl font-medium text-white mb-2 tracking-wider">СКИДКИ ДО 50%</p>
-                <h2 class="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">Ваша Новая Кухня</h2>
-                <p class="text-lg font-light max-w-lg mx-auto">Получите бесплатный 3D-проект и замер уже сегодня!</p>
-                <button class="mt-6 bg-white text-orange-600 font-black py-3 px-8 rounded-full transition duration-300 shadow-lg hover:bg-gray-100 uppercase text-base">
-                    Записаться на замер
-                </button>
+    <!-- ОСНОВНОЙ КОНТЕЙНЕР ДЛЯ СПИСКА ТОВАРОВ -->
+    <div id="main-view-container">
+        <main class="max-w-4xl mx-auto px-4 mt-6">
+            <!-- Баннер -->
+            <div class="p-8 md:p-12 rounded-3xl bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-2xl mb-8 relative overflow-hidden">
+                <div class="relative z-10 text-center">
+                    <p class="text-xl font-medium text-white mb-2 tracking-wider">СКИДКИ ДО 50%</p>
+                    <h2 class="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">Ваша Новая Кухня</h2>
+                    <p class="text-lg font-light max-w-lg mx-auto">Получите бесплатный 3D-проект и замер уже сегодня!</p>
+                    <button class="mt-6 bg-white text-orange-600 font-black py-3 px-8 rounded-full transition duration-300 shadow-lg hover:bg-gray-100 uppercase text-base">
+                        Записаться на замер
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <!-- Поиск -->
-        <div class="relative mb-8">
-            <input type="text" id="search-input" placeholder="Поиск: диван, шкаф, кухня..." class="w-full py-3.5 pl-14 pr-6 text-lg border-2 border-gray-200 rounded-full focus:ring-orange-500 focus:border-orange-500 transition duration-200" />
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <!-- Поиск -->
+            <div class="relative mb-8">
+                <input type="text" id="search-input" placeholder="Поиск: диван, шкаф, кухня..." class="w-full py-3.5 pl-14 pr-6 text-lg border-2 border-gray-200 rounded-full focus:ring-orange-500 focus:border-orange-500 transition duration-200" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+
+            <!-- Категории -->
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Каталог</h3>
+            <div id="category-filter" class="flex flex-nowrap overflow-x-auto space-x-3 pb-4 scrollbar-hide">
+                <!-- Категории будут загружены сюда JavaScript'ом -->
+            </div>
+
+            <!-- Предложения -->
+            <h3 class="text-2xl font-bold text-gray-800 my-6">Выгодные предложения</h3>
+            <div id="offers-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+                <div id="no-offers" class="col-span-full text-center text-gray-500 hidden p-8">Предложений по вашему запросу не найдено.</div>
+                <!-- Карточки товаров будут загружены сюда JavaScript'ом -->
+            </div>
+        </main>
+    </div>
+
+    <!-- КОНТЕЙНЕР ДЛЯ ДЕТАЛЕЙ ТОВАРА (СКРЫТ ПО УМОЛЧАЛЬНИЮ) -->
+    <div id="product-detail-view" class="max-w-4xl mx-auto px-4 mt-6 hidden">
+        <!-- Кнопка Назад -->
+        <button onclick="hideProductDetails()" class="flex items-center text-orange-600 font-semibold mb-6 hover:text-orange-800 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
+            Назад к покупкам
+        </button>
+        <div id="product-detail-content" class="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-gray-100">
+            <!-- Содержимое деталей товара будет сгенерировано JS -->
         </div>
-
-        <!-- Категории -->
-        <h3 class="text-2xl font-bold text-gray-800 mb-4">Каталог</h3>
-        <div id="category-filter" class="flex flex-nowrap overflow-x-auto space-x-3 pb-4 scrollbar-hide">
-            <!-- Категории будут загружены сюда JavaScript'ом -->
-        </div>
-
-        <!-- Предложения -->
-        <h3 class="text-2xl font-bold text-gray-800 my-6">Выгодные предложения</h3>
-        <div id="offers-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-            <div id="no-offers" class="col-span-full text-center text-gray-500 hidden p-8">Предложений по вашему запросу не найдено.</div>
-            <!-- Карточки товаров будут загружены сюда JavaScript'ом -->
-        </div>
-    </main>
-
+    </div>
+    
     <!-- Модальное окно админа -->
     <div id="admin-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
         <div class="bg-white rounded-2xl p-6 w-80 relative">
@@ -168,18 +189,18 @@
             try {
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
-                auth = getAuth(app); // <-- auth устанавливается здесь
+                auth = getAuth(app); 
                 console.log("Firebase успешно инициализирован.");
             } catch (e) {
                 console.error("КРИТИЧЕСКАЯ ОШИБКА: Ошибка инициализации Firebase.", e);
-                db = null; db = null; auth = null; // Обеспечиваем, что переменные null в случае ошибки
+                db = null; auth = null; // Обеспечиваем, что переменные null в случае ошибки
             }
         }
 
         // 2. Инициализация аутентификации (вход анонимно или по токену)
         async function initializeAuth() {
             if (!auth) {
-                // Если Auth не инициализирован (initializeFirebase не сработал), используем рандомный ID
+                // Если Auth не инициализирован, используем рандомный ID
                 userId = crypto.randomUUID();
                 return; 
             }
@@ -226,8 +247,9 @@
         const adminLogin = document.getElementById('admin-login');
         const adminRegister = document.getElementById('admin-register');
         const adminMessageDiv = document.getElementById('admin-message');
-
-        const ADMIN_REDIRECT_URL = 'https://vsemmebel-1.onrender.com/admin.html';
+        
+        // Примечание: предполагается, что admin.html существует в корневом каталоге.
+        const ADMIN_REDIRECT_URL = 'admin.html'; 
 
         adminLoginBtn.onclick = () => adminModal.classList.remove('hidden');
         adminCloseBtn.onclick = () => adminModal.classList.add('hidden');
@@ -248,7 +270,6 @@
             const password = adminPasswordInput.value;
             if (!email || !password) return showAdminMessage('Введите email и пароль', true);
             
-            // КЛЮЧЕВОЙ МОМЕНТ: Проверяем, что auth инициализирован
             if (!auth) {
                 console.error("Ошибка: Firebase Auth не инициализирован. Попробуйте обновить страницу.");
                 return showAdminMessage('Ошибка: Firebase Auth не инициализирован. Проверьте консоль.', true);
@@ -256,7 +277,6 @@
 
             try {
                 await signInWithEmailAndPassword(auth, email, password);
-                // УСПЕХ: Редирект без сообщения
                 console.log("Админ вошел. Перенаправление на admin.html");
                 window.location.href = ADMIN_REDIRECT_URL;
                 
@@ -278,7 +298,6 @@
             const password = adminPasswordInput.value;
             if (!email || !password) return showAdminMessage('Введите email и пароль', true);
             
-            // КЛЮЧЕВОЙ МОМЕНТ: Проверяем, что auth инициализирован
             if (!auth) {
                 console.error("Ошибка: Firebase Auth не инициализирован. Попробуйте обновить страницу.");
                 return showAdminMessage('Ошибка: Firebase Auth не инициализирован. Проверьте консоль.', true);
@@ -286,7 +305,6 @@
 
             try {
                 await createUserWithEmailAndPassword(auth, email, password);
-                // УСПЕХ: Редирект без сообщения
                 console.log("Админ зарегистрирован. Перенаправление на admin.html");
                 window.location.href = ADMIN_REDIRECT_URL;
                 
@@ -309,9 +327,12 @@
         const CATEGORIES = ["Все товары", "Диваны", "Кровати", "Шкафы", "Столы и Стулья", "Кухни"];
 
         let currentCategory = "Все товары";
-        let allOffers = []; // Будет хранить все загруженные товары
+        let allOffers = []; // Будет хранить ВСЕ загруженные товары (полные объекты)
         let searchTerm = "";
 
+        const mainView = document.getElementById('main-view-container');
+        const detailView = document.getElementById('product-detail-view');
+        const detailContent = document.getElementById('product-detail-content');
         const categoryFilterDiv = document.getElementById('category-filter');
         const offersListDiv = document.getElementById('offers-list');
         const searchInput = document.getElementById('search-input');
@@ -330,25 +351,12 @@
             onSnapshot(q, (snapshot) => {
                 const fetchedOffers = [];
                 snapshot.forEach(doc => {
-                    const data = doc.data();
-                    // Временно используем первую комбинацию для цены, если она активна
-                    const activeCombo = data.combinations?.find(c => c.isActive);
-                    
-                    if (activeCombo) {
-                        fetchedOffers.push({
-                            id: doc.id,
-                            title: data.title || 'Товар без названия',
-                            category: data.category || 'Прочее',
-                            imageUrl: data.images?.[0] || `https://placehold.co/400x300/f3f4f6/4b5563?text=${encodeURIComponent(data.title || 'Нет Фото')}`,
-                            discount: data.discount || 0,
-                            originalPrice: activeCombo.price || 0, 
-                            finalPrice: activeCombo.price * (1 - (data.discount || 0) / 100),
-                        });
-                    }
+                    // Сохраняем ВЕСЬ объект данных для использования на странице деталей
+                    fetchedOffers.push({ id: doc.id, ...doc.data() });
                 });
                 
                 allOffers = fetchedOffers;
-                console.log(`Загружено ${allOffers.length} активных товаров.`);
+                console.log(`Загружено ${allOffers.length} товаров.`);
                 // Перерисовываем при получении новых данных
                 renderOffers(); 
             }, (error) => {
@@ -375,7 +383,7 @@
         function setActiveCategory(category) {
             currentCategory = category;
             renderCategories(); // Обновить стили кнопок
-            renderOffers();    // Применить фильтр
+            renderOffers();    // Применить фильтр
         }
 
         function renderOffers() {
@@ -389,8 +397,8 @@
             // 2. Фильтр по поисковому запросу
             const filteredBySearch = searchTerm.trim().toLowerCase();
             const finalOffers = filteredByCategory.filter(offer => 
-                offer.title.toLowerCase().includes(filteredBySearch) || 
-                offer.category.toLowerCase().includes(filteredBySearch)
+                offer.title?.toLowerCase().includes(filteredBySearch) || 
+                offer.category?.toLowerCase().includes(filteredBySearch)
             );
 
             if (finalOffers.length === 0) {
@@ -401,21 +409,30 @@
 
             // 3. Рендеринг карточек
             finalOffers.forEach(offer => {
+                // Ищем первую активную комбинацию для отображения цены
+                const activeCombo = offer.combinations?.find(c => c.isActive) || offer.combinations?.[0];
+                const originalPrice = activeCombo?.price || 0;
+                const finalPrice = originalPrice * (1 - (offer.discount || 0) / 100);
+                const imageUrl = offer.images?.[0] || `https://placehold.co/400x300/f3f4f6/4b5563?text=${encodeURIComponent(offer.title || 'Нет Фото')}`;
+
                 const card = document.createElement('div');
-                card.className = 'offer-card flex flex-col';
+                card.className = 'offer-card flex flex-col cursor-pointer';
+                card.setAttribute('data-offer-id', offer.id);
+                // Добавляем обработчик клика, который откроет страницу деталей
+                card.onclick = () => showProductDetails(offer.id);
 
                 const priceDisplay = offer.discount > 0 ? 
                     `
-                    <p class="text-xl font-extrabold text-red-600">${Math.round(offer.finalPrice)} ₽</p>
-                    <p class="text-sm text-gray-400 line-through">${Math.round(offer.originalPrice)} ₽</p>
+                    <p class="text-xl font-extrabold text-red-600">${Math.round(finalPrice)} ₽</p>
+                    <p class="text-sm text-gray-400 line-through">${Math.round(originalPrice)} ₽</p>
                     ` : 
-                    `<p class="text-xl font-extrabold text-gray-900">${Math.round(offer.finalPrice)} ₽</p>`;
+                    `<p class="text-xl font-extrabold text-gray-900">${Math.round(finalPrice)} ₽</p>`;
 
                 card.innerHTML = `
                     <div class="h-48 overflow-hidden relative">
                         <!-- Изображение с заглушкой -->
                         <img 
-                            src="${offer.imageUrl}" 
+                            src="${imageUrl}" 
                             alt="${offer.title}" 
                             class="w-full h-full object-cover transition duration-500 ease-in-out hover:scale-105"
                             onerror="this.onerror=null; this.src='https://placehold.co/400x300/f3f4f6/4b5563?text=Нет+Фото';"
@@ -423,13 +440,14 @@
                         ${offer.discount > 0 ? `<div class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">- ${offer.discount}%</div>` : ''}
                     </div>
                     <div class="p-5 flex flex-col flex-grow">
-                        <p class="text-sm font-semibold text-orange-600 mb-1">${offer.category}</p>
-                        <h4 class="text-lg font-bold text-gray-900 mb-3 flex-grow">${offer.title}</h4>
+                        <p class="text-sm font-semibold text-orange-600 mb-1">${offer.category || 'Прочее'}</p>
+                        <h4 class="text-lg font-bold text-gray-900 mb-3 flex-grow">${offer.title || 'Товар без названия'}</h4>
                         <div class="flex items-end justify-between mt-auto">
                             <div class="flex items-center space-x-2">
                                 ${priceDisplay}
                             </div>
-                            <button class="card-button text-white text-sm font-bold py-2 px-4 rounded-full transition">
+                            <!-- Кнопка "Заказать" теперь будет вызывать сообщение, так как переход на детальную страницу происходит по клику на карточке -->
+                            <button onclick="event.stopPropagation(); showCustomMessage('Вы добавили ${offer.title || 'этот товар'} в корзину (имитация)!')" class="card-button text-white text-sm font-bold py-2 px-4 rounded-full transition">
                                 Заказать
                             </button>
                         </div>
@@ -437,6 +455,113 @@
                 `;
                 offersListDiv.appendChild(card);
             });
+        }
+        
+        // --- Product Detail Page (PDP) Logic ---
+
+        function hideProductDetails() {
+            detailView.classList.add('hidden');
+            mainView.classList.remove('hidden');
+            // Очищаем контент страницы деталей при скрытии
+            detailContent.innerHTML = ''; 
+            // Скроллим наверх
+            window.scrollTo(0, 0);
+        }
+
+        function showProductDetails(id) {
+            const product = allOffers.find(o => o.id === id);
+            
+            if (!product) {
+                return showCustomMessage("Ошибка: Детали товара не найдены.");
+            }
+            
+            // Находим активную или первую комбинацию
+            const activeCombo = product.combinations?.find(c => c.isActive) || product.combinations?.[0];
+            const originalPrice = activeCombo?.price || 0;
+            const finalPrice = originalPrice * (1 - (product.discount || 0) / 100);
+            const displayImages = product.images || [];
+
+            // Форматирование цены
+            const priceDisplay = product.discount > 0 ? 
+                `
+                <div class="flex items-baseline space-x-3 mb-4">
+                    <p class="text-4xl font-extrabold text-red-600">${Math.round(finalPrice)} ₽</p>
+                    <p class="text-xl text-gray-400 line-through">${Math.round(originalPrice)} ₽</p>
+                    <span class="text-sm font-bold bg-red-100 text-red-600 px-3 py-1 rounded-full">${product.discount}% СКИДКА</span>
+                </div>
+                ` : 
+                `<p class="text-4xl font-extrabold text-gray-900 mb-4">${Math.round(finalPrice)} ₽</p>`;
+            
+            // Генерация HTML для страницы деталей
+            detailContent.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Колонка 1: Галерея Изображений -->
+                    <div class="lg:col-span-2">
+                        <h2 class="text-3xl font-black text-gray-900 mb-4 lg:hidden">${product.title || 'Товар'}</h2>
+                        <div class="h-96 md:h-[500px] bg-gray-100 rounded-2xl overflow-hidden relative shadow-md">
+                            <img id="main-product-image" 
+                                src="${displayImages[0] || 'https://placehold.co/800x600/f3f4f6/4b5563?text=Нет+Фото'}" 
+                                alt="${product.title}" 
+                                class="w-full h-full object-cover"
+                                onerror="this.onerror=null; this.src='https://placehold.co/800x600/f3f4f6/4b5563?text=Нет+Фото';"
+                            >
+                        </div>
+                        
+                        <!-- Миниатюры (Thumbs) -->
+                        <div class="flex space-x-3 overflow-x-auto mt-4 pb-2" id="thumbnail-gallery">
+                            ${displayImages.map((imgUrl, index) => `
+                                <img 
+                                    src="${imgUrl}" 
+                                    class="w-20 h-20 object-cover rounded-xl cursor-pointer transition ${index === 0 ? 'thumb-active' : ''}"
+                                    onclick="document.getElementById('main-product-image').src='${imgUrl}'; 
+                                             document.querySelectorAll('#thumbnail-gallery img').forEach(i => i.classList.remove('thumb-active')); 
+                                             this.classList.add('thumb-active');"
+                                    onerror="this.onerror=null; this.src='https://placehold.co/80x80/f3f4f6/4b5563?text=N/A';"
+                                >
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Колонка 2: Информация о продукте -->
+                    <div class="lg:col-span-1 flex flex-col">
+                        <h2 class="text-3xl font-black text-gray-900 mb-2 hidden lg:block">${product.title || 'Товар'}</h2>
+                        <p class="text-lg font-semibold text-orange-600 mb-6">${product.category || 'Прочее'}</p>
+                        
+                        <!-- Цена -->
+                        ${priceDisplay}
+
+                        <!-- Описание -->
+                        <div class="mb-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Описание</h3>
+                            <p class="text-gray-600 leading-relaxed">${product.description || 'Детальное описание товара отсутствует.'}</p>
+                        </div>
+
+                        <!-- Характеристики / Комбинации (Упрощенная версия) -->
+                        <div class="mb-8">
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Основные характеристики</h3>
+                            <ul class="space-y-2 text-gray-700 text-sm">
+                                <li><strong>ID товара:</strong> ${product.id}</li>
+                                <li><strong>Наличие:</strong> <span class="text-green-600 font-bold">В наличии</span></li>
+                                ${activeCombo ? 
+                                    `<li><strong>Цвет:</strong> ${activeCombo.color || 'Нет данных'}</li>
+                                    <li><strong>Материал:</strong> ${activeCombo.material || 'Нет данных'}</li>`
+                                    : '<li>(Нет активных комбинаций)</li>'
+                                }
+                            </ul>
+                        </div>
+                        
+                        <!-- Кнопка заказа -->
+                        <button class="w-full card-button text-white text-lg font-bold py-4 rounded-xl transition mt-auto hover:bg-orange-600"
+                            onclick="showCustomMessage('Вы оформили заказ на ${product.title || 'этот товар'} (имитация оформления)!');">
+                            Купить сейчас
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            mainView.classList.add('hidden');
+            detailView.classList.remove('hidden');
+            window.scrollTo(0, 0); // Скроллим наверх для лучшего UX
         }
 
 
