@@ -194,26 +194,17 @@ function renderGallery(images) {
   mainImage.src = images[0] || "https://placehold.co/800x600?text=Нет+изображения";
 }
 
-function activateOption(containerId, value) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  container.querySelectorAll("button").forEach(b => {
-    b.classList.remove("active");
-    if (b.textContent.trim() === value?.trim()) b.classList.add("active");
-  });
-}
-
 function renderOptions(containerId, options, clickHandler) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
   (options || []).forEach(o => {
     const btn = document.createElement("button");
     btn.textContent = o;
+    btn.dataset.value = o;
     btn.className = "option-button-style";
     btn.onclick = () => {
       clickHandler(o);
-      container.querySelectorAll("button").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
+      updateProductView();
     };
     container.appendChild(btn);
   });
@@ -225,24 +216,30 @@ function renderColorOptions(containerId, colors, clickHandler) {
   (colors || []).forEach(c => {
     const btn = document.createElement("button");
     btn.textContent = c.name;
+    btn.dataset.value = c.name;
     btn.className = "option-button-style";
-    btn.style.background = "white";
-    btn.style.color = "#f97316";
-    btn.style.borderColor = "#f97316";
-    btn.onmouseenter = () => btn.style.background = "#fff7ed";
-    btn.onmouseleave = () => { if (!btn.classList.contains("active")) btn.style.background = "white"; };
+    btn.style.background = c.hex;
+    btn.style.color = getTextColorForBackground(c.hex);
+    btn.style.borderColor = c.hex;
     btn.onclick = () => {
       clickHandler(c.name);
-      container.querySelectorAll("button").forEach(b => { b.classList.remove("active"); b.style.background = "white"; });
-      btn.classList.add("active");
-      btn.style.background = "#f97316";
-      btn.style.color = "white";
+      updateProductView();
     };
     container.appendChild(btn);
   });
 }
 
-function findCombination(autoCorrect = true) {
+function getTextColorForBackground(bgColor) {
+  if (!bgColor) return "#f97316";
+  const c = bgColor.charAt(0) === '#' ? bgColor.substring(1,7) : bgColor;
+  const r = parseInt(c.substring(0,2),16);
+  const g = parseInt(c.substring(2,4),16);
+  const b = parseInt(c.substring(4,6),16);
+  const brightness = (r*299 + g*587 + b*114)/1000;
+  return brightness > 150 ? "#000" : "#fff";
+}
+
+function findCombination() {
   if (!productData || !productData.combinations) return null;
   let combo = productData.combinations.find(c =>
     c.material === selectedMaterial &&
@@ -250,21 +247,11 @@ function findCombination(autoCorrect = true) {
     c.color === selectedColor
   );
   if (combo) return combo;
-
-  if (!autoCorrect) return null;
-  combo = productData.combinations.find(c =>
-    c.color === selectedColor || c.facade === selectedFacade || c.material === selectedMaterial
-  );
-
-  if (combo) {
-    selectedMaterial = combo.material;
-    selectedFacade = combo.facade;
-    selectedColor = combo.color;
-    activateOption("material-options", selectedMaterial);
-    activateOption("facade-options", selectedFacade);
-    activateOption("color-options", selectedColor);
-  }
-  return combo || null;
+  combo = productData.combinations.find(c => true); // Берем первую доступную
+  selectedMaterial = combo.material;
+  selectedFacade = combo.facade;
+  selectedColor = combo.color;
+  return combo;
 }
 
 function initializeProductView(data) {
@@ -274,71 +261,89 @@ function initializeProductView(data) {
   document.getElementById("product-description").textContent = data.description || "Подробное описание товара отсутствует.";
 
   renderGallery(data.images || [data.image].filter(Boolean));
-  renderOptions("facade-options", data.facades, v => { selectedFacade = v; updateProductView(); });
-  renderOptions("material-options", data.materials, v => { selectedMaterial = v; updateProductView(); });
-  renderColorOptions("color-options", data.colors, v => { selectedColor = v; updateProductView(); });
+  renderOptions("facade-options", data.facades, v => selectedFacade = v);
+  renderOptions("material-options", data.materials, v => selectedMaterial = v);
+  renderColorOptions("color-options", data.colors, v => selectedColor = v);
 
   const combo = data.combinations?.[0];
-  selectedMaterial = combo?.material || data.materials?.[0] || null;
-  selectedFacade = combo?.facade || data.facades?.[0] || null;
-  selectedColor = combo?.color || data.colors?.[0]?.name || null;
+  selectedMaterial = combo?.material || data.materials?.[0];
+  selectedFacade = combo?.facade || data.facades?.[0];
+  selectedColor = combo?.color || data.colors?.[0]?.name;
 
-  activateOption("material-options", selectedMaterial);
-  activateOption("facade-options", selectedFacade);
-  activateOption("color-options", selectedColor);
   updateProductView();
 }
 
 function updateProductView() {
   if (!productData) return;
-  const combo = findCombination(true);
+  const combo = findCombination();
+  if (!combo) return;
+
+  // Обновляем кнопки
+  updateOptionButtons("material-options", selectedMaterial);
+  updateOptionButtons("facade-options", selectedFacade);
+  updateOptionButtons("color-options", selectedColor);
+
   const buyButton = document.getElementById("buy-button");
   const errorMessage = document.getElementById("error-message");
 
-  let basePrice = combo?.price || productData.price || 0;
-  const discount = productData.discount || 0;
-  const comboImage = combo?.colorImage || null;
+  const basePrice = combo.price || 0;
+  const discount = combo.discount || 0;
 
-  const isCombinationAvailable = !!combo;
-  errorMessage.classList.toggle("hidden", isCombinationAvailable);
+  errorMessage.classList.add("hidden");
 
   const oldPriceEl = document.getElementById("old-price");
   const newPriceEl = document.getElementById("new-price");
   oldPriceEl.textContent = formatPrice(basePrice);
-  newPriceEl.textContent = formatPrice(Math.round(basePrice * (1 - discount / 100)));
-  oldPriceEl.style.display = discount > 0 ? "inline" : "none";
+  newPriceEl.textContent = formatPrice(Math.round(basePrice*(1-discount/100)));
+  oldPriceEl.style.display = discount>0?"inline":"none";
 
   const mainImage = document.getElementById("main-product-image");
   mainImage.style.opacity = 0;
-  setTimeout(() => {
-    mainImage.src = comboImage || productData.images?.[0] || "https://placehold.co/800x600?text=Нет+изображения";
-    mainImage.style.opacity = 1;
-  }, 150);
+  setTimeout(()=>{ mainImage.src = combo.colorImage||productData.images?.[0]||"https://placehold.co/800x600?text=Нет+изображения"; mainImage.style.opacity=1; },150);
 
-  buyButton.disabled = !isCombinationAvailable;
-  buyButton.textContent = isCombinationAvailable ? "Купить" : "Комбинация недоступна";
+  buyButton.disabled = false;
+  buyButton.textContent = "Купить";
 }
 
-function formatPrice(price) {
-  return isNaN(price) ? "N/A" : price.toLocaleString("ru-RU", { style: "currency", currency: "BYN", maximumFractionDigits: 0 });
+function updateOptionButtons(containerId, value) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll("button").forEach(btn=>{
+    if(btn.dataset.value===value){
+      btn.classList.add("active");
+      if(containerId==="color-options"){
+        const hex = productData.colors.find(c=>c.name===value)?.hex;
+        btn.style.background=hex; 
+        btn.style.color=getTextColorForBackground(hex);
+      }
+    }else{
+      btn.classList.remove("active");
+      if(containerId==="color-options"){
+        const hex = productData.colors.find(c=>c.name===btn.dataset.value)?.hex;
+        btn.style.background=hex;
+        btn.style.color=getTextColorForBackground(hex);
+      }
+    }
+  });
 }
+
+function formatPrice(price){return isNaN(price)?"N/A":price.toLocaleString("ru-RU",{style:"currency",currency:"BYN",maximumFractionDigits:0});}
 
 document.getElementById("buy-button").onclick = () => {
-  if (document.getElementById("buy-button").disabled) return;
   const comboText = `Материал: ${selectedMaterial||'-'}, Фасад: ${selectedFacade||'-'}, Цвет: ${selectedColor||'-'}`;
   const priceText = document.getElementById("new-price").textContent;
   showMessage(`✅ Вы оформили заказ:<br><strong>${productData.title}</strong><br>Опции: ${comboText}<br>Итоговая цена: ${priceText}`, false);
 };
 
-function showMessage(text, isError) {
-  const msgBox = document.getElementById("message-box");
-  msgBox.innerHTML = text;
-  msgBox.className = "show";
-  msgBox.style.backgroundColor = isError ? "#ef4444" : "#10b981";
-  setTimeout(() => msgBox.classList.remove("show"), 5000);
+function showMessage(text,isError){
+  const msgBox=document.getElementById("message-box");
+  msgBox.innerHTML=text;
+  msgBox.className="show";
+  msgBox.style.backgroundColor=isError?"#ef4444":"#10b981";
+  setTimeout(()=>msgBox.classList.remove("show"),5000);
 }
 
-window.onload = initializeAuthAndFirestore;
+window.onload=initializeAuthAndFirestore;
 </script>
 </body>
 </html>
