@@ -30,7 +30,7 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 .thumbnail { width:60px; height:60px; border:2px solid transparent; cursor:pointer; border-radius:0.5rem; transition:0.2s; object-fit: cover;}
 .thumbnail:hover { transform: scale(1.05); box-shadow:0 2px 5px rgba(249,115,22,0.3);}
 .thumbnail.active { border-color:#f97316; box-shadow:0 4px 12px rgba(249,115,22,0.4);}
-
+#main-product-image { transition: opacity 0.3s ease-in-out; }
 #message-box { position: fixed; top: 20px; right: 20px; z-index: 1000; min-width: 300px; padding: 1rem; background-color: #10b981; color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); opacity: 0; transition: opacity 0.5s, transform 0.5s; transform: translateY(-10px); }
 #message-box.show { opacity: 1; transform: translateY(0); }
 </style>
@@ -225,7 +225,9 @@ function renderGallery(images) {
         thumb.className = "thumbnail" + (i === 0 ? " active" : "");
         thumb.onerror = () => thumb.src = "https://placehold.co/60x60?text=IMG";
         thumb.onclick = () => {
-            document.getElementById("main-product-image").src = img;
+            const mainImage = document.getElementById("main-product-image");
+            mainImage.style.opacity = 0;
+            setTimeout(()=>{ mainImage.src = img; mainImage.style.opacity = 1; }, 200);
             gallery.querySelectorAll("img").forEach(t => t.classList.remove("active"));
             thumb.classList.add("active");
         };
@@ -269,36 +271,67 @@ function activateOption(containerId, value) {
     container.querySelectorAll('button').forEach(b => { if (b.textContent === value) b.classList.add('active'); });
 }
 
-function findCombination() {
+// ===================== НОВАЯ ЛОГИКА КОМБИНАЦИЙ =====================
+function findCombination(autoCorrect = true) {
     if (!productData || !productData.combinations) return null;
-    return productData.combinations.find(c => c.material === selectedMaterial && c.facade === selectedFacade && c.color === selectedColor) || null;
+
+    let combo = productData.combinations.find(c =>
+        c.material === selectedMaterial &&
+        c.facade === selectedFacade &&
+        c.color === selectedColor
+    );
+    if (combo) return combo;
+
+    if (!autoCorrect) return null;
+
+    combo = productData.combinations.find(c =>
+        c.color === selectedColor || c.facade === selectedFacade || c.material === selectedMaterial
+    );
+
+    if (combo) {
+        selectedMaterial = combo.material;
+        selectedFacade = combo.facade;
+        selectedColor = combo.color;
+
+        activateOption('material-options', selectedMaterial);
+        activateOption('facade-options', selectedFacade);
+        activateOption('color-options', selectedColor);
+    }
+
+    return combo || null;
 }
 
 function updateProductView() {
     if (!productData) return;
+
     const requiredOptions = [productData.materials?.length > 0, productData.facades?.length > 0, productData.colors?.length > 0].filter(Boolean).length;
     const selectedCount = [selectedMaterial, selectedFacade, selectedColor].filter(Boolean).length;
     const isAllSelected = requiredOptions === selectedCount;
-    const combo = findCombination();
+
+    const combo = findCombination(true);
     const buyButton = document.getElementById("buy-button");
     const errorMessage = document.getElementById("error-message");
 
     let basePrice = productData.price || 0; 
     let discount = productData.discount || 0;
     let comboImage = null;
-    let isCombinationAvailable = false;
+    let isCombinationAvailable = !!combo;
 
-    if (isAllSelected) {
-        if (combo) { isCombinationAvailable = true; if (combo.price) basePrice = combo.price; if (combo.colorImage) comboImage = combo.colorImage; errorMessage.classList.add('hidden'); }
-        else { isCombinationAvailable = false; errorMessage.classList.remove('hidden'); }
-    } else errorMessage.classList.add('hidden');
+    if (!isAllSelected) errorMessage.classList.add('hidden');
+    else if (!isCombinationAvailable) errorMessage.classList.remove('hidden');
+    else errorMessage.classList.add('hidden');
+
+    if (combo) {
+        if (combo.price) basePrice = combo.price;
+        if (combo.colorImage) comboImage = combo.colorImage;
+    }
 
     const oldPriceEl = document.getElementById("old-price");
     const newPriceEl = document.getElementById("new-price");
     if (isCombinationAvailable || !isAllSelected) {
         oldPriceEl.textContent = formatPrice(basePrice);
         newPriceEl.textContent = formatPrice(Math.round(basePrice * (1 - discount / 100)));
-        oldPriceEl.style.display = discount > 0 ? 'inline' : 'none'; 
+        oldPriceEl.style.display = discount > 0 ? 'inline' : 'none';
         newPriceEl.classList.remove('text-gray-400');
         newPriceEl.classList.add('text-orange-600');
     } else {
@@ -310,18 +343,24 @@ function updateProductView() {
     }
 
     const mainImage = document.getElementById("main-product-image");
-    if (comboImage) mainImage.src = comboImage;
-    else {
-        const selectedColorData = (productData.colors || []).find(c => c.name === selectedColor);
-        if (selectedColorData && selectedColorData.image) mainImage.src = selectedColorData.image;
-        else if (productData.images && productData.images.length > 0) mainImage.src = productData.images[0];
-    }
+    mainImage.style.opacity = 0;
+    setTimeout(()=>{
+        if (comboImage) mainImage.src = comboImage;
+        else {
+            const selectedColorData = (productData.colors || []).find(c => c.name === selectedColor);
+            if (selectedColorData && selectedColorData.image) mainImage.src = selectedColorData.image;
+            else if (productData.images && productData.images.length > 0) mainImage.src = productData.images[0];
+        }
+        mainImage.style.opacity = 1;
+    }, 150);
+
     document.getElementById("thumbnail-gallery").querySelectorAll("img").forEach(t=>t.classList.remove("active"));
 
-    if (!isAllSelected) { buyButton.disabled = true; buyButton.textContent = requiredOptions > 0 ? `Выберите все опции (${requiredOptions - selectedCount} еще)` : "Купить"; }
-    else if (!isCombinationAvailable) { buyButton.disabled = true; buyButton.textContent = "Комбинация недоступна"; }
-    else { buyButton.disabled = false; buyButton.textContent = "Купить"; }
+    if (!isAllSelected) buyButton.disabled = true, buyButton.textContent = requiredOptions > 0 ? `Выберите все опции (${requiredOptions - selectedCount} еще)` : "Купить";
+    else if (!isCombinationAvailable) buyButton.disabled = true, buyButton.textContent = "Комбинация недоступна";
+    else buyButton.disabled = false, buyButton.textContent = "Купить";
 }
+// =================================================================
 
 function formatPrice(price) { return (typeof price !== 'number' || isNaN(price)) ? 'N/A' : price.toLocaleString('ru-RU', { style: 'currency', currency: 'BYN', maximumFractionDigits: 0 }); }
 
