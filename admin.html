@@ -326,78 +326,77 @@ function renderColors(){
     });
 }
 
-function renderCombinations(){
-    combinationsContainer.innerHTML="";
+function renderCombinations() {
+    combinationsContainer.innerHTML = "";
     const colorNames = colors.map(c => c.name);
 
-    combinations.forEach((c,i)=>{
-        const div=document.createElement('div');
-        div.className="flex flex-col sm:flex-row gap-2 mb-3 p-3 bg-gray-50 border border-gray-200 rounded-lg items-start sm:items-center";
+    combinations.forEach((combo, i) => {
+        // Нормализуем поля (если кто-то сохранил старые ключи)
+        combo.material = combo.material || combo["материал"] || "";
+        combo.facade = combo.facade || combo["фасад"] || "";
+        combo.color = combo.color || combo["цвет"] || "";
+        delete combo["материал"];
+        delete combo["фасад"];
+        delete combo["цвет"];
 
-        const createSelect = (field, options, currentValue) => {
-            const select = document.createElement('select');
-            select.name = field;
+        const div = document.createElement("div");
+        div.className = "flex flex-col sm:flex-row gap-2 mb-3 p-3 bg-gray-50 border border-gray-200 rounded-lg items-start sm:items-center";
+
+        const createSelect = (label, options, key) => {
+            const select = document.createElement("select");
             select.className = "input-field flex-grow";
-            select.innerHTML = `<option value="">-- Выберите ${field} --</option>`;
+            select.innerHTML = `<option value="">-- ${label} --</option>`;
             options.forEach(opt => {
-                select.innerHTML += `<option value="${opt}" ${opt === currentValue ? 'selected' : ''}>${opt}</option>`;
+                select.innerHTML += `<option value="${opt}" ${opt === combo[key] ? "selected" : ""}>${opt}</option>`;
             });
-            select.onchange = e => { c[field.toLowerCase()] = e.target.value; };
+            select.onchange = e => combo[key] = e.target.value;
             return select;
         };
 
-        const optionsDiv = document.createElement('div');
-        optionsDiv.className = "flex w-full sm:w-8/12 gap-2 flex-wrap sm:flex-nowrap";
-        optionsDiv.appendChild(createSelect('Материал', materials, c.material));
-        optionsDiv.appendChild(createSelect('Фасад', facades, c.facade));
-        optionsDiv.appendChild(createSelect('Цвет', colorNames, c.color));
+        const selectsDiv = document.createElement("div");
+        selectsDiv.className = "flex w-full sm:w-8/12 gap-2 flex-wrap sm:flex-nowrap";
+        selectsDiv.appendChild(createSelect("Материал", materials, "material"));
+        selectsDiv.appendChild(createSelect("Фасад", facades, "facade"));
+        selectsDiv.appendChild(createSelect("Цвет", colorNames, "color"));
 
-        const priceActiveDiv = document.createElement('div');
-        priceActiveDiv.className = "flex w-full sm:w-4/12 gap-2 items-center";
-        
-        const priceInput = document.createElement('input');
-        priceInput.type = 'number';
-        priceInput.className = "input-field w-24 flex-grow-0";
-        priceInput.value = c.price || 0;
+        const controlsDiv = document.createElement("div");
+        controlsDiv.className = "flex w-full sm:w-4/12 gap-2 items-center";
+
+        const priceInput = document.createElement("input");
+        priceInput.type = "number";
+        priceInput.className = "input-field w-24";
+        priceInput.value = combo.price || 0;
         priceInput.placeholder = "Цена";
-        priceInput.oninput = e => c.price = parseFloat(e.target.value) || 0;
+        priceInput.oninput = e => combo.price = parseFloat(e.target.value) || 0;
 
-        const activeContainer = document.createElement('div');
-        activeContainer.className = "flex items-center space-x-1";
-        const activeInput = document.createElement('input');
-        activeInput.type = 'checkbox';
-        activeInput.className = 'h-5 w-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500';
-        activeInput.checked = !!c.isActive;
-        activeInput.onchange = e => {
-            c.isActive = e.target.checked;
-            // Обновляем состояние полей при изменении активности
-            c.discount = c.isActive ? c.discount : 0; // Сбрасываем скидку, если неактивно
-            renderCombinations(); 
-        };
-        const activeLabel = document.createElement('label');
-        activeLabel.textContent = 'Активно';
-        activeLabel.className = 'text-sm text-gray-600';
-        activeContainer.append(activeInput, activeLabel);
-
-        const discountInput = document.createElement('input');
-        discountInput.type = 'number';
-        discountInput.className = `input-field w-20 flex-grow-0 transition duration-150 ${!c.isActive ? 'bg-gray-200 cursor-not-allowed' : ''}`;
-        discountInput.value = c.discount || 0;
+        const discountInput = document.createElement("input");
+        discountInput.type = "number";
+        discountInput.className = "input-field w-20";
+        discountInput.value = combo.discount || 0;
         discountInput.placeholder = "Скидка %";
-        discountInput.disabled = !c.isActive; // Блокировка поля скидки
-        discountInput.oninput = e => c.discount = parseInt(e.target.value) || 0;
+        discountInput.oninput = e => combo.discount = parseFloat(e.target.value) || 0;
 
-        const deleteBtn = document.createElement('button');
+        const activeLabel = document.createElement("label");
+        activeLabel.className = "flex items-center gap-1 text-sm text-gray-600";
+        const activeCheckbox = document.createElement("input");
+        activeCheckbox.type = "checkbox";
+        activeCheckbox.checked = combo.isActive || false;
+        activeCheckbox.onchange = e => combo.isActive = e.target.checked;
+        activeLabel.append(activeCheckbox, "Активно");
+
+        const deleteBtn = document.createElement("button");
         deleteBtn.className = "btn btn-delete py-2 px-3 text-sm flex-shrink-0";
-        deleteBtn.textContent = 'X';
-        deleteBtn.onclick = () => { combinations.splice(i,1); renderCombinations(); };
+        deleteBtn.textContent = "X";
+        deleteBtn.onclick = () => {
+            combinations.splice(i, 1);
+            renderCombinations();
+        };
 
-        priceActiveDiv.append(priceInput, activeContainer, discountInput, deleteBtn);
-        div.append(optionsDiv, priceActiveDiv);
+        controlsDiv.append(priceInput, discountInput, activeLabel, deleteBtn);
+        div.append(selectsDiv, controlsDiv);
         combinationsContainer.appendChild(div);
     });
 }
-
 
 // --- Existing Products ---
 function loadExistingProducts(){
