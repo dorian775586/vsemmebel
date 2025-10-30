@@ -12,7 +12,7 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 .orange-accent { background-color: #f97316; color:white; font-weight:700; transition:0.3s; }
 .orange-accent:hover:not(:disabled) { background-color: #ea580c; }
 .orange-accent:disabled { background-color: #fca5a5; cursor: not-allowed; } /* Стиль для неактивной кнопки */
-.option-button-style { border:2px solid #f97316; background:#ffedd5; color:#f97316; font-weight:600; transition:0.2s; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor:pointer;}
+.option-button-style { border:2px solid #f97316; background:#ffedd5; color:#f97316; font-weight:600; transition:0.2s; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor:pointer; min-width: 80px; text-align: center;}
 .option-button-style.active { background:#f97316; color:white; box-shadow:0 2px 5px rgba(249,115,22,0.3); border-color: #f97316;}
 .thumbnail { width:60px; height:60px; border:2px solid transparent; cursor:pointer; border-radius:0.5rem; transition:0.2s; object-fit: cover;}
 .thumbnail.active { border-color:#f97316; box-shadow:0 2px 5px rgba(249,115,22,0.3);}
@@ -32,6 +32,7 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 
 <main class="max-w-6xl mx-auto px-4 mt-6">
 
+  <!-- Хлебные крошки. Если здесь были onclick, они устранены. -->
   <div class="mb-6 text-sm text-gray-500">
     <a href="index.html" class="hover:text-orange-500 transition">Главная</a>
     <span class="mx-2">/</span>
@@ -74,6 +75,7 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
       </div>
 
       <div class="flex flex-col space-y-4">
+        <!-- Кнопка "Купить". Если здесь был onclick, он устранен. -->
         <button id="buy-button" class="orange-accent text-white font-black text-lg py-4 rounded-xl uppercase">
           Купить
         </button>
@@ -88,32 +90,30 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
   </div>
 </main>
 
-<!-- Всплывающее уведомление -->
+<!-- Всплывающее уведомление (замена alert()) -->
 <div id="message-box" role="alert"></div>
 
 <script type="module">
-// Глобальные переменные Canvas для Firebase (используйте их для реальной интеграции)
-// const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-// const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { /* ... */ };
-
-// Используем ваш статический конфиг для демонстрации
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const firebaseConfig = {
+// Конфигурация Firebase: используем предоставленную вами,
+// но делаем её совместимой с окружением Canvas.
+const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : JSON.stringify({
     apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
     authDomain: "vsemmebel-90d48.firebaseapp.com",
     projectId: "vsemmebel-90d48",
     storageBucket: "vsemmebel-90d48.firebasestorage.app",
     messagingSenderId: "958123504041",
     appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
-};
+}));
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // --- Глобальное состояние товара и выбора ---
 const urlParams = new URLSearchParams(window.location.search);
-// Используем тестовый ID, если нет в URL. Замените на реальный ID вашего товара.
+// Используем тестовый ID, если нет в URL (для отладки)
 const productId = urlParams.get("id") || "test_product_id"; 
 
 let productData = null;
@@ -128,16 +128,17 @@ else { loadProduct(productId); }
 // --- Функции загрузки данных ---
 
 async function loadProduct(id){
+    console.log(`[FIREBASE] Попытка загрузить товар с ID: ${id}`);
     try {
         const docRef = doc(db, "offers", id);
         const docSnap = await getDoc(docRef);
         
         if(!docSnap.exists()){ 
-            // Используем тестовые данные, если товар не найден
             productData = createTestProductData();
-            showMessage(`Товар ID ${id} не найден в Firestore. Загружены тестовые данные.`, true);
+            showMessage(`Товар ID ${id} не найден. Загружены тестовые данные.`, true);
         } else {
             productData = docSnap.data();
+            console.log("[FIREBASE] Данные товара получены:", productData.title);
             showMessage(`Товар "${productData.title}" успешно загружен.`, false);
         }
         
@@ -146,7 +147,6 @@ async function loadProduct(id){
     } catch (error) {
         console.error("Ошибка загрузки товара:", error);
         showMessage("Произошла ошибка при загрузке данных.", true);
-        // Загружаем тестовые данные как запасной вариант
         productData = createTestProductData();
         initializeProductView(productData);
     }
@@ -155,30 +155,26 @@ async function loadProduct(id){
 // Тестовые данные для демонстрации
 function createTestProductData() {
     return {
-        title: "Кухня 'Элегант'",
+        title: "Кухня 'Элегант' (Тест)",
         category: "Кухни",
         price: 3500, // Базовая цена
         discount: 10,
         images: [
-            "https://placehold.co/800x600/f3f4f6/1f2937?text=К+У+Х+Н+Я",
+            "https://placehold.co/800x600/f3f4f6/1f2937?text=К+У+Х+Н+Я+1",
             "https://placehold.co/800x600/a78bfa/ffffff?text=К+У+Х+Н+Я+2",
-            "https://placehold.co/800x600/34d399/ffffff?text=К+У+Х+Н+Я+3",
         ],
         facades: ["МДФ", "Массив"],
-        materials: ["ЛДСП", "Фанера", "МДФ"],
+        materials: ["ЛДСП", "Фанера"],
         colors: [
-            { name: "Белый Глянец", hex: "#ffffff", image: "https://placehold.co/800x600/ffffff/000000?text=БЕЛЫЙ+ГЛЯНЕЦ" },
-            { name: "Серый Матовый", hex: "#4b5563", image: "https://placehold.co/800x600/4b5563/ffffff?text=СЕРЫЙ+МАТОВЫЙ" },
-            { name: "Под дерево", hex: "#92400e", image: "https://placehold.co/800x600/92400e/ffffff?text=ПОД+ДЕРЕВО" }
+            { name: "Белый", hex: "#ffffff", image: "https://placehold.co/800x600/ffffff/000000?text=БЕЛЫЙ+ЦВЕТ" },
+            { name: "Серый", hex: "#4b5563", image: "https://placehold.co/800x600/4b5563/ffffff?text=СЕРЫЙ+ЦВЕТ" },
+            { name: "Орех", hex: "#92400e", image: "https://placehold.co/800x600/92400e/ffffff?text=ОРЕХ" }
         ],
         combinations: [
             // Комбинация с повышенной ценой и своим изображением
-            { material: "Фанера", facade: "Массив", color: "Под дерево", price: 5800, colorImage: "https://placehold.co/800x600/5b21b6/ffffff?text=ПРЕМИУМ+КОМБО" },
+            { material: "Фанера", facade: "Массив", color: "Орех", price: 5800, colorImage: "https://placehold.co/800x600/5b21b6/ffffff?text=ПРЕМИУМ+КОМБО" },
             // Стандартная комбинация
-            { material: "ЛДСП", facade: "МДФ", color: "Белый Глянец", price: 3500 },
-            // Комбинация со средней ценой
-            { material: "МДФ", facade: "МДФ", color: "Серый Матовый", price: 4200 },
-            // Недоступная комбинация (будет использовать базовую цену) - не указываем ее в комбинациях
+            { material: "ЛДСП", facade: "МДФ", color: "Белый", price: 3500 },
         ]
     };
 }
@@ -233,20 +229,21 @@ function renderGallery(images) {
         const thumb = document.createElement("img");
         thumb.src = img;
         thumb.className = "thumbnail" + (i === 0 ? " active" : "");
+        thumb.onerror = () => thumb.src = "https://placehold.co/60x60?text=IMG"; // Fallback на случай битой ссылки
         thumb.onclick = () => {
             document.getElementById("main-product-image").src = img;
             gallery.querySelectorAll("img").forEach(t => t.classList.remove("active"));
             thumb.classList.add("active");
-            // Сбрасываем выбранные опции, если пользователь выбирает изображение из галереи (опционально)
-            // selectedColor = null; 
-            // activateOption('color-options', null);
+            // Обработчик галереи не должен сбрасывать выбранные опции
         };
         gallery.appendChild(thumb);
     });
 
+    const mainImage = document.getElementById("main-product-image");
     if (images.length > 0) {
-         document.getElementById("main-product-image").src = images[0];
+         mainImage.src = images[0];
     }
+    mainImage.onerror = () => mainImage.src = "https://placehold.co/800x600?text=Нет+изображения";
 }
 
 function renderOptions(containerId, options, clickHandler) {
@@ -257,6 +254,7 @@ function renderOptions(containerId, options, clickHandler) {
         btn.textContent = o;
         btn.className = "option-button-style";
         btn.onclick = () => {
+            console.log(`Выбрана опция ${containerId}: ${o}`);
             clickHandler(o);
             container.querySelectorAll("button").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
@@ -273,10 +271,11 @@ function renderColorOptions(containerId, colors, clickHandler) {
         btn.textContent = c.name;
         btn.className = "option-button-style";
         btn.style.backgroundColor = c.hex || '#fff';
-        btn.style.color = c.hex === '#ffffff' ? '#333' : 'white'; // Улучшение читаемости текста на белом фоне
+        btn.style.color = (c.hex && c.hex.toLowerCase() === '#ffffff') ? '#333' : 'white'; // Улучшение читаемости текста на белом фоне
         btn.style.borderColor = c.hex || '#f97316';
         
         btn.onclick = () => {
+            console.log(`Выбран цвет: ${c.name}`);
             clickHandler(c.name);
             container.querySelectorAll("button").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
@@ -296,17 +295,31 @@ function activateOption(containerId, value) {
 function findCombination() {
     if (!productData || !productData.combinations) return null;
 
-    return productData.combinations.find(c =>
+    const combo = productData.combinations.find(c =>
         c.material === selectedMaterial &&
         c.facade === selectedFacade &&
         c.color === selectedColor
     );
+    
+    if (combo) {
+        console.log("[КОМБО] Найдена подходящая комбинация:", combo);
+    } else {
+        console.log(`[КОМБО] Комбинация не найдена: Материал=${selectedMaterial}, Фасад=${selectedFacade}, Цвет=${selectedColor}`);
+    }
+    return combo;
 }
 
 function updateProductView() {
     if (!productData) return;
     
-    const requiredOptions = [productData.materials, productData.facades, productData.colors].filter(arr => arr && arr.length > 0).length;
+    // Определяем, сколько категорий опций есть в товаре
+    const requiredOptions = [
+        productData.materials?.length > 0, 
+        productData.facades?.length > 0, 
+        productData.colors?.length > 0
+    ].filter(Boolean).length;
+
+    // Определяем, сколько опций выбрано
     const selectedCount = [selectedMaterial, selectedFacade, selectedColor].filter(Boolean).length;
     const isAllSelected = requiredOptions === selectedCount;
 
@@ -317,23 +330,19 @@ function updateProductView() {
     let basePrice = productData.price || 1000;
     let discount = productData.discount || 0;
     let comboImage = null;
-
     let isCombinationAvailable = false;
     
     if (isAllSelected) {
         if (combo) {
-            // КОМБИНАЦИЯ НАЙДЕНА - ИСПОЛЬЗУЕМ ЕЕ ДАННЫЕ
             isCombinationAvailable = true;
             if (combo.price) basePrice = combo.price;
             if (combo.colorImage) comboImage = combo.colorImage;
             errorMessage.classList.add('hidden');
         } else {
-            // КОМБИНАЦИЯ НЕ НАЙДЕНА
             isCombinationAvailable = false;
             errorMessage.classList.remove('hidden');
         }
     } else {
-        // ОПЦИИ ВЫБРАНЫ НЕ ПОЛНОСТЬЮ
         errorMessage.classList.add('hidden');
     }
 
@@ -341,17 +350,17 @@ function updateProductView() {
     const oldPriceEl = document.getElementById("old-price");
     const newPriceEl = document.getElementById("new-price");
     
-    // Если комбинация недоступна, можем показать базовую цену или 'N/A'
     if (isCombinationAvailable || !isAllSelected) {
         oldPriceEl.textContent = formatPrice(basePrice);
         newPriceEl.textContent = formatPrice(Math.round(basePrice * (1 - discount / 100)));
-        oldPriceEl.classList.remove('opacity-0');
+        // Дисконтную цену показываем, если она есть
+        oldPriceEl.style.display = discount > 0 ? 'inline' : 'none'; 
         newPriceEl.classList.remove('text-gray-400');
         newPriceEl.classList.add('text-orange-600');
     } else {
-        oldPriceEl.textContent = 'N/A';
+        oldPriceEl.textContent = '';
         newPriceEl.textContent = 'N/A';
-        oldPriceEl.classList.add('opacity-0');
+        oldPriceEl.style.display = 'none';
         newPriceEl.classList.remove('text-orange-600');
         newPriceEl.classList.add('text-gray-400');
     }
@@ -361,20 +370,18 @@ function updateProductView() {
     
     if (comboImage) {
         mainImage.src = comboImage;
+        console.log("[ИЗОБРАЖЕНИЕ] Установлено изображение из комбинации.");
     } else {
         // Fallback: Ищем изображение по выбранному Цвету
         const selectedColorData = (productData.colors || []).find(c => c.name === selectedColor);
         if (selectedColorData && selectedColorData.image) {
             mainImage.src = selectedColorData.image;
+            console.log("[ИЗОБРАЖЕНИЕ] Установлено изображение по выбранному цвету.");
         } else if (productData.images && productData.images.length > 0) {
              // Fallback к первому изображению галереи
              mainImage.src = productData.images[0];
-        } else if (productData.image) {
-             // Fallback к единственному изображению
-             mainImage.src = productData.image;
-        } else {
-            mainImage.src = "https://placehold.co/800x600?text=No+Image";
-        }
+             console.log("[ИЗОБРАЖЕНИЕ] Установлено первое изображение из галереи (Fallback).");
+        } 
     }
     
     // Снимаем активность со всех маленьких изображений, так как основное изменилось
@@ -394,7 +401,7 @@ function updateProductView() {
 }
 
 function formatPrice(price) {
-    if (typeof price !== 'number') return 'N/A';
+    if (typeof price !== 'number' || isNaN(price)) return 'N/A';
     return price.toLocaleString('ru-RU', { style: 'currency', currency: 'BYN', maximumFractionDigits: 0 });
 }
 
@@ -428,10 +435,6 @@ function showMessage(text, isError) {
     }, 5000);
 }
 
-// Обработка случая, если ID не был указан (для дебага)
-if (productId === "test_product_id") {
-    // Эта функция будет вызвана внутри loadProduct, если реальный ID не найден
-}
 </script>
 
 </body>
