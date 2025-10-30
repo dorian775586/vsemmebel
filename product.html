@@ -24,71 +24,71 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 <body class="pb-20">
 
 <header class="sticky top-0 header-bg z-20">
-  <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-    <a href="/" class="text-3xl font-black text-gray-900 tracking-tight">Mebel.by</a>
-  </div>
+  <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+    <a href="/" class="text-3xl font-black text-gray-900 tracking-tight">Mebel.by</a>
+  </div>
 </header>
 
 <main class="max-w-6xl mx-auto px-4 mt-6">
 
-  <!-- Хлебные крошки -->
-  <div class="mb-6 text-sm text-gray-500">
-    <a href="/" class="hover:text-orange-500 transition">Главная</a>
-    <span class="mx-2">/</span>
-    <a href="#" class="hover:text-orange-500 transition" id="breadcrumb-category">Категория</a>
-    <span class="mx-2">/</span>
-    <span class="text-gray-900 font-medium" id="breadcrumb-title">Товар</span>
-  </div>
+  <!-- Хлебные крошки -->
+  <div class="mb-6 text-sm text-gray-500">
+    <a href="/" class="hover:text-orange-500 transition">Главная</a>
+    <span class="mx-2">/</span>
+    <a href="#" class="hover:text-orange-500 transition" id="breadcrumb-category">Категория</a>
+    <span class="mx-2">/</span>
+    <span class="text-gray-900 font-medium" id="breadcrumb-title">Товар</span>
+  </div>
 
-  <div class="lg:grid lg:grid-cols-2 lg:gap-10">
+  <div class="lg:grid lg:grid-cols-2 lg:gap-10">
 
-    <!-- Галерея -->
-    <div class="mb-8 lg:mb-0">
-      <div id="thumbnail-gallery" class="flex gap-3 mb-3"></div>
-      <img id="main-product-image" src="https://placehold.co/800x600?text=Нет+изображения" class="w-full h-auto rounded-3xl object-cover" style="max-height: 600px;">
-    </div>
+    <!-- Галерея -->
+    <div class="mb-8 lg:mb-0">
+      <div id="thumbnail-gallery" class="flex gap-3 mb-3"></div>
+      <img id="main-product-image" src="https://placehold.co/800x600?text=Нет+изображения" class="w-full h-auto rounded-3xl object-cover" style="max-height: 600px;">
+    </div>
 
-    <!-- Информация о товаре -->
-    <div class="p-6 bg-white rounded-3xl shadow-2xl sticky top-20 h-fit">
-      <h1 class="text-4xl font-black text-gray-900 mb-2" id="product-title">Товар</h1>
-      <p class="text-lg font-medium text-orange-600 uppercase mb-4" id="product-category">Категория</p>
+    <!-- Информация о товаре -->
+    <div class="p-6 bg-white rounded-3xl shadow-2xl sticky top-20 h-fit">
+      <h1 class="text-4xl font-black text-gray-900 mb-2" id="product-title">Товар</h1>
+      <p class="text-lg font-medium text-orange-600 uppercase mb-4" id="product-category">Категория</p>
 
-      <div class="mb-5 flex items-end">
-        <span id="old-price" class="line-through text-xl text-gray-400 mr-3 transition duration-300 ease-in-out">0 BYN</span>
-        <span id="new-price" class="text-4xl font-black text-orange-600 transition duration-300 ease-in-out">0 BYN</span>
-      </div>
-      
-      <!-- Добавлено поле для описания -->
-      <p class="text-gray-600 mb-6" id="product-description">Загрузка описания...</p>
+      <div class="mb-5 flex items-end">
+        <span id="old-price" class="line-through text-xl text-gray-400 mr-3 transition duration-300 ease-in-out">0 BYN</span>
+        <span id="new-price" class="text-4xl font-black text-orange-600 transition duration-300 ease-in-out">0 BYN</span>
+      </div>
+      
+      <!-- Добавлено поле для описания -->
+      <p class="text-gray-600 mb-6" id="product-description">Загрузка описания...</p>
 
-      <div class="mb-5" id="facade-section">
-        <p class="font-bold text-gray-800 mb-3">Фасад:</p>
-        <div class="flex flex-wrap gap-3" id="facade-options"></div>
-      </div>
+      <div class="mb-5" id="facade-section">
+        <p class="font-bold text-gray-800 mb-3">Фасад:</p>
+        <div class="flex flex-wrap gap-3" id="facade-options"></div>
+      </div>
 
-      <div class="mb-5" id="material-section">
-        <p class="font-bold text-gray-800 mb-3">Материал:</p>
-        <div class="flex flex-wrap gap-3" id="material-options"></div>
-      </div>
+      <div class="mb-5" id="material-section">
+        <p class="font-bold text-gray-800 mb-3">Материал:</p>
+        <div class="flex flex-wrap gap-3" id="material-options"></div>
+      </div>
 
-      <div class="mb-8" id="color-section">
-        <p class="font-bold text-gray-800 mb-3">Цвет/Текстура:</p>
-        <div class="flex flex-wrap gap-3" id="color-options"></div>
-      </div>
+      <div class="mb-8" id="color-section">
+        <p class="font-bold text-gray-800 mb-3">Цвет/Текстура:</p>
+        <div class="flex flex-wrap gap-3" id="color-options"></div>
+      </div>
 
-      <div class="flex flex-col space-y-4">
-        <button id="buy-button" class="orange-accent text-white font-black text-lg py-4 rounded-xl uppercase">
-          Купить
-        </button>
-      </div>
-      
-      <div class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm hidden" id="error-message">
-          <p>Эта комбинация опций недоступна.</p>
-      </div>
+      <div class="flex flex-col space-y-4">
+        <button id="buy-button" class="orange-accent text-white font-black text-lg py-4 rounded-xl uppercase">
+          Купить
+        </button>
+      </div>
+      
+      <div class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm hidden" id="error-message">
+        <p>Эта комбинация опций недоступна.</p>
+      </div>
 
-    </div>
+    </div>
 
-  </div>
+  </div>
 </main>
 
 <!-- Всплывающее уведомление (замена alert()) -->
@@ -96,26 +96,35 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 
 <script type="module">
 import { 
-  initializeApp 
+  initializeApp 
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { 
-  getFirestore, doc, getDoc, 
-  collection, query, getDocs, limit 
+  getFirestore, doc, getDoc, 
+  collection, query, getDocs, limit, 
+  setLogLevel
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import {
+  getAuth, signInAnonymously, signInWithCustomToken
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-// Конфигурация Firebase:
-// Используем глобальную переменную, предоставляемую средой, с запасными данными.
-const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : JSON.stringify({
-    apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
-    authDomain: "vsemmebel-90d48.firebaseapp.com",
-    projectId: "vsemmebel-90d48",
-    storageBucket: "vsemmebel-90d48.firebasestorage.app",
-    messagingSenderId: "958123504041",
-    appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
-}));
 
+// --- Инициализация Firebase и Аутентификация ---
+
+// Глобальные переменные среды
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+// Устанавливаем путь к публичной коллекции, как вы и просили
+const COLLECTION_PATH = `/artifacts/${appId}/public/data/offers`;
+
+// Инициализация сервисов
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Установка уровня логирования для отладки
+setLogLevel('Debug'); 
 
 // --- Глобальное состояние товара и выбора ---
 const urlParams = new URLSearchParams(window.location.search);
@@ -125,337 +134,365 @@ let productData = null;
 let selectedMaterial = null;
 let selectedFacade = null;
 let selectedColor = null;
+let isAuthReady = false; // Флаг готовности аутентификации
 
-// Инициализация загрузки: если ID нет, сразу ищем первый товар в базе.
-if(!productId){ 
-    console.log("[INIT] ID товара не указан в URL. Ищем первый доступный товар...");
-    findFirstAvailableProduct(); 
-} else { 
-    loadProduct(productId); 
+// Функция для аутентификации и начала загрузки
+async function initializeAuthAndFirestore() {
+    console.log("[INIT] Запуск аутентификации...");
+    try {
+        if (initialAuthToken) {
+            await signInWithCustomToken(auth, initialAuthToken);
+            console.log("[AUTH] Успешный вход с пользовательским токеном.");
+        } else {
+            // Анонимный вход, если токен не предоставлен
+            await signInAnonymously(auth);
+            console.log("[AUTH] Анонимный вход.");
+        }
+        
+        isAuthReady = true;
+
+        // Начинаем загрузку товара только после успешной аутентификации
+        if (!productId) { 
+            findFirstAvailableProduct(); 
+        } else { 
+            loadProduct(productId); 
+        }
+
+    } catch (error) {
+        console.error("Ошибка Firebase Auth:", error);
+        showMessage("Ошибка авторизации. Данные могут быть недоступны.", true);
+    }
 }
 
+
 /**
- * Ищет первый доступный ID товара в базе и перезагружает страницу.
- * Если товар не найден, показывает ошибку.
- */
+ * Ищет первый доступный ID товара в базе по новому публичному пути.
+ * Если товар не найден, показывает ошибку.
+ */
 async function findFirstAvailableProduct() {
-    try {
-        const q = query(collection(db, "offers"), limit(1));
-        const querySnapshot = await getDocs(q);
+    if (!isAuthReady) return;
+    try {
+        // Используем COLLECTION_PATH
+        const q = query(collection(db, COLLECTION_PATH), limit(1));
+        const querySnapshot = await getDocs(q);
 
-        if (!querySnapshot.empty) {
-            const firstDoc = querySnapshot.docs[0];
-            const newProductId = firstDoc.id;
-            console.log(`[FIREBASE] Найден первый доступный ID: ${newProductId}. Перезагрузка.`);
-            
-            // Устанавливаем новый ID в URL и запускаем загрузку
-            const newUrl = window.location.pathname + `?id=${newProductId}`;
-            window.history.pushState({}, '', newUrl); // Изменяем URL без полной перезагрузки
-            productId = newProductId; // Обновляем глобальную переменную
-            loadProduct(productId); // Запускаем загрузку данных с новым ID
-        } else {
-            showMessage("Ошибка: В коллекции 'offers' не найдено ни одного товара.", true);
-        }
+        if (!querySnapshot.empty) {
+            const firstDoc = querySnapshot.docs[0];
+            const newProductId = firstDoc.id;
+            console.log(`[FIREBASE] Найден первый доступный ID: ${newProductId}. Путь: ${COLLECTION_PATH}`);
+            
+            // Устанавливаем новый ID в URL и запускаем загрузку
+            const newUrl = window.location.pathname + `?id=${newProductId}`;
+            window.history.pushState({}, '', newUrl); // Изменяем URL без полной перезагрузки
+            productId = newProductId; // Обновляем глобальную переменную
+            loadProduct(productId); // Запускаем загрузку данных с новым ID
+        } else {
+            showMessage(`Ошибка: В коллекции '${COLLECTION_PATH}' не найдено ни одного товара.`, true);
+        }
 
-    } catch (error) {
-        console.error("Ошибка при поиске первого товара:", error);
-        showMessage("Произошла ошибка связи с базой данных.", true);
-    }
+    } catch (error) {
+        console.error("Ошибка при поиске первого товара:", error);
+        showMessage("Произошла ошибка связи с базой данных при поиске товара.", true);
+    }
 }
 
 
 // --- Функции загрузки данных ---
 
 async function loadProduct(id){
-    console.log(`[FIREBASE] Попытка загрузить товар с ID: ${id}`);
-    try {
-        // Использование коллекции "offers" и ID из URL
-        const docRef = doc(db, "offers", id);
-        const docSnap = await getDoc(docRef);
-        
-        if(docSnap.exists()){ 
-            productData = docSnap.data();
-            console.log("[FIREBASE] Данные товара получены:", productData.title);
-            showMessage(`Товар "${productData.title || 'загружен'}" успешно загружен. ID: ${id}`, false);
-            initializeProductView(productData);
+    if (!isAuthReady) return;
+    console.log(`[FIREBASE] Попытка загрузить товар с ID: ${id} из пути: ${COLLECTION_PATH}`);
+    try {
+        // Используем COLLECTION_PATH для получения документа
+        const docRef = doc(db, COLLECTION_PATH, id);
+        const docSnap = await getDoc(docRef);
+        
+        if(docSnap.exists()){ 
+            productData = docSnap.data();
+            console.log("[FIREBASE] Данные товара получены:", productData.title);
+            showMessage(`Товар "${productData.title || 'загружен'}" успешно загружен. ID: ${id}`, false);
+            initializeProductView(productData);
 
-        } else {
-            // Если товар не найден, ищем другой.
-            console.warn(`[FIREBASE] Товар ID "${id}" не найден.`);
-            showMessage(`Товар ID "${id}" не найден. Поиск первого доступного товара...`, true);
-            findFirstAvailableProduct();
-        }
+        } else {
+            // Если товар не найден, ищем другой.
+            console.warn(`[FIREBASE] Товар ID "${id}" не найден.`);
+            showMessage(`Товар ID "${id}" не найден. Поиск первого доступного товара...`, true);
+            findFirstAvailableProduct();
+        }
 
-    } catch (error) {
-        console.error("Ошибка загрузки товара:", error);
-        showMessage("Произошла ошибка при загрузке данных.", true);
-        initializeProductView({ title: "Ошибка загрузки данных", price: 0 });
-    }
+    } catch (error) {
+        console.error("Ошибка загрузки товара:", error);
+        showMessage("Произошла ошибка при загрузке данных.", true);
+        initializeProductView({ title: "Ошибка загрузки данных", price: 0 });
+    }
 }
 
 
-// --- Функции рендеринга и обновления ---
+// --- Функции рендеринга и обновления (Оставлены без изменений) ---
 
 function initializeProductView(data) {
-    if (!data) return; 
-    
-    document.getElementById("product-title").textContent = data.title || "Без названия";
-    document.getElementById("breadcrumb-title").textContent = data.title || "Без названия";
-    document.getElementById("breadcrumb-category").textContent = data.category || "-";
-    // Отображение описания
-    document.getElementById("product-description").textContent = data.description || "Подробное описание товара отсутствует.";
+    if (!data) return; 
+    
+    document.getElementById("product-title").textContent = data.title || "Без названия";
+    document.getElementById("breadcrumb-title").textContent = data.title || "Без названия";
+    document.getElementById("breadcrumb-category").textContent = data.category || "-";
+    // Отображение описания
+    document.getElementById("product-description").textContent = data.description || "Подробное описание товара отсутствует.";
 
 
-    // Инициализация галереи
-    renderGallery(data.images || [data.image].filter(Boolean)); 
+    // Инициализация галереи
+    renderGallery(data.images || [data.image].filter(Boolean)); 
 
-    // Инициализация опций
-    renderOptions('facade-options', data.facades, (value) => { selectedFacade = value; updateProductView(); });
-    renderOptions('material-options', data.materials, (value) => { selectedMaterial = value; updateProductView(); });
-    renderColorOptions('color-options', data.colors, (value) => { selectedColor = value; updateProductView(); });
-    
-    // Скрываем блоки, если нет опций
-    if(!data.facades || data.facades.length === 0) document.getElementById('facade-section').style.display = 'none';
-    else document.getElementById('facade-section').style.display = 'block';
+    // Инициализация опций
+    renderOptions('facade-options', data.facades, (value) => { selectedFacade = value; updateProductView(); });
+    renderOptions('material-options', data.materials, (value) => { selectedMaterial = value; updateProductView(); });
+    renderColorOptions('color-options', data.colors, (value) => { selectedColor = value; updateProductView(); });
+    
+    // Скрываем блоки, если нет опций
+    if(!data.facades || data.facades.length === 0) document.getElementById('facade-section').style.display = 'none';
+    else document.getElementById('facade-section').style.display = 'block';
 
-    if(!data.materials || data.materials.length === 0) document.getElementById('material-section').style.display = 'none';
-    else document.getElementById('material-section').style.display = 'block';
+    if(!data.materials || data.materials.length === 0) document.getElementById('material-section').style.display = 'none';
+    else document.getElementById('material-section').style.display = 'block';
 
-    if(!data.colors || data.colors.length === 0) document.getElementById('color-section').style.display = 'none';
-    else document.getElementById('color-section').style.display = 'block';
+    if(!data.colors || data.colors.length === 0) document.getElementById('color-section').style.display = 'none';
+    else document.getElementById('color-section').style.display = 'block';
 
 
-    // Выбираем первую доступную комбинацию по умолчанию
-    if (data.combinations && data.combinations.length) {
-        const combo = data.combinations[0];
-        selectedMaterial = combo.material;
-        selectedFacade = combo.facade;
-        selectedColor = combo.color;
-    } else {
-        // Если комбинаций нет, выбираем первые опции, если они есть
-        selectedMaterial = data.materials?.[0] || null;
-        selectedFacade = data.facades?.[0] || null;
-        selectedColor = data.colors?.[0]?.name || null;
-    }
+    // Выбираем первую доступную комбинацию по умолчанию
+    if (data.combinations && data.combinations.length) {
+        const combo = data.combinations[0];
+        selectedMaterial = combo.material;
+        selectedFacade = combo.facade;
+        selectedColor = combo.color;
+    } else {
+        // Если комбинаций нет, выбираем первые опции, если они есть
+        selectedMaterial = data.materials?.[0] || null;
+        selectedFacade = data.facades?.[0] || null;
+        selectedColor = data.colors?.[0]?.name || null;
+    }
 
-    // Активируем кнопки и обновляем представление
-    activateOption('material-options', selectedMaterial);
-    activateOption('facade-options', selectedFacade);
-    activateOption('color-options', selectedColor);
-    
-    updateProductView();
+    // Активируем кнопки и обновляем представление
+    activateOption('material-options', selectedMaterial);
+    activateOption('facade-options', selectedFacade);
+    activateOption('color-options', selectedColor);
+    
+    updateProductView();
 }
 
 function renderGallery(images) {
-    const gallery = document.getElementById("thumbnail-gallery");
-    gallery.innerHTML = "";
-    
-    images.forEach((img, i) => {
-        const thumb = document.createElement("img");
-        thumb.src = img;
-        thumb.className = "thumbnail" + (i === 0 ? " active" : "");
-        thumb.onerror = () => thumb.src = "https://placehold.co/60x60?text=IMG"; // Fallback на случай битой ссылки
-        thumb.onclick = () => {
-            document.getElementById("main-product-image").src = img;
-            gallery.querySelectorAll("img").forEach(t => t.classList.remove("active"));
-            thumb.classList.add("active");
-        };
-        gallery.appendChild(thumb);
-    });
+    const gallery = document.getElementById("thumbnail-gallery");
+    gallery.innerHTML = "";
+    
+    images.forEach((img, i) => {
+        const thumb = document.createElement("img");
+        thumb.src = img;
+        thumb.className = "thumbnail" + (i === 0 ? " active" : "");
+        thumb.onerror = () => thumb.src = "https://placehold.co/60x60?text=IMG"; // Fallback на случай битой ссылки
+        thumb.onclick = () => {
+            document.getElementById("main-product-image").src = img;
+            gallery.querySelectorAll("img").forEach(t => t.classList.remove("active"));
+            thumb.classList.add("active");
+        };
+        gallery.appendChild(thumb);
+    });
 
-    const mainImage = document.getElementById("main-product-image");
-    if (images.length > 0) {
-         mainImage.src = images[0];
-    } else {
-        mainImage.src = "https://placehold.co/800x600?text=Нет+изображения";
-    }
-    mainImage.onerror = () => mainImage.src = "https://placehold.co/800x600?text=Нет+изображения";
+    const mainImage = document.getElementById("main-product-image");
+    if (images.length > 0) {
+           mainImage.src = images[0];
+    } else {
+        mainImage.src = "https://placehold.co/800x600?text=Нет+изображения";
+    }
+    mainImage.onerror = () => mainImage.src = "https://placehold.co/800x600?text=Нет+изображения";
 }
 
 function renderOptions(containerId, options, clickHandler) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = "";
-    (options || []).forEach(o => {
-        const btn = document.createElement("button");
-        btn.textContent = o;
-        btn.className = "option-button-style";
-        btn.onclick = () => {
-            console.log(`Выбрана опция ${containerId}: ${o}`);
-            clickHandler(o);
-            container.querySelectorAll("button").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-        };
-        container.appendChild(btn);
-    });
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+    (options || []).forEach(o => {
+        const btn = document.createElement("button");
+        btn.textContent = o;
+        btn.className = "option-button-style";
+        btn.onclick = () => {
+            console.log(`Выбрана опция ${containerId}: ${o}`);
+            clickHandler(o);
+            container.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+        };
+        container.appendChild(btn);
+    });
 }
 
 function renderColorOptions(containerId, colors, clickHandler) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = "";
-    (colors || []).forEach(c => {
-        const btn = document.createElement("button");
-        btn.textContent = c.name;
-        btn.className = "option-button-style";
-        btn.style.backgroundColor = c.hex || '#fff';
-        btn.style.color = (c.hex && c.hex.toLowerCase() === '#ffffff') ? '#333' : 'white'; 
-        btn.style.borderColor = c.hex || '#f97316';
-        
-        btn.onclick = () => {
-            console.log(`Выбран цвет: ${c.name}`);
-            clickHandler(c.name);
-            container.querySelectorAll("button").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-        };
-        container.appendChild(btn);
-    });
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+    (colors || []).forEach(c => {
+        const btn = document.createElement("button");
+        btn.textContent = c.name;
+        btn.className = "option-button-style";
+        btn.style.backgroundColor = c.hex || '#fff';
+        btn.style.color = (c.hex && c.hex.toLowerCase() === '#ffffff') ? '#333' : 'white'; 
+        btn.style.borderColor = c.hex || '#f97316';
+        
+        btn.onclick = () => {
+            console.log(`Выбран цвет: ${c.name}`);
+            clickHandler(c.name);
+            container.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+        };
+        container.appendChild(btn);
+    });
 }
 
 function activateOption(containerId, value) {
-    if (!value) return;
-    const container = document.getElementById(containerId);
-    container.querySelectorAll('button').forEach(b => {
-        if (b.textContent === value) b.classList.add('active');
-    });
+    if (!value) return;
+    const container = document.getElementById(containerId);
+    container.querySelectorAll('button').forEach(b => {
+        if (b.textContent === value) b.classList.add('active');
+    });
 }
 
 function findCombination() {
-    if (!productData || !productData.combinations) return null;
+    if (!productData || !productData.combinations) return null;
 
-    const combo = productData.combinations.find(c =>
-        c.material === selectedMaterial &&
-        c.facade === selectedFacade &&
-        c.color === selectedColor
-    );
-    
-    if (combo) {
-        console.log("[КОМБО] Найдена подходящая комбинация:", combo);
-    } else {
-        console.log(`[КОМБО] Комбинация не найдена: Материал=${selectedMaterial}, Фасад=${selectedFacade}, Цвет=${selectedColor}`);
-    }
-    return combo;
+    const combo = productData.combinations.find(c =>
+        c.material === selectedMaterial &&
+        c.facade === selectedFacade &&
+        c.color === selectedColor
+    );
+    
+    if (combo) {
+        console.log("[КОМБО] Найдена подходящая комбинация:", combo);
+    } else {
+        console.log(`[КОМБО] Комбинация не найдена: Материал=${selectedMaterial}, Фасад=${selectedFacade}, Цвет=${selectedColor}`);
+    }
+    return combo;
 }
 
 function updateProductView() {
-    if (!productData) return;
-    
-    // Определяем, сколько категорий опций есть в товаре
-    const requiredOptions = [
-        productData.materials?.length > 0, 
-        productData.facades?.length > 0, 
-        productData.colors?.length > 0
-    ].filter(Boolean).length;
+    if (!productData) return;
+    
+    // Определяем, сколько категорий опций есть в товаре
+    const requiredOptions = [
+        productData.materials?.length > 0, 
+        productData.facades?.length > 0, 
+        productData.colors?.length > 0
+    ].filter(Boolean).length;
 
-    // Определяем, сколько опций выбрано
-    const selectedCount = [selectedMaterial, selectedFacade, selectedColor].filter(Boolean).length;
-    const isAllSelected = requiredOptions === selectedCount;
+    // Определяем, сколько опций выбрано
+    const selectedCount = [selectedMaterial, selectedFacade, selectedColor].filter(Boolean).length;
+    const isAllSelected = requiredOptions === selectedCount;
 
-    const combo = findCombination();
-    const buyButton = document.getElementById("buy-button");
-    const errorMessage = document.getElementById("error-message");
-    
-    let basePrice = productData.price || 0; 
-    let discount = productData.discount || 0;
-    let comboImage = null;
-    let isCombinationAvailable = false;
-    
-    if (isAllSelected) {
-        if (combo) {
-            isCombinationAvailable = true;
-            if (combo.price) basePrice = combo.price;
-            if (combo.colorImage) comboImage = combo.colorImage;
-            errorMessage.classList.add('hidden');
-        } else {
-            isCombinationAvailable = false;
-            errorMessage.classList.remove('hidden');
-        }
-    } else {
-        errorMessage.classList.add('hidden');
-    }
+    const combo = findCombination();
+    const buyButton = document.getElementById("buy-button");
+    const errorMessage = document.getElementById("error-message");
+    
+    let basePrice = productData.price || 0; 
+    let discount = productData.discount || 0;
+    let comboImage = null;
+    let isCombinationAvailable = false;
+    
+    if (isAllSelected) {
+        if (combo) {
+            isCombinationAvailable = true;
+            if (combo.price) basePrice = combo.price;
+            if (combo.colorImage) comboImage = combo.colorImage;
+            errorMessage.classList.add('hidden');
+        } else {
+            isCombinationAvailable = false;
+            errorMessage.classList.remove('hidden');
+        }
+    } else {
+        errorMessage.classList.add('hidden');
+    }
 
-    // --- 1. Обновление цены ---
-    const oldPriceEl = document.getElementById("old-price");
-    const newPriceEl = document.getElementById("new-price");
-    
-    if (isCombinationAvailable || !isAllSelected) {
-        oldPriceEl.textContent = formatPrice(basePrice);
-        newPriceEl.textContent = formatPrice(Math.round(basePrice * (1 - discount / 100)));
-        oldPriceEl.style.display = discount > 0 ? 'inline' : 'none'; 
-        newPriceEl.classList.remove('text-gray-400');
-        newPriceEl.classList.add('text-orange-600');
-    } else {
-        oldPriceEl.textContent = '';
-        newPriceEl.textContent = 'N/A';
-        oldPriceEl.style.display = 'none';
-        newPriceEl.classList.remove('text-orange-600');
-        newPriceEl.classList.add('text-gray-400');
-    }
+    // --- 1. Обновление цены ---
+    const oldPriceEl = document.getElementById("old-price");
+    const newPriceEl = document.getElementById("new-price");
+    
+    if (isCombinationAvailable || !isAllSelected) {
+        oldPriceEl.textContent = formatPrice(basePrice);
+        newPriceEl.textContent = formatPrice(Math.round(basePrice * (1 - discount / 100)));
+        oldPriceEl.style.display = discount > 0 ? 'inline' : 'none'; 
+        newPriceEl.classList.remove('text-gray-400');
+        newPriceEl.classList.add('text-orange-600');
+    } else {
+        oldPriceEl.textContent = '';
+        newPriceEl.textContent = 'N/A';
+        oldPriceEl.style.display = 'none';
+        newPriceEl.classList.remove('text-orange-600');
+        newPriceEl.classList.add('text-gray-400');
+    }
 
-    // --- 2. Обновление изображения ---
-    const mainImage = document.getElementById("main-product-image");
-    
-    if (comboImage) {
-        mainImage.src = comboImage;
-    } else {
-        // Fallback: Ищем изображение по выбранному Цвету
-        const selectedColorData = (productData.colors || []).find(c => c.name === selectedColor);
-        if (selectedColorData && selectedColorData.image) {
-            mainImage.src = selectedColorData.image;
-        } else if (productData.images && productData.images.length > 0) {
-             mainImage.src = productData.images[0];
-        } 
-    }
-    
-    // Снимаем активность со всех маленьких изображений, так как основное изменилось
-    document.getElementById("thumbnail-gallery").querySelectorAll("img").forEach(t=>t.classList.remove("active"));
-    
-    // --- 3. Обновление кнопки "Купить" ---
-    if (!isAllSelected) {
-        buyButton.disabled = true;
-        buyButton.textContent = requiredOptions > 0 ? `Выберите все опции (${requiredOptions - selectedCount} еще)` : "Купить";
-    } else if (!isCombinationAvailable) {
-        buyButton.disabled = true;
-        buyButton.textContent = "Комбинация недоступна";
-    } else {
-        buyButton.disabled = false;
-        buyButton.textContent = "Купить";
-    }
+    // --- 2. Обновление изображения ---
+    const mainImage = document.getElementById("main-product-image");
+    
+    if (comboImage) {
+        mainImage.src = comboImage;
+    } else {
+        // Fallback: Ищем изображение по выбранному Цвету
+        const selectedColorData = (productData.colors || []).find(c => c.name === selectedColor);
+        if (selectedColorData && selectedColorData.image) {
+            mainImage.src = selectedColorData.image;
+        } else if (productData.images && productData.images.length > 0) {
+               mainImage.src = productData.images[0];
+        } 
+    }
+    
+    // Снимаем активность со всех маленьких изображений, так как основное изменилось
+    document.getElementById("thumbnail-gallery").querySelectorAll("img").forEach(t=>t.classList.remove("active"));
+    
+    // --- 3. Обновление кнопки "Купить" ---
+    if (!isAllSelected) {
+        buyButton.disabled = true;
+        buyButton.textContent = requiredOptions > 0 ? `Выберите все опции (${requiredOptions - selectedCount} еще)` : "Купить";
+    } else if (!isCombinationAvailable) {
+        buyButton.disabled = true;
+        buyButton.textContent = "Комбинация недоступна";
+    } else {
+        buyButton.disabled = false;
+        buyButton.textContent = "Купить";
+    }
 }
 
 function formatPrice(price) {
-    if (typeof price !== 'number' || isNaN(price)) return 'N/A';
-    return price.toLocaleString('ru-RU', { style: 'currency', currency: 'BYN', maximumFractionDigits: 0 });
+    if (typeof price !== 'number' || isNaN(price)) return 'N/A';
+    return price.toLocaleString('ru-RU', { style: 'currency', currency: 'BYN', maximumFractionDigits: 0 });
 }
 
 // --- Обработчик покупки и Всплывающее сообщение ---
 
 document.getElementById("buy-button").onclick = () => {
-    if (document.getElementById("buy-button").disabled) return;
-    if (!productData) return showMessage("Ошибка: Данные товара не загружены.", true);
-    
-    const comboText = `Материал: ${selectedMaterial||'-'}, Фасад: ${selectedFacade||'-'}, Цвет: ${selectedColor||'-'}`;
-    const priceText = document.getElementById("new-price").textContent;
-    
-    const message = `
-        ✅ Вы оформили заказ:<br>
-        <strong>${productData.title}</strong><br>
-        Опции: ${comboText}<br>
-        Итоговая цена: ${priceText}
-    `;
-    
-    console.log("Оформлен заказ:", productData.title, comboText, "Цена:", priceText);
-    showMessage(message, false);
+    if (document.getElementById("buy-button").disabled) return;
+    if (!productData) return showMessage("Ошибка: Данные товара не загружены.", true);
+    
+    const comboText = `Материал: ${selectedMaterial||'-'}, Фасад: ${selectedFacade||'-'}, Цвет: ${selectedColor||'-'}`;
+    const priceText = document.getElementById("new-price").textContent;
+    
+    const message = `
+        ✅ Вы оформили заказ:<br>
+        <strong>${productData.title}</strong><br>
+        Опции: ${comboText}<br>
+        Итоговая цена: ${priceText}
+    `;
+    
+    console.log("Оформлен заказ:", productData.title, comboText, "Цена:", priceText);
+    showMessage(message, false);
 };
 
 function showMessage(text, isError) {
-    const msgBox = document.getElementById("message-box");
-    msgBox.innerHTML = text;
-    msgBox.className = 'show';
-    msgBox.style.backgroundColor = isError ? '#ef4444' : '#10b981';
-    
-    setTimeout(() => {
-        msgBox.classList.remove('show');
-    }, 5000);
+    const msgBox = document.getElementById("message-box");
+    msgBox.innerHTML = text;
+    msgBox.className = 'show';
+    msgBox.style.backgroundColor = isError ? '#ef4444' : '#10b981';
+    
+    setTimeout(() => {
+        msgBox.classList.remove('show');
+    }, 5000);
 }
+
+// Запуск инициализации
+window.onload = initializeAuthAndFirestore;
 
 </script>
 
