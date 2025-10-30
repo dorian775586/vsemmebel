@@ -44,7 +44,6 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 </header>
 
 <main class="max-w-6xl mx-auto px-4 mt-6">
-
   <div class="mb-6 text-sm text-gray-500">
     <a href="/" class="hover:text-orange-500 transition">Главная</a>
     <span class="mx-2">/</span>
@@ -54,7 +53,6 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
   </div>
 
   <div class="lg:grid lg:grid-cols-2 lg:gap-10">
-
     <div class="mb-8 lg:mb-0">
       <div id="thumbnail-gallery" class="flex gap-3 mb-3"></div>
       <img id="main-product-image" src="https://placehold.co/800x600?text=Нет+изображения" class="w-full h-auto rounded-3xl object-cover" style="max-height: 600px;">
@@ -87,17 +85,13 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
       </div>
 
       <div class="flex flex-col space-y-4">
-        <button id="buy-button" class="orange-accent text-white font-black text-lg py-4 rounded-xl uppercase">
-          Купить
-        </button>
+        <button id="buy-button" class="orange-accent text-white font-black text-lg py-4 rounded-xl uppercase">Купить</button>
       </div>
 
       <div class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm hidden" id="error-message">
         <p>Эта комбинация опций недоступна.</p>
       </div>
-
     </div>
-
   </div>
 </main>
 
@@ -117,12 +111,12 @@ const urlParams = new URLSearchParams(window.location.search);
 let productId = urlParams.get('id');
 
 const HARDCODED_FIREBASE_CONFIG = {
-    apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70", 
-    authDomain: "vsemmebel-90d48.firebaseapp.com",
-    projectId: "vsemmebel-90d48", 
-    storageBucket: "vsemmebel-90d48.appspot.com", 
-    messagingSenderId: "958123504041",
-    appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
+  apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
+  authDomain: "vsemmebel-90d48.firebaseapp.com",
+  projectId: "vsemmebel-90d48",
+  storageBucket: "vsemmebel-90d48.appspot.com",
+  messagingSenderId: "958123504041",
+  appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
 };
 
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -131,257 +125,220 @@ const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial
 
 let firebaseConfig = {};
 try {
-    const parsedConfig = JSON.parse(firebaseConfigString);
-    if (parsedConfig && parsedConfig.projectId) firebaseConfig = parsedConfig;
-    else firebaseConfig = HARDCODED_FIREBASE_CONFIG;
-} catch (e) { firebaseConfig = HARDCODED_FIREBASE_CONFIG; }
+  const parsedConfig = JSON.parse(firebaseConfigString);
+  firebaseConfig = parsedConfig?.projectId ? parsedConfig : HARDCODED_FIREBASE_CONFIG;
+} catch {
+  firebaseConfig = HARDCODED_FIREBASE_CONFIG;
+}
 
 const COLLECTION_PATH = `/artifacts/${appId}/public/data/offers`;
 let app, db, auth, isAuthReady = false;
 
 async function initializeAuthAndFirestore() {
-    app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    auth = getAuth(app);
-    setLogLevel('Debug');
-    try {
-        if (initialAuthToken) await signInWithCustomToken(auth, initialAuthToken);
-        else await signInAnonymously(auth);
-        isAuthReady = true;
-        if (!productId) findFirstAvailableProduct(); else loadProduct(productId);
-    } catch (error) { showMessage("Ошибка авторизации. Данные могут быть недоступны.", true); }
+  app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  auth = getAuth(app);
+  setLogLevel('Debug');
+  try {
+    if (initialAuthToken) await signInWithCustomToken(auth, initialAuthToken);
+    else await signInAnonymously(auth);
+    isAuthReady = true;
+    if (!productId) findFirstAvailableProduct();
+    else loadProduct(productId);
+  } catch {
+    showMessage("Ошибка авторизации. Данные могут быть недоступны.", true);
+  }
 }
 
 async function findFirstAvailableProduct() {
-    if (!isAuthReady) return;
-    try {
-        const q = query(collection(db, COLLECTION_PATH), limit(1));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-            const firstDoc = querySnapshot.docs[0];
-            const newProductId = firstDoc.id;
-            const newUrl = window.location.pathname + `?id=${newProductId}`;
-            window.history.pushState({}, '', newUrl);
-            productId = newProductId;
-            loadProduct(productId);
-        } else showMessage(`Ошибка: В коллекции '${COLLECTION_PATH}' не найдено ни одного товара.`, true);
-    } catch (error) { showMessage("Произошла ошибка связи с базой данных при поиске товара.", true); }
+  if (!isAuthReady) return;
+  const q = query(collection(db, COLLECTION_PATH), limit(1));
+  const querySnapshot = await getDocs(q);
+  if (!querySnapshot.empty) {
+    const firstDoc = querySnapshot.docs[0];
+    productId = firstDoc.id;
+    window.history.pushState({}, '', `?id=${productId}`);
+    loadProduct(productId);
+  } else showMessage(`Ошибка: коллекция '${COLLECTION_PATH}' пуста.`, true);
 }
 
-async function loadProduct(id){
-    if (!isAuthReady) return;
-    try {
-        const docRef = doc(db, COLLECTION_PATH, id);
-        const docSnap = await getDoc(docRef);
-        if(docSnap.exists()){ 
-            productData = docSnap.data();
-            showMessage(`Товар "${productData.title || 'загружен'}" успешно загружен.`, false);
-            initializeProductView(productData);
-        } else findFirstAvailableProduct();
-    } catch (error) { showMessage("Произошла ошибка при загрузке данных.", true); }
-}
-
-function initializeProductView(data) {
-    document.getElementById("product-title").textContent = data.title || "Без названия";
-    document.getElementById("breadcrumb-title").textContent = data.title || "Без названия";
-    document.getElementById("breadcrumb-category").textContent = data.category || "-";
-    document.getElementById("product-description").textContent = data.description || "Подробное описание товара отсутствует.";
-
-    renderGallery(data.images || [data.image].filter(Boolean)); 
-    renderOptions('facade-options', data.facades, (value) => { selectedFacade = value; updateProductView(); });
-    renderOptions('material-options', data.materials, (value) => { selectedMaterial = value; updateProductView(); });
-    renderColorOptions('color-options', data.colors, (value) => { selectedColor = value; updateProductView(); });
-
-    if(!data.facades || data.facades.length === 0) document.getElementById('facade-section').style.display = 'none';
-    else document.getElementById('facade-section').style.display = 'block';
-    if(!data.materials || data.materials.length === 0) document.getElementById('material-section').style.display = 'none';
-    else document.getElementById('material-section').style.display = 'block';
-    if(!data.colors || data.colors.length === 0) document.getElementById('color-section').style.display = 'none';
-    else document.getElementById('color-section').style.display = 'block';
-
-    if (data.combinations && data.combinations.length) {
-        const combo = data.combinations[0];
-        selectedMaterial = combo.material;
-        selectedFacade = combo.facade;
-        selectedColor = combo.color;
-    } else {
-        selectedMaterial = data.materials?.[0] || null;
-        selectedFacade = data.facades?.[0] || null;
-        selectedColor = data.colors?.[0]?.name || null;
-    }
-
-    activateOption('material-options', selectedMaterial);
-    activateOption('facade-options', selectedFacade);
-    activateOption('color-options', selectedColor);
-    updateProductView();
+async function loadProduct(id) {
+  if (!isAuthReady) return;
+  const docRef = doc(db, COLLECTION_PATH, id);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    productData = docSnap.data();
+    showMessage(`Товар "${productData.title || 'загружен'}" успешно загружен.`, false);
+    initializeProductView(productData);
+  } else findFirstAvailableProduct();
 }
 
 function renderGallery(images) {
-    const gallery = document.getElementById("thumbnail-gallery");
-    gallery.innerHTML = "";
-    images.forEach((img, i) => {
-        const thumb = document.createElement("img");
-        thumb.src = img;
-        thumb.className = "thumbnail" + (i === 0 ? " active" : "");
-        thumb.onerror = () => thumb.src = "https://placehold.co/60x60?text=IMG";
-        thumb.onclick = () => {
-            const mainImage = document.getElementById("main-product-image");
-            mainImage.style.opacity = 0;
-            setTimeout(()=>{ mainImage.src = img; mainImage.style.opacity = 1; }, 200);
-            gallery.querySelectorAll("img").forEach(t => t.classList.remove("active"));
-            thumb.classList.add("active");
-        };
-        gallery.appendChild(thumb);
-    });
-    const mainImage = document.getElementById("main-product-image");
-    mainImage.src = images[0] || "https://placehold.co/800x600?text=Нет+изображения";
-    mainImage.onerror = () => mainImage.src = "https://placehold.co/800x600?text=Нет+изображения";
-}
-
-function renderOptions(containerId, options, clickHandler) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = "";
-    (options || []).forEach(o => {
-        const btn = document.createElement("button");
-        btn.textContent = o;
-        btn.className = "option-button-style";
-        btn.onclick = () => { clickHandler(o); container.querySelectorAll("button").forEach(b => b.classList.remove("active")); btn.classList.add("active"); };
-        container.appendChild(btn);
-    });
-}
-
-function renderColorOptions(containerId, colors, clickHandler) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = "";
-    (colors || []).forEach(c => {
-        const btn = document.createElement("button");
-        btn.textContent = c.name;
-        btn.className = "option-button-style";
-        btn.style.backgroundColor = c.hex || '#fff';
-        btn.style.color = (c.hex && c.hex.toLowerCase() === '#ffffff') ? '#333' : 'white'; 
-        btn.style.borderColor = c.hex || '#f97316';
-        btn.onclick = () => { clickHandler(c.name); container.querySelectorAll("button").forEach(b => b.classList.remove("active")); btn.classList.add("active"); };
-        container.appendChild(btn);
-    });
+  const gallery = document.getElementById("thumbnail-gallery");
+  gallery.innerHTML = "";
+  images.forEach((img, i) => {
+    const thumb = document.createElement("img");
+    thumb.src = img;
+    thumb.className = "thumbnail" + (i === 0 ? " active" : "");
+    thumb.onerror = () => thumb.src = "https://placehold.co/60x60?text=IMG";
+    thumb.onclick = () => {
+      const mainImage = document.getElementById("main-product-image");
+      mainImage.style.opacity = 0;
+      setTimeout(() => { mainImage.src = img; mainImage.style.opacity = 1; }, 200);
+      gallery.querySelectorAll("img").forEach(t => t.classList.remove("active"));
+      thumb.classList.add("active");
+    };
+    gallery.appendChild(thumb);
+  });
+  const mainImage = document.getElementById("main-product-image");
+  mainImage.src = images[0] || "https://placehold.co/800x600?text=Нет+изображения";
 }
 
 function activateOption(containerId, value) {
-    if (!value) return;
-    const container = document.getElementById(containerId);
-    container.querySelectorAll('button').forEach(b => { if (b.textContent === value) b.classList.add('active'); });
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll("button").forEach(b => {
+    b.classList.remove("active");
+    if (b.textContent.trim() === value?.trim()) b.classList.add("active");
+  });
 }
 
-// ===================== НОВАЯ ЛОГИКА КОМБИНАЦИЙ =====================
+function renderOptions(containerId, options, clickHandler) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+  (options || []).forEach(o => {
+    const btn = document.createElement("button");
+    btn.textContent = o;
+    btn.className = "option-button-style";
+    btn.onclick = () => {
+      clickHandler(o);
+      container.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    };
+    container.appendChild(btn);
+  });
+}
+
+function renderColorOptions(containerId, colors, clickHandler) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+  (colors || []).forEach(c => {
+    const btn = document.createElement("button");
+    btn.textContent = c.name;
+    btn.className = "option-button-style";
+    btn.style.background = "white";
+    btn.style.color = "#f97316";
+    btn.style.borderColor = "#f97316";
+    btn.onmouseenter = () => btn.style.background = "#fff7ed";
+    btn.onmouseleave = () => { if (!btn.classList.contains("active")) btn.style.background = "white"; };
+    btn.onclick = () => {
+      clickHandler(c.name);
+      container.querySelectorAll("button").forEach(b => { b.classList.remove("active"); b.style.background = "white"; });
+      btn.classList.add("active");
+      btn.style.background = "#f97316";
+      btn.style.color = "white";
+    };
+    container.appendChild(btn);
+  });
+}
+
 function findCombination(autoCorrect = true) {
-    if (!productData || !productData.combinations) return null;
+  if (!productData || !productData.combinations) return null;
+  let combo = productData.combinations.find(c =>
+    c.material === selectedMaterial &&
+    c.facade === selectedFacade &&
+    c.color === selectedColor
+  );
+  if (combo) return combo;
 
-    let combo = productData.combinations.find(c =>
-        c.material === selectedMaterial &&
-        c.facade === selectedFacade &&
-        c.color === selectedColor
-    );
-    if (combo) return combo;
+  if (!autoCorrect) return null;
+  combo = productData.combinations.find(c =>
+    c.color === selectedColor || c.facade === selectedFacade || c.material === selectedMaterial
+  );
 
-    if (!autoCorrect) return null;
+  if (combo) {
+    selectedMaterial = combo.material;
+    selectedFacade = combo.facade;
+    selectedColor = combo.color;
+    activateOption("material-options", selectedMaterial);
+    activateOption("facade-options", selectedFacade);
+    activateOption("color-options", selectedColor);
+  }
+  return combo || null;
+}
 
-    combo = productData.combinations.find(c =>
-        c.color === selectedColor || c.facade === selectedFacade || c.material === selectedMaterial
-    );
+function initializeProductView(data) {
+  document.getElementById("product-title").textContent = data.title || "Без названия";
+  document.getElementById("breadcrumb-title").textContent = data.title || "Без названия";
+  document.getElementById("breadcrumb-category").textContent = data.category || "-";
+  document.getElementById("product-description").textContent = data.description || "Подробное описание товара отсутствует.";
 
-    if (combo) {
-        selectedMaterial = combo.material;
-        selectedFacade = combo.facade;
-        selectedColor = combo.color;
+  renderGallery(data.images || [data.image].filter(Boolean));
+  renderOptions("facade-options", data.facades, v => { selectedFacade = v; updateProductView(); });
+  renderOptions("material-options", data.materials, v => { selectedMaterial = v; updateProductView(); });
+  renderColorOptions("color-options", data.colors, v => { selectedColor = v; updateProductView(); });
 
-        activateOption('material-options', selectedMaterial);
-        activateOption('facade-options', selectedFacade);
-        activateOption('color-options', selectedColor);
-    }
+  const combo = data.combinations?.[0];
+  selectedMaterial = combo?.material || data.materials?.[0] || null;
+  selectedFacade = combo?.facade || data.facades?.[0] || null;
+  selectedColor = combo?.color || data.colors?.[0]?.name || null;
 
-    return combo || null;
+  activateOption("material-options", selectedMaterial);
+  activateOption("facade-options", selectedFacade);
+  activateOption("color-options", selectedColor);
+  updateProductView();
 }
 
 function updateProductView() {
-    if (!productData) return;
+  if (!productData) return;
+  const combo = findCombination(true);
+  const buyButton = document.getElementById("buy-button");
+  const errorMessage = document.getElementById("error-message");
 
-    const requiredOptions = [productData.materials?.length > 0, productData.facades?.length > 0, productData.colors?.length > 0].filter(Boolean).length;
-    const selectedCount = [selectedMaterial, selectedFacade, selectedColor].filter(Boolean).length;
-    const isAllSelected = requiredOptions === selectedCount;
+  let basePrice = combo?.price || productData.price || 0;
+  const discount = productData.discount || 0;
+  const comboImage = combo?.colorImage || null;
 
-    const combo = findCombination(true);
-    const buyButton = document.getElementById("buy-button");
-    const errorMessage = document.getElementById("error-message");
+  const isCombinationAvailable = !!combo;
+  errorMessage.classList.toggle("hidden", isCombinationAvailable);
 
-    let basePrice = productData.price || 0; 
-    let discount = productData.discount || 0;
-    let comboImage = null;
-    let isCombinationAvailable = !!combo;
+  const oldPriceEl = document.getElementById("old-price");
+  const newPriceEl = document.getElementById("new-price");
+  oldPriceEl.textContent = formatPrice(basePrice);
+  newPriceEl.textContent = formatPrice(Math.round(basePrice * (1 - discount / 100)));
+  oldPriceEl.style.display = discount > 0 ? "inline" : "none";
 
-    if (!isAllSelected) errorMessage.classList.add('hidden');
-    else if (!isCombinationAvailable) errorMessage.classList.remove('hidden');
-    else errorMessage.classList.add('hidden');
+  const mainImage = document.getElementById("main-product-image");
+  mainImage.style.opacity = 0;
+  setTimeout(() => {
+    mainImage.src = comboImage || productData.images?.[0] || "https://placehold.co/800x600?text=Нет+изображения";
+    mainImage.style.opacity = 1;
+  }, 150);
 
-    if (combo) {
-        if (combo.price) basePrice = combo.price;
-        if (combo.colorImage) comboImage = combo.colorImage;
-    }
-
-    const oldPriceEl = document.getElementById("old-price");
-    const newPriceEl = document.getElementById("new-price");
-    if (isCombinationAvailable || !isAllSelected) {
-        oldPriceEl.textContent = formatPrice(basePrice);
-        newPriceEl.textContent = formatPrice(Math.round(basePrice * (1 - discount / 100)));
-        oldPriceEl.style.display = discount > 0 ? 'inline' : 'none';
-        newPriceEl.classList.remove('text-gray-400');
-        newPriceEl.classList.add('text-orange-600');
-    } else {
-        oldPriceEl.textContent = '';
-        newPriceEl.textContent = 'N/A';
-        oldPriceEl.style.display = 'none';
-        newPriceEl.classList.remove('text-orange-600');
-        newPriceEl.classList.add('text-gray-400');
-    }
-
-    const mainImage = document.getElementById("main-product-image");
-    mainImage.style.opacity = 0;
-    setTimeout(()=>{
-        if (comboImage) mainImage.src = comboImage;
-        else {
-            const selectedColorData = (productData.colors || []).find(c => c.name === selectedColor);
-            if (selectedColorData && selectedColorData.image) mainImage.src = selectedColorData.image;
-            else if (productData.images && productData.images.length > 0) mainImage.src = productData.images[0];
-        }
-        mainImage.style.opacity = 1;
-    }, 150);
-
-    document.getElementById("thumbnail-gallery").querySelectorAll("img").forEach(t=>t.classList.remove("active"));
-
-    if (!isAllSelected) buyButton.disabled = true, buyButton.textContent = requiredOptions > 0 ? `Выберите все опции (${requiredOptions - selectedCount} еще)` : "Купить";
-    else if (!isCombinationAvailable) buyButton.disabled = true, buyButton.textContent = "Комбинация недоступна";
-    else buyButton.disabled = false, buyButton.textContent = "Купить";
+  buyButton.disabled = !isCombinationAvailable;
+  buyButton.textContent = isCombinationAvailable ? "Купить" : "Комбинация недоступна";
 }
-// =================================================================
 
-function formatPrice(price) { return (typeof price !== 'number' || isNaN(price)) ? 'N/A' : price.toLocaleString('ru-RU', { style: 'currency', currency: 'BYN', maximumFractionDigits: 0 }); }
+function formatPrice(price) {
+  return isNaN(price) ? "N/A" : price.toLocaleString("ru-RU", { style: "currency", currency: "BYN", maximumFractionDigits: 0 });
+}
 
 document.getElementById("buy-button").onclick = () => {
-    if (document.getElementById("buy-button").disabled) return;
-    if (!productData) return showMessage("Ошибка: Данные товара не загружены.", true);
-    const comboText = `Материал: ${selectedMaterial||'-'}, Фасад: ${selectedFacade||'-'}, Цвет: ${selectedColor||'-'}`;
-    const priceText = document.getElementById("new-price").textContent;
-    showMessage(`✅ Вы оформили заказ:<br><strong>${productData.title}</strong><br>Опции: ${comboText}<br>Итоговая цена: ${priceText}`, false);
+  if (document.getElementById("buy-button").disabled) return;
+  const comboText = `Материал: ${selectedMaterial||'-'}, Фасад: ${selectedFacade||'-'}, Цвет: ${selectedColor||'-'}`;
+  const priceText = document.getElementById("new-price").textContent;
+  showMessage(`✅ Вы оформили заказ:<br><strong>${productData.title}</strong><br>Опции: ${comboText}<br>Итоговая цена: ${priceText}`, false);
 };
 
 function showMessage(text, isError) {
-    const msgBox = document.getElementById("message-box");
-    msgBox.innerHTML = text;
-    msgBox.className = 'show';
-    msgBox.style.backgroundColor = isError ? '#ef4444' : '#10b981';
-    setTimeout(() => { msgBox.classList.remove('show'); }, 5000);
+  const msgBox = document.getElementById("message-box");
+  msgBox.innerHTML = text;
+  msgBox.className = "show";
+  msgBox.style.backgroundColor = isError ? "#ef4444" : "#10b981";
+  setTimeout(() => msgBox.classList.remove("show"), 5000);
 }
 
 window.onload = initializeAuthAndFirestore;
 </script>
-
 </body>
 </html>
