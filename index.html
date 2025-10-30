@@ -338,7 +338,8 @@
                 });
                 
                 allOffers = fetchedOffers;
-                console.log(`Загружено ${allOffers.length} товаров.`);
+                // *** ДОБАВЛЕНО ЛОГИРОВАНИЕ: Проверяем, сколько товаров пришло из базы ***
+                console.log(`[Firestore] Загружено ${allOffers.length} товаров. (0 = нет товаров)`);
                 // Перерисовываем при получении новых данных
                 renderOffers(); 
             }, (error) => {
@@ -369,6 +370,9 @@
         }
 
         function renderOffers() {
+            // *** ДОБАВЛЕНО ЛОГИРОВАНИЕ: Проверяем, что очистка происходит ***
+            console.log(`[Render] Очистка списка товаров. Товаров к рендерингу после фильтра: ${allOffers.length}`);
+
             offersListDiv.innerHTML = '';
             
             // 1. Фильтр по категории
@@ -385,6 +389,8 @@
 
             if (finalOffers.length === 0) {
                 noOffersDiv.classList.remove('hidden');
+                // Важно: вставляем сообщение "Нет товаров" в контейнер offersListDiv
+                offersListDiv.appendChild(noOffersDiv);
                 return;
             }
             noOffersDiv.classList.add('hidden');
@@ -392,8 +398,9 @@
             // 3. Рендеринг карточек
             finalOffers.forEach(offer => {
                 // Ищем первую активную комбинацию для отображения цены
-                const activeCombo = offer.combinations?.find(c => c.isActive) || offer.combinations?.[0];
-                const originalPrice = activeCombo?.price || 0;
+                // *** БЫЛА ДОБАВЛЕНА ПРОВЕРКА НА СУЩЕСТВОВАНИЕ offer.combinations ***
+                const activeCombo = offer.combinations?.find(c => c.isActive) || offer.combinations?.[0] || { price: 0 }; 
+                const originalPrice = activeCombo.price || 0;
                 const finalPrice = originalPrice * (1 - (offer.discount || 0) / 100);
                 const imageUrl = offer.images?.[0] || `https://placehold.co/400x300/f3f4f6/4b5563?text=${encodeURIComponent(offer.title || 'Нет Фото')}`;
 
@@ -430,7 +437,7 @@
                                 ${priceDisplay}
                             </div>
                             <!-- Кнопка "Заказать" теперь вызывает сообщение, чтобы не мешать клику по карточке -->
-                            <button onclick="event.stopPropagation(); showCustomMessage('Вы добавили ${offer.title || 'этот товар'} в корзину (имитация)!')" class="card-button text-white text-sm font-bold py-2 px-4 rounded-full transition">
+                            <button onclick="event.stopPropagation(); window.showCustomMessage('Вы добавили ${offer.title || 'этот товар'} в корзину (имитация)!')" class="card-button text-white text-sm font-bold py-2 px-4 rounded-full transition">
                                 Заказать
                             </button>
                         </div>
@@ -469,6 +476,7 @@
         // 2. DOM-зависимые функции запускаем после полной загрузки страницы
         window.onload = () => {
             renderCategories(); // Рендерим кнопки категорий
+            // Рендеринг товаров будет вызван после успешной аутентификации в initializeAuth -> setupRealtimeOffersListener
         };
 
     </script>
