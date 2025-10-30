@@ -11,13 +11,12 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 .header-bg { background-color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
 .orange-accent { background-color: #f97316; color:white; font-weight:700; transition:0.3s; }
 .orange-accent:hover:not(:disabled) { background-color: #ea580c; }
-.orange-accent:disabled { background-color: #fca5a5; cursor: not-allowed; } /* Стиль для неактивной кнопки */
+.orange-accent:disabled { background-color: #fca5a5; cursor: not-allowed; } 
 .option-button-style { border:2px solid #f97316; background:#ffedd5; color:#f97316; font-weight:600; transition:0.2s; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor:pointer; min-width: 80px; text-align: center;}
 .option-button-style.active { background:#f97316; color:white; box-shadow:0 2px 5px rgba(249,115,22,0.3); border-color: #f97316;}
 .thumbnail { width:60px; height:60px; border:2px solid transparent; cursor:pointer; border-radius:0.5rem; transition:0.2s; object-fit: cover;}
 .thumbnail.active { border-color:#f97316; box-shadow:0 2px 5px rgba(249,115,22,0.3);}
 
-/* Всплывающее уведомление */
 #message-box { position: fixed; top: 20px; right: 20px; z-index: 1000; min-width: 300px; padding: 1rem; background-color: #10b981; color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); opacity: 0; transition: opacity 0.5s, transform 0.5s; transform: translateY(-10px); }
 #message-box.show { opacity: 1; transform: translateY(0); }
 </style>
@@ -32,7 +31,7 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 
 <main class="max-w-6xl mx-auto px-4 mt-6">
 
-  <!-- Хлебные крошки. Если здесь были onclick, они устранены. -->
+  <!-- Хлебные крошки -->
   <div class="mb-6 text-sm text-gray-500">
     <a href="index.html" class="hover:text-orange-500 transition">Главная</a>
     <span class="mx-2">/</span>
@@ -75,7 +74,6 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
       </div>
 
       <div class="flex flex-col space-y-4">
-        <!-- Кнопка "Купить". Если здесь был onclick, он устранен. -->
         <button id="buy-button" class="orange-accent text-white font-black text-lg py-4 rounded-xl uppercase">
           Купить
         </button>
@@ -94,11 +92,15 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 <div id="message-box" role="alert"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { 
+  initializeApp 
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { 
+  getFirestore, doc, getDoc, 
+  collection, query, getDocs, limit 
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// Конфигурация Firebase: используем предоставленную вами,
-// но делаем её совместимой с окружением Canvas.
+// Конфигурация Firebase:
 const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : JSON.stringify({
     apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
     authDomain: "vsemmebel-90d48.firebaseapp.com",
@@ -113,19 +115,48 @@ const db = getFirestore(app);
 
 // --- Глобальное состояние товара и выбора ---
 const urlParams = new URLSearchParams(window.location.search);
-// Берем ID товара строго из URL. Если нет, loadProduct не вызывается.
-const productId = urlParams.get("id"); 
+let productId = urlParams.get("id"); 
 
 let productData = null;
 let selectedMaterial = null;
 let selectedFacade = null;
 let selectedColor = null;
 
-// Инициализация загрузки: если ID нет, показываем ошибку и останавливаемся.
+// Инициализация загрузки: если ID нет, сразу ищем первый товар в базе.
 if(!productId){ 
-    showMessage("Ошибка: Не указан ID товара в URL!", true); 
+    console.log("[INIT] ID товара не указан в URL. Ищем первый доступный товар...");
+    findFirstAvailableProduct(); 
 } else { 
-    loadProduct(productId); 
+    loadProduct(productId); 
+}
+
+/**
+ * Ищет первый доступный ID товара в базе и перезагружает страницу.
+ * Если товар не найден, показывает ошибку.
+ */
+async function findFirstAvailableProduct() {
+    try {
+        const q = query(collection(db, "offers"), limit(1));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            const firstDoc = querySnapshot.docs[0];
+            const newProductId = firstDoc.id;
+            console.log(`[FIREBASE] Найден первый доступный ID: ${newProductId}. Перезагрузка.`);
+            
+            // Устанавливаем новый ID в URL и перезагружаем страницу
+            const newUrl = window.location.pathname + `?id=${newProductId}`;
+            window.history.pushState({}, '', newUrl); // Изменяем URL без полной перезагрузки
+            productId = newProductId; // Обновляем глобальную переменную
+            loadProduct(productId); // Запускаем загрузку данных с новым ID
+        } else {
+            showMessage("Ошибка: В коллекции 'offers' не найдено ни одного товара.", true);
+        }
+
+    } catch (error) {
+        console.error("Ошибка при поиске первого товара:", error);
+        showMessage("Произошла ошибка связи с базой данных.", true);
+    }
 }
 
 
@@ -137,41 +168,38 @@ async function loadProduct(id){
         const docRef = doc(db, "offers", id);
         const docSnap = await getDoc(docRef);
         
-        if(!docSnap.exists()){ 
-            showMessage(`Товар ID "${id}" не найден в базе данных.`, true);
-            // Останавливаем выполнение, не подгружая тестовые данные
-            document.getElementById("product-title").textContent = "Товар не найден";
-            return;
-        } 
-            
-        productData = docSnap.data();
-        console.log("[FIREBASE] Данные товара получены:", productData.title);
-        showMessage(`Товар "${productData.title}" успешно загружен.`, false);
-        
-        initializeProductView(productData);
+        if(docSnap.exists()){ 
+            productData = docSnap.data();
+            console.log("[FIREBASE] Данные товара получены:", productData.title);
+            showMessage(`Товар "${productData.title || 'загружен'}" успешно загружен. ID: ${id}`, false);
+            initializeProductView(productData);
+
+        } else {
+            // Если товар не найден, ищем другой.
+            console.warn(`[FIREBASE] Товар ID "${id}" не найден.`);
+            showMessage(`Товар ID "${id}" не найден. Поиск первого доступного товара...`, true);
+            findFirstAvailableProduct();
+        }
 
     } catch (error) {
         console.error("Ошибка загрузки товара:", error);
         showMessage("Произошла ошибка при загрузке данных.", true);
-        // Останавливаем выполнение при ошибке, не подгружая тестовые данные
-        document.getElementById("product-title").textContent = "Ошибка загрузки";
+        initializeProductView({ title: "Ошибка загрузки данных", price: 0 });
     }
 }
 
-// УДАЛЕНА: function createTestProductData() {...}
 
-
-// --- Функции рендеринга и обновления ---
+// --- Функции рендеринга и обновления (без изменений) ---
 
 function initializeProductView(data) {
-    if (!data) return; // Защита на случай, если данных нет
+    if (!data) return; 
     
     document.getElementById("product-title").textContent = data.title || "Без названия";
     document.getElementById("breadcrumb-title").textContent = data.title || "Без названия";
     document.getElementById("breadcrumb-category").textContent = data.category || "-";
 
     // Инициализация галереи
-    renderGallery(data.images || [data.image].filter(Boolean)); // Обработка случая, когда images нет
+    renderGallery(data.images || [data.image].filter(Boolean)); 
 
     // Инициализация опций
     renderOptions('facade-options', data.facades, (value) => { selectedFacade = value; updateProductView(); });
@@ -180,8 +208,13 @@ function initializeProductView(data) {
     
     // Скрываем блоки, если нет опций
     if(!data.facades || data.facades.length === 0) document.getElementById('facade-section').style.display = 'none';
+    else document.getElementById('facade-section').style.display = 'block';
+
     if(!data.materials || data.materials.length === 0) document.getElementById('material-section').style.display = 'none';
+    else document.getElementById('material-section').style.display = 'block';
+
     if(!data.colors || data.colors.length === 0) document.getElementById('color-section').style.display = 'none';
+    else document.getElementById('color-section').style.display = 'block';
 
 
     // Выбираем первую доступную комбинацию по умолчанию
@@ -191,6 +224,7 @@ function initializeProductView(data) {
         selectedFacade = combo.facade;
         selectedColor = combo.color;
     } else {
+        // Если комбинаций нет, выбираем первые опции, если они есть
         selectedMaterial = data.materials?.[0] || null;
         selectedFacade = data.facades?.[0] || null;
         selectedColor = data.colors?.[0]?.name || null;
@@ -217,7 +251,6 @@ function renderGallery(images) {
             document.getElementById("main-product-image").src = img;
             gallery.querySelectorAll("img").forEach(t => t.classList.remove("active"));
             thumb.classList.add("active");
-            // Обработчик галереи не должен сбрасывать выбранные опции
         };
         gallery.appendChild(thumb);
     });
@@ -256,7 +289,7 @@ function renderColorOptions(containerId, colors, clickHandler) {
         btn.textContent = c.name;
         btn.className = "option-button-style";
         btn.style.backgroundColor = c.hex || '#fff';
-        btn.style.color = (c.hex && c.hex.toLowerCase() === '#ffffff') ? '#333' : 'white'; // Улучшение читаемости текста на белом фоне
+        btn.style.color = (c.hex && c.hex.toLowerCase() === '#ffffff') ? '#333' : 'white'; 
         btn.style.borderColor = c.hex || '#f97316';
         
         btn.onclick = () => {
@@ -312,7 +345,7 @@ function updateProductView() {
     const buyButton = document.getElementById("buy-button");
     const errorMessage = document.getElementById("error-message");
     
-    let basePrice = productData.price || 0; // Базовая цена теперь 0
+    let basePrice = productData.price || 0; 
     let discount = productData.discount || 0;
     let comboImage = null;
     let isCombinationAvailable = false;
@@ -338,7 +371,6 @@ function updateProductView() {
     if (isCombinationAvailable || !isAllSelected) {
         oldPriceEl.textContent = formatPrice(basePrice);
         newPriceEl.textContent = formatPrice(Math.round(basePrice * (1 - discount / 100)));
-        // Дисконтную цену показываем, если она есть
         oldPriceEl.style.display = discount > 0 ? 'inline' : 'none'; 
         newPriceEl.classList.remove('text-gray-400');
         newPriceEl.classList.add('text-orange-600');
@@ -355,17 +387,13 @@ function updateProductView() {
     
     if (comboImage) {
         mainImage.src = comboImage;
-        console.log("[ИЗОБРАЖЕНИЕ] Установлено изображение из комбинации.");
     } else {
         // Fallback: Ищем изображение по выбранному Цвету
         const selectedColorData = (productData.colors || []).find(c => c.name === selectedColor);
         if (selectedColorData && selectedColorData.image) {
             mainImage.src = selectedColorData.image;
-            console.log("[ИЗОБРАЖЕНИЕ] Установлено изображение по выбранному цвету.");
         } else if (productData.images && productData.images.length > 0) {
-             // Fallback к первому изображению галереи
              mainImage.src = productData.images[0];
-             console.log("[ИЗОБРАЖЕНИЕ] Установлено первое изображение из галереи (Fallback).");
         } 
     }
     
