@@ -603,7 +603,17 @@ function setupGeneralHandlers() {
             materials: materials.filter(m => m.trim() !== ''),
             colors,
             // Фильтруем комбинации, чтобы не сохранять пустые
-            combinations: combinations.filter(c => c.material || c.facade || c.color || c.price > 0)
+        combinations: combinations
+            .map(c => ({
+                material: c.material || "",
+                facade: c.facade || "",
+                color: c.color || "",
+                price: Number(c.price) || 0,
+                discount: Number(c.discount) || 0,
+                isActive: !!c.isActive
+            }))
+            .filter(c => c.material || c.facade || c.color)
+
         };
 
         if(!data.title){ return showMessage("Введите название товара!"); }
