@@ -110,41 +110,48 @@ import {
 
 // --- Инициализация Firebase и Аутентификация ---
 
-// Глобальные переменные среды
+// 1. Получение и парсинг глобальных переменных
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-// Устанавливаем путь к публичной коллекции, как вы и просили
+let firebaseConfig = {};
+try {
+    firebaseConfig = JSON.parse(firebaseConfigString);
+} catch (e) {
+    console.error("FATAL ERROR: Не удалось разобрать __firebase_config:", e);
+    // Продолжаем с пустой конфигурацией, что приведет к ошибке, но мы это обрабатываем ниже.
+}
+
+// Устанавливаем путь к публичной коллекции
 const COLLECTION_PATH = `/artifacts/${appId}/public/data/offers`;
 
-// Инициализация сервисов
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+let app, db, auth;
+let isAuthReady = false; 
 
-// Установка уровня логирования для отладки
-setLogLevel('Debug'); 
-
-// --- Глобальное состояние товара и выбора ---
-const urlParams = new URLSearchParams(window.location.search);
-let productId = urlParams.get("id"); 
-
-let productData = null;
-let selectedMaterial = null;
-let selectedFacade = null;
-let selectedColor = null;
-let isAuthReady = false; // Флаг готовности аутентификации
-
-// Функция для аутентификации и начала загрузки
+// Инициализация сервисов и аутентификация
 async function initializeAuthAndFirestore() {
     console.log("[INIT] Запуск аутентификации...");
+
+    // Проверка наличия projectId перед инициализацией
+    if (!firebaseConfig.projectId) {
+        console.error('Ошибка инициализации Firebase: "projectId" отсутствует в конфигурации.');
+        showMessage("Критическая ошибка: Проект Firebase не настроен. Проверьте конфигурацию.", true);
+        return; 
+    }
+    
+    // Инициализация App
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    
+    setLogLevel('Debug'); // Установка уровня логирования для отладки
+
     try {
         if (initialAuthToken) {
             await signInWithCustomToken(auth, initialAuthToken);
             console.log("[AUTH] Успешный вход с пользовательским токеном.");
         } else {
-            // Анонимный вход, если токен не предоставлен
             await signInAnonymously(auth);
             console.log("[AUTH] Анонимный вход.");
         }
@@ -167,7 +174,6 @@ async function initializeAuthAndFirestore() {
 
 /**
  * Ищет первый доступный ID товара в базе по новому публичному пути.
- * Если товар не найден, показывает ошибку.
  */
 async function findFirstAvailableProduct() {
     if (!isAuthReady) return;
@@ -228,7 +234,7 @@ async function loadProduct(id){
 }
 
 
-// --- Функции рендеринга и обновления (Оставлены без изменений) ---
+// --- Функции рендеринга и обновления ---
 
 function initializeProductView(data) {
     if (!data) return; 
@@ -491,7 +497,7 @@ function showMessage(text, isError) {
     }, 5000);
 }
 
-// Запуск инициализации
+// Запуск инициализации после загрузки окна
 window.onload = initializeAuthAndFirestore;
 
 </script>
