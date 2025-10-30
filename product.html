@@ -178,6 +178,16 @@ async function loadProduct(id) {
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
     productData = docSnap.data();
+
+    // ✅ Сопоставляем изображения с цветами
+    if (productData.combinations && productData.image_color_map) {
+      productData.combinations.forEach(combo => {
+        const colorName = combo.color;
+        const imageObj = productData.image_color_map.find(m => m.color === colorName);
+        combo.colorImage = imageObj?.url || null;
+      });
+    }
+
     initializeProductView(productData);
   } else {
     findFirstAvailableProduct();
@@ -298,11 +308,9 @@ function initializeProductView(data) {
 function updateProductView() {
     if (!productData) return;
 
-    // Находим комбинацию для выбранных опций
     const combo = findCombination();
     if (!combo) return;
 
-    // Обновляем кнопки выбора
     updateOptionButtons("material-options", selectedMaterial);
     updateOptionButtons("facade-options", selectedFacade);
     updateOptionButtons("color-options", selectedColor);
@@ -312,7 +320,6 @@ function updateProductView() {
 
     errorMessage.classList.add("hidden");
 
-    // Обновляем цены
     const basePrice = combo.price || 0;
     const discount = combo.discount || 0;
     const oldPriceEl = document.getElementById("old-price");
@@ -321,12 +328,10 @@ function updateProductView() {
     newPriceEl.textContent = formatPrice(Math.round(basePrice * (1 - discount / 100)));
     oldPriceEl.style.display = discount > 0 ? "inline" : "none";
 
-    // Обновляем главное изображение по выбранному цвету
     const mainImage = document.getElementById("main-product-image");
     mainImage.style.opacity = 0;
     setTimeout(() => {
-        // Если combo.colorImage есть, показываем его, иначе первое изображение из галереи
-        mainImage.src = combo.colorImage || (productData.images?.[0] || "https://placehold.co/800x600?text=Нет+изображения");
+        mainImage.src = combo.colorImage || productData.images?.[0] || "https://placehold.co/800x600?text=Нет+изображения";
         mainImage.style.opacity = 1;
     }, 150);
 
@@ -334,16 +339,11 @@ function updateProductView() {
     buyButton.textContent = "Купить";
 }
 
-
 function updateOptionButtons(containerId, value) {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.querySelectorAll("button").forEach(btn=>{
-    if(btn.dataset.value===value){
-      btn.classList.add("active");
-    }else{
-      btn.classList.remove("active");
-    }
+    btn.classList.toggle("active", btn.dataset.value === value);
   });
 }
 
