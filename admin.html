@@ -33,7 +33,11 @@
             background-size: 1.5em 1.5em;
             padding-right: 2.5rem;
         }
-        
+        .images-list-item { display:flex; gap:0.75rem; align-items:center; background:#fff; padding:0.5rem; border-radius:0.75rem; border:1px solid #eee; }
+        .images-list-item .meta { display:flex; gap:0.5rem; align-items:center; width:100%; }
+        .images-list-item .meta select { max-width:220px; }
+        .images-list-item .meta .url { flex:1; font-size:13px; color:#374151; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .small-btn { padding:0.3rem 0.6rem; font-size:13px; border-radius:0.5rem; }
     </style>
 </head>
 <body class="p-4 sm:p-6">
@@ -67,15 +71,19 @@
     
     <!-- БЛОК ИЗОБРАЖЕНИЙ -->
     <div class="mb-4">
-        <label class="font-semibold text-gray-600">Изображения (URL)</label>
+        <label class="font-semibold text-gray-600">Изображения (URL) — можно привязать изображение к цвету</label>
         <div id="images-container" class="space-y-2"></div>
         
         <div id="image-url-input-area" class="flex gap-2 mt-2 hidden">
             <input id="image-url-input" class="input-field" type="url" placeholder="Вставьте URL изображения (http://...)">
+            <select id="image-url-color-select" class="input-field w-48">
+                <option value="">— Без привязки к цвету —</option>
+            </select>
             <button id="image-url-ok-btn" class="btn btn-save text-sm px-4">ОК</button>
             <button id="image-url-cancel-btn" class="btn bg-gray-300 text-gray-700 hover:bg-gray-400 text-sm px-4">Отмена</button>
         </div>
         <button id="add-image-btn" class="btn mt-2 btn-save">Добавить URL изображения</button>
+        <p class="text-xs text-gray-500 mt-2">Привязав изображение к цвету, на странице товара при выборе цвета можно показывать связанное изображение.</p>
     </div>
 
     <!-- БЛОК УПРАВЛЕНИЯ ФАСАДАМИ -->
@@ -244,12 +252,15 @@ function showConfirm(message, onConfirm) {
 }
 
 // --- GLOBAL STATE ---
-let productId = null, images = [], facades = [], materials = [], colors = [], combinations = []; 
+let productId = null, images = [], imagesMeta = [], facades = [], materials = [], colors = [], combinations = []; 
+// images: array of url strings (legacy + display)
+// imagesMeta: array of objects { url, color } - used to map image -> color
 
 // --- DOM ELEMENTS (Привязка элементов) ---
 const titleInput = document.getElementById('title'), categoryInput = document.getElementById('category');
 const imagesContainer = document.getElementById('images-container'), addImageBtn = document.getElementById('add-image-btn');
 const imageUrlInputArea = document.getElementById('image-url-input-area'), imageUrlInput = document.getElementById('image-url-input');
+const imageUrlColorSelect = document.getElementById('image-url-color-select');
 const imageUrlOkBtn = document.getElementById('image-url-ok-btn'), imageUrlCancelBtn = document.getElementById('image-url-cancel-btn');
 const facadesContainer = document.getElementById('facades-container'), addFacadeBtn = document.getElementById('add-facade-btn');
 const facadeDynamicArea = document.getElementById('facade-dynamic-input-area'), facadeInput = document.getElementById('facade-input');
@@ -271,17 +282,59 @@ const existingProductsDiv = document.getElementById('existing-products');
 function renderImages(){
     imagesContainer.innerHTML = images.length === 0 ? '<p class="text-sm text-gray-500">Нет загруженных изображений.</p>' : "";
     images.forEach((url, i) => {
+        const meta = imagesMeta.find(m => m.url === url) || { url, color: '' };
         const div = document.createElement('div');
-        div.className = "flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-100";
+        div.className = "images-list-item";
         div.innerHTML = `
-            <div class="thumbnail">
-                <img src="${url}" onerror="this.src='https://placehold.co/60x60/cccccc/333333?text=Нет'" alt="Превью">
+            <div class="thumbnail"><img src="${url}" onerror="this.src='https://placehold.co/60x60/cccccc/333333?text=Нет'" alt="Превью"></div>
+            <div class="meta">
+                <div class="url">${url}</div>
+                <select class="input-field image-color-select">
+                    <option value="">— Без привязки к цвету —</option>
+                </select>
             </div>
-            <p class="text-sm flex-grow truncate text-gray-700">${url.substring(0, 50)}...</p>
-            <button class="btn btn-delete flex-shrink-0 py-1.5 px-3 text-sm">Удалить</button>
+            <div class="flex gap-2">
+                <button class="btn btn-delete small-btn">Удалить</button>
+            </div>
         `;
-        div.querySelector('.btn-delete').onclick = () => { images.splice(i, 1); renderImages(); };
+        // populate color select
+        const select = div.querySelector('.image-color-select');
+        colors.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.name;
+            opt.textContent = c.name;
+            if (c.name === meta.color) opt.selected = true;
+            select.appendChild(opt);
+        });
+        select.onchange = e => {
+            const selected = e.target.value || '';
+            // update imagesMeta
+            const idx = imagesMeta.findIndex(m => m.url === url);
+            if (idx >= 0) imagesMeta[idx].color = selected;
+            else imagesMeta.push({ url, color: selected });
+        };
+
+        div.querySelector('.btn-delete').onclick = () => {
+            // remove from images and imagesMeta
+            images.splice(i, 1);
+            const metaIdx = imagesMeta.findIndex(m => m.url === url);
+            if (metaIdx >= 0) imagesMeta.splice(metaIdx, 1);
+            renderImages();
+        };
         imagesContainer.appendChild(div);
+    });
+    // update the quick add color select
+    populateImageUrlColorSelect();
+}
+
+function populateImageUrlColorSelect(){
+    // fill imageUrlColorSelect with current colors
+    imageUrlColorSelect.innerHTML = `<option value="">— Без привязки к цвету —</option>`;
+    colors.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.name;
+        opt.textContent = c.name;
+        imageUrlColorSelect.appendChild(opt);
     });
 }
 
@@ -293,6 +346,11 @@ function createOptionBtn(text, index, list, renderFunction) {
         list.splice(index,1); 
         renderFunction(); 
         renderCombinations(); 
+        // when a color is removed, remove associations in imagesMeta
+        if (renderFunction === renderColors) {
+            imagesMeta.forEach(m => { if (m.color === text) m.color = ''; });
+            renderImages();
+        }
     };
     return btn;
 }
@@ -322,8 +380,26 @@ function renderColors(){
             colors.splice(i,1); 
             renderColors(); 
             renderCombinations(); 
+            // when color removed, clear image associations
+            imagesMeta.forEach(m => { if (m.color === c.name) m.color = ''; });
+            renderImages();
         };
         colorsContainer.appendChild(btn);
+    });
+    populateImageUrlColorSelect();
+    // also update selects in existing image items
+    const selects = document.querySelectorAll('.image-color-select');
+    selects.forEach(sel => {
+        // rebuild options keeping current selection
+        const current = sel.value;
+        sel.innerHTML = `<option value="">— Без привязки к цвету —</option>`;
+        colors.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.name;
+            opt.textContent = c.name;
+            if (c.name === current) opt.selected = true;
+            sel.appendChild(opt);
+        });
     });
 }
 
@@ -455,11 +531,28 @@ async function editProduct(id){
         titleInput.value=data.title||'';
         categoryInput.value=data.category||'';
         
-        images=data.images||[]; renderImages();
-        facades=data.facades||[]; renderFacades();
-        materials=data.materials||[]; renderMaterials(); 
-        colors=data.colors||[]; renderColors();
-        combinations=data.combinations||[]; renderCombinations();
+        // images may be stored as array of strings (legacy) and/or image_color_map
+        images = data.images ? [...data.images] : [];
+        imagesMeta = [];
+        if (Array.isArray(data.image_color_map)) {
+            imagesMeta = data.image_color_map.map(m => ({ url: m.url, color: m.color || '' }));
+            // ensure images list includes mapped urls
+            imagesMeta.forEach(m => { if (!images.includes(m.url)) images.push(m.url); });
+        } else {
+            // build empty meta for existing images
+            images.forEach(u => imagesMeta.push({ url: u, color: '' }));
+        }
+        renderImages();
+
+        facades = data.facades ? [...data.facades] : [];
+        materials = data.materials ? [...data.materials] : [];
+        colors = data.colors ? [...data.colors] : []; // expected items {name,hex}
+        combinations = data.combinations ? [...data.combinations] : [];
+
+        renderFacades();
+        renderMaterials(); 
+        renderColors();
+        renderCombinations();
         
         document.querySelectorAll('[id$="-dynamic-input-area"]').forEach(el => el.classList.add('hidden'));
         [addFacadeBtn, addMaterialBtn, addColorBtn, addImageBtn].forEach(btn => btn.disabled = false);
@@ -557,15 +650,21 @@ function setupGeneralHandlers() {
         imageUrlInputArea.classList.remove('hidden');
         addImageBtn.disabled = true;
         imageUrlInput.value = '';
+        imageUrlColorSelect.value = '';
         imageUrlInput.focus();
     };
     imageUrlOkBtn.onclick = () => {
         const url = imageUrlInput.value.trim();
+        const chosenColor = imageUrlColorSelect.value || '';
         if (url && url.startsWith('http')) {
             if (!images.includes(url)) {
                 images.push(url);
+                imagesMeta.push({ url, color: chosenColor });
             } else {
-                showMessage("Этот URL уже добавлен.");
+                // update meta if exists
+                const idx = imagesMeta.findIndex(m => m.url === url);
+                if (idx >= 0) imagesMeta[idx].color = chosenColor;
+                showMessage("Этот URL уже добавлен — обновлена привязка к цвету.");
             }
         } else if (url) {
             showMessage("Пожалуйста, введите корректный URL, начинающийся с 'http'.");
@@ -599,22 +698,23 @@ function setupGeneralHandlers() {
         const data={
             title:titleInput.value.trim(),
             category:categoryInput.value.trim(),
-            images: images.filter(url => url.trim() !== ''),
+            images: images.filter(url => url.trim() !== ''), // legacy arrays of urls
             facades: facades.filter(f => f.trim() !== ''),
             materials: materials.filter(m => m.trim() !== ''),
             colors,
+            // сохраняем карту изображений отдельно, чтобы фронтенд мог её использовать
+            image_color_map: imagesMeta.map(m => ({ url: m.url, color: m.color || "" })).filter(m => m.url),
             // Фильтруем комбинации, чтобы не сохранять пустые
-        combinations: combinations
-            .map(c => ({
-                material: c.material || "",
-                facade: c.facade || "",
-                color: c.color || "",
-                price: Number(c.price) || 0,
-                discount: Number(c.discount) || 0,
-                isActive: !!c.isActive
-            }))
-            .filter(c => c.material || c.facade || c.color)
-
+            combinations: combinations
+                .map(c => ({
+                    material: c.material || "",
+                    facade: c.facade || "",
+                    color: c.color || "",
+                    price: Number(c.price) || 0,
+                    discount: Number(c.discount) || 0,
+                    isActive: !!c.isActive
+                }))
+                .filter(c => c.material || c.facade || c.color)
         };
 
         if(!data.title){ return showMessage("Введите название товара!"); }
@@ -639,7 +739,7 @@ function setupGeneralHandlers() {
         productId=null; 
         titleInput.value=''; 
         categoryInput.value='';
-        images=[], facades=[], materials=[], colors=[], combinations=[];
+        images=[], imagesMeta=[], facades=[], materials=[], colors=[], combinations=[];
         renderImages(); renderFacades(); renderMaterials(); renderColors(); renderCombinations();
         showMessage("Форма очищена. Вы готовы к созданию нового товара.");
     };
@@ -656,6 +756,7 @@ window.onload = () => {
     setupColorHandlers();
     setupGeneralHandlers();
     
+    // initial empty renders
     renderImages();
     renderFacades();
     renderMaterials();
