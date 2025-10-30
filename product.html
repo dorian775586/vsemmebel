@@ -108,6 +108,26 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
 
+// --- Глобальные переменные состояния продукта ---
+let productData = null;
+let selectedFacade = null;
+let selectedMaterial = null;
+let selectedColor = null;
+
+const urlParams = new URLSearchParams(window.location.search);
+let productId = urlParams.get('id');
+
+// --- ХАРДКОДИРОВАННАЯ КОНФИГУРАЦИЯ ДЛЯ FALLBACK ---
+const HARDCODED_FIREBASE_CONFIG = {
+    apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70", 
+    authDomain: "vsemmebel-90d48.firebaseapp.com",
+    projectId: "vsemmebel-90d48", 
+    storageBucket: "vsemmebel-90d48.appspot.com", 
+    messagingSenderId: "958123504041",
+    appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
+};
+
+
 // --- Инициализация Firebase и Аутентификация ---
 
 // 1. Получение и парсинг глобальных переменных
@@ -117,10 +137,21 @@ const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial
 
 let firebaseConfig = {};
 try {
-    firebaseConfig = JSON.parse(firebaseConfigString);
+    const parsedConfig = JSON.parse(firebaseConfigString);
+    
+    // Если динамическая конфигурация содержит projectId, используем ее.
+    if (parsedConfig && parsedConfig.projectId) {
+        firebaseConfig = parsedConfig;
+        console.log("[CONFIG] Успешно загружена динамическая конфигурация.");
+    } else {
+        // Иначе используем хардкодированную конфигурацию как FALLBACK
+        firebaseConfig = HARDCODED_FIREBASE_CONFIG;
+        console.warn("[CONFIG] Динамическая конфигурация неполна. Используется хардкодированная конфигурация.");
+    }
 } catch (e) {
-    console.error("FATAL ERROR: Не удалось разобрать __firebase_config:", e);
-    // Продолжаем с пустой конфигурацией, что приведет к ошибке, но мы это обрабатываем ниже.
+    // Если парсинг не удался, используем хардкодированную конфигурацию
+    console.error("FATAL ERROR: Не удалось разобрать __firebase_config. Используется хардкодированная конфигурация.", e);
+    firebaseConfig = HARDCODED_FIREBASE_CONFIG;
 }
 
 // Устанавливаем путь к публичной коллекции
@@ -129,14 +160,18 @@ const COLLECTION_PATH = `/artifacts/${appId}/public/data/offers`;
 let app, db, auth;
 let isAuthReady = false; 
 
+
 // Инициализация сервисов и аутентификация
 async function initializeAuthAndFirestore() {
     console.log("[INIT] Запуск аутентификации...");
 
-    // Проверка наличия projectId перед инициализацией
+    // 2. Проверка наличия projectId (теперь она гарантирована благодаря fallback)
     if (!firebaseConfig.projectId) {
-        console.error('Ошибка инициализации Firebase: "projectId" отсутствует в конфигурации.');
-        showMessage("Критическая ошибка: Проект Firebase не настроен. Проверьте конфигурацию.", true);
+        const errorMsg = 'Критическая ошибка: Проект Firebase не настроен. Поле "projectId" отсутствует.';
+        console.error(errorMsg);
+        showMessage(errorMsg, true);
+        document.getElementById("product-title").textContent = "Ошибка конфигурации";
+        document.getElementById("product-description").textContent = "Данные не могут быть загружены из-за отсутствия конфигурации Firebase.";
         return; 
     }
     
