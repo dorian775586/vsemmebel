@@ -1,52 +1,39 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Админка Mebel.by</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-/* Используем Noto Sans для лучшей поддержки кириллицы и стиля */
-body { font-family: 'Noto Sans', sans-serif; background:#f7f7f7; }
-.input-field { border:2px solid #ddd; padding:0.5rem; border-radius:0.5rem; width:100%; transition: border-color 0.2s; }
-.input-field:focus { border-color: #f97316; outline: none; }
-.section { background:white; padding:1.5rem; border-radius:1rem; margin-bottom:1.5rem; box-shadow:0 6px 15px rgba(0,0,0,0.08); }
-.btn { padding:0.6rem 1.2rem; border-radius:0.5rem; font-weight:600; cursor:pointer; transition:0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap; }
-.btn-save { background:#f97316;color:white; }
-.btn-save:hover:not(:disabled) { background:#ea580c; box-shadow: 0 4px 6px rgba(234,88,12,0.3); }
-.btn-save:disabled { background:#fcd34d; cursor: not-allowed; } 
-.btn-delete { background:#ef4444;color:white; }
-.btn-delete:hover { background:#b91c1c; box-shadow: 0 4px 6px rgba(239,68,68,0.3); }
-.option-btn { border:2px solid #f97316; background:#ffedd5; padding:0.3rem 0.8rem; margin-right:0.3rem; margin-bottom:0.3rem; border-radius:0.5rem; cursor:pointer; transition:0.2s; white-space: nowrap; display: inline-flex; align-items: center; }
-.option-btn:hover { background: #f97316; color: white; }
-.thumbnail { width:60px;height:60px;object-fit:cover;border:2px solid #ddd;border-radius:0.5rem;flex-shrink: 0;}
-.thumbnail img { width:100%; height:100%; object-fit:cover; border-radius:0.3rem; }
-
-/* Modal styles */
-.modal-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
-    display: flex; justify-content: center; align-items: center;
-    z-index: 1000;
-}
-.modal-content {
-    background: white; padding: 1.5rem; border-radius: 1rem;
-    max-width: 400px; width: 90%;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    animation: fadeIn 0.3s;
-}
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Стили для Select */
-select.input-field {
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 011.414 0L10 10.586l3.293-3.293a1 1 011.414 1.414l-4 4a1 1 01-1.414 0l-4-4a1 1 010-1.414z' clip-rule='evenodd' /%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.5rem center;
-    background-size: 1.5em 1.5em;
-    padding-right: 2.5rem;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админка Mebel.by</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Noto Sans', sans-serif; background:#f7f7f7; }
+        .input-field { border:2px solid #ddd; padding:0.5rem; border-radius:0.5rem; width:100%; transition: border-color 0.2s; }
+        .input-field:focus { border-color: #f97316; outline: none; }
+        .section { background:white; padding:1.5rem; border-radius:1rem; margin-bottom:1.5rem; box-shadow:0 6px 15px rgba(0,0,0,0.08); }
+        .btn { padding:0.6rem 1.2rem; border-radius:0.5rem; font-weight:600; cursor:pointer; transition:0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space: nowrap; }
+        .btn-save { background:#f97316;color:white; }
+        .btn-save:hover:not(:disabled) { background:#ea580c; box-shadow: 0 4px 6px rgba(234,88,12,0.3); }
+        .btn-save:disabled { background:#fcd34d; cursor: not-allowed; } 
+        .btn-delete { background:#ef4444;color:white; }
+        .btn-delete:hover { background:#b91c1c; box-shadow: 0 4px 6px rgba(239,68,68,0.3); }
+        .option-btn { border:2px solid #f97316; background:#ffedd5; padding:0.3rem 0.8rem; margin-right:0.3rem; margin-bottom:0.3rem; border-radius:0.5rem; cursor:pointer; transition:0.2s; white-space: nowrap; display: inline-flex; align-items: center; }
+        .option-btn:hover { background: #f97316; color: white; }
+        .thumbnail { width:60px;height:60px;object-fit:cover;border:2px solid #ddd;border-radius:0.5rem;flex-shrink: 0;}
+        .thumbnail img { width:100%; height:100%; object-fit:cover; border-radius:0.3rem; }
+        /* Modal styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 1.5rem; border-radius: 1rem; max-width: 400px; width: 90%; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        /* Select arrow styles */
+        select.input-field {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 011.414 0L10 10.586l3.293-3.293a1 1 011.414 1.414l-4 4a1 1 01-1.414 0l-4-4a1 1 010-1.414z' clip-rule='evenodd' /%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+    </style>
 </head>
 <body class="p-4 sm:p-6">
 
@@ -56,7 +43,7 @@ select.input-field {
     <h2 class="text-xl font-bold mb-4 text-gray-700">Создание / Редактирование товара</h2>
     
     <div class="mb-4">
-        <label class="font-semibold text-gray-600">ID Пользователя (для отладки)</label>
+        <label class="font-semibold text-gray-600">ID Пользователя</label>
         <div id="user-id-display" class="p-2 bg-gray-100 rounded-lg text-sm truncate">...</div>
     </div>
 
@@ -77,7 +64,7 @@ select.input-field {
         </select>
     </div>
     
-    <!-- ОБНОВЛЕННЫЙ БЛОК ИЗОБРАЖЕНИЙ (Ввод URL) -->
+    <!-- БЛОК ИЗОБРАЖЕНИЙ -->
     <div class="mb-4">
         <label class="font-semibold text-gray-600">Изображения (URL)</label>
         <div id="images-container" class="space-y-2"></div>
@@ -87,7 +74,6 @@ select.input-field {
             <button id="image-url-ok-btn" class="btn btn-save text-sm px-4">ОК</button>
             <button id="image-url-cancel-btn" class="btn bg-gray-300 text-gray-700 hover:bg-gray-400 text-sm px-4">Отмена</button>
         </div>
-        
         <button id="add-image-btn" class="btn mt-2 btn-save">Добавить URL изображения</button>
     </div>
 
@@ -164,19 +150,14 @@ select.input-field {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, setDoc, doc, onSnapshot, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-// Firebase Storage импорты удалены
-import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, setDoc, doc, onSnapshot, getDoc, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// Устанавливаем режим отладки для Firestore
 setLogLevel('Debug');
 
 // --- FIREBASE CONFIGURATION & AUTH VARIABLES ---
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 const firebaseConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-
-// --- FALLBACK: HARDCODED CONFIGURATION (Используется для надежности) ---
 const HARDCODED_FIREBASE_CONFIG = {
     apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70", 
     authDomain: "vsemmebel-90d48.firebaseapp.com",
@@ -185,39 +166,26 @@ const HARDCODED_FIREBASE_CONFIG = {
     messagingSenderId: "958123504041",
     appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
 };
-// ------------------------------------------
 
-let firebaseConfig = null;
-let app = null;
-let db = null;
-let auth = null;
-// let storage = null; // Storage больше не нужен
-let userId = null;
+let firebaseConfig = null, app = null, db = null, auth = null, userId = null;
 const productCollectionPath = `artifacts/${appId}/public/data/offers`;
-
 
 // 1. Инициализация Firebase
 function initializeFirebase() {
     if (firebaseConfigString) {
-        try {
-            firebaseConfig = JSON.parse(firebaseConfigString);
-        } catch (e) {
+        try { firebaseConfig = JSON.parse(firebaseConfigString); } catch (e) {
             console.error("ОШИБКА: Не удалось распарсить JSON из переменной хостинга.", e);
         }
     } 
-
     if (!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey === "ВАШ_API_KEY") {
         firebaseConfig = HARDCODED_FIREBASE_CONFIG;
         console.warn("ВНИМАНИЕ: Используется хардкодированная конфигурация Firebase.");
     }
-
     if (firebaseConfig && firebaseConfig.apiKey) {
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
-            // storage = getStorage(app); // Storage больше не инициализируется
-            console.log("Firebase успешно инициализирован.");
         } catch (e) {
             console.error("КРИТИЧЕСКАЯ ОШИБКА: Ошибка инициализации Firebase.", e);
             db = null; 
@@ -230,17 +198,10 @@ function initializeFirebase() {
 
 // 2. Инициализация аутентификации
 async function initializeAuth() {
-    if (!auth) {
-        userId = crypto.randomUUID();
-        return; 
-    }
-    
+    if (!auth) { userId = crypto.randomUUID(); return; }
     try {
-        if (initialAuthToken) {
-            await signInWithCustomToken(auth, initialAuthToken);
-        } else {
-            await signInAnonymously(auth); 
-        }
+        if (initialAuthToken) { await signInWithCustomToken(auth, initialAuthToken); } 
+        else { await signInAnonymously(auth); }
         userId = auth.currentUser?.uid || crypto.randomUUID();
         document.getElementById('user-id-display').textContent = userId;
         console.log("Аутентификация успешна. UID:", userId);
@@ -260,13 +221,11 @@ const modalOverlay = document.getElementById('custom-modal');
 const modalMessage = document.getElementById('modal-message');
 const modalConfirmBtn = document.getElementById('modal-btn-confirm');
 const modalCancelBtn = document.getElementById('modal-btn-cancel');
-
 function closeModal() {
     modalOverlay.classList.add('hidden');
     modalConfirmBtn.onclick = null;
     modalCancelBtn.onclick = null;
 }
-
 function showMessage(message) {
     modalMessage.textContent = message;
     modalCancelBtn.classList.add('hidden');
@@ -274,101 +233,56 @@ function showMessage(message) {
     modalConfirmBtn.onclick = closeModal;
     modalOverlay.classList.remove('hidden');
 }
-
 function showConfirm(message, onConfirm) {
     modalMessage.textContent = message;
     modalCancelBtn.classList.remove('hidden');
     modalConfirmBtn.textContent = 'Подтвердить';
-
-    modalConfirmBtn.onclick = () => {
-        closeModal();
-        if (onConfirm) onConfirm();
-    };
+    modalConfirmBtn.onclick = () => { closeModal(); if (onConfirm) onConfirm(); };
     modalCancelBtn.onclick = closeModal;
     modalOverlay.classList.remove('hidden');
 }
 
 // --- GLOBAL STATE ---
-let productId = null;
-let images = []; // Хранит URL-адреса изображений
-let facades = [];
-let materials = []; 
-let colors = [];
-let combinations = []; 
+let productId = null, images = [], facades = [], materials = [], colors = [], combinations = []; 
 
 // --- DOM ELEMENTS (Привязка элементов) ---
-const titleInput = document.getElementById('title');
-const categoryInput = document.getElementById('category');
-const imagesContainer = document.getElementById('images-container');
-const addImageBtn = document.getElementById('add-image-btn');
-
-// Новые элементы для ввода URL
-const imageUrlInputArea = document.getElementById('image-url-input-area');
-const imageUrlInput = document.getElementById('image-url-input');
-const imageUrlOkBtn = document.getElementById('image-url-ok-btn');
-const imageUrlCancelBtn = document.getElementById('image-url-cancel-btn');
-
-
-const facadesContainer = document.getElementById('facades-container');
-const addFacadeBtn = document.getElementById('add-facade-btn');
-const facadeDynamicArea = document.getElementById('facade-dynamic-input-area');
-const facadeInput = document.getElementById('facade-input');
-const facadeOkBtn = document.getElementById('facade-ok-btn');
-const facadeCancelBtn = document.getElementById('facade-cancel-btn');
-
-const materialsContainer = document.getElementById('materials-container');
-const addMaterialBtn = document.getElementById('add-material-btn');
-const materialDynamicArea = document.getElementById('material-dynamic-input-area');
-const materialInput = document.getElementById('material-input');
-const materialOkBtn = document.getElementById('material-ok-btn');
-const materialCancelBtn = document.getElementById('material-cancel-btn');
-
-const colorsContainer = document.getElementById('colors-container');
-const addColorBtn = document.getElementById('add-color-btn');
-const colorDynamicArea = document.getElementById('color-dynamic-input-area');
-const colorNameInput = document.getElementById('color-name');
+const titleInput = document.getElementById('title'), categoryInput = document.getElementById('category');
+const imagesContainer = document.getElementById('images-container'), addImageBtn = document.getElementById('add-image-btn');
+const imageUrlInputArea = document.getElementById('image-url-input-area'), imageUrlInput = document.getElementById('image-url-input');
+const imageUrlOkBtn = document.getElementById('image-url-ok-btn'), imageUrlCancelBtn = document.getElementById('image-url-cancel-btn');
+const facadesContainer = document.getElementById('facades-container'), addFacadeBtn = document.getElementById('add-facade-btn');
+const facadeDynamicArea = document.getElementById('facade-dynamic-input-area'), facadeInput = document.getElementById('facade-input');
+const facadeOkBtn = document.getElementById('facade-ok-btn'), facadeCancelBtn = document.getElementById('facade-cancel-btn');
+const materialsContainer = document.getElementById('materials-container'), addMaterialBtn = document.getElementById('add-material-btn');
+const materialDynamicArea = document.getElementById('material-dynamic-input-area'), materialInput = document.getElementById('material-input');
+const materialOkBtn = document.getElementById('material-ok-btn'), materialCancelBtn = document.getElementById('material-cancel-btn');
+const colorsContainer = document.getElementById('colors-container'), addColorBtn = document.getElementById('add-color-btn');
+const colorDynamicArea = document.getElementById('color-dynamic-input-area'), colorNameInput = document.getElementById('color-name');
 const colorHexInput = document.getElementById('color-hex');
-const colorOkBtn = document.getElementById('color-ok-btn');
-const colorCancelBtn = document.getElementById('color-cancel-btn');
-
-const combinationsContainer = document.getElementById('combinations-container');
-const addComboBtn = document.getElementById('add-combo-btn');
-const saveBtn = document.getElementById('save-product-btn');
-const clearBtn = document.getElementById('clear-product-btn');
+const colorOkBtn = document.getElementById('color-ok-btn'), colorCancelBtn = document.getElementById('color-cancel-btn');
+const combinationsContainer = document.getElementById('combinations-container'), addComboBtn = document.getElementById('add-combo-btn');
+const saveBtn = document.getElementById('save-product-btn'), clearBtn = document.getElementById('clear-product-btn');
 const existingProductsDiv = document.getElementById('existing-products');
-
-// --- FIREBASE STORAGE UPLOAD LOGIC (УДАЛЕНО) ---
-// function uploadFile... 
 
 
 // --- Render Functions ---
 
 function renderImages(){
-    imagesContainer.innerHTML = "";
-    if (images.length === 0) {
-        imagesContainer.innerHTML = '<p class="text-sm text-gray-500">Нет загруженных изображений.</p>';
-    }
-
+    imagesContainer.innerHTML = images.length === 0 ? '<p class="text-sm text-gray-500">Нет загруженных изображений.</p>' : "";
     images.forEach((url, i) => {
         const div = document.createElement('div');
         div.className = "flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-100";
         div.innerHTML = `
             <div class="thumbnail">
-                <!-- Fallback placeholder image used if URL is broken or invalid -->
                 <img src="${url}" onerror="this.src='https://placehold.co/60x60/cccccc/333333?text=Нет'" alt="Превью">
             </div>
             <p class="text-sm flex-grow truncate text-gray-700">${url.substring(0, 50)}...</p>
             <button class="btn btn-delete flex-shrink-0 py-1.5 px-3 text-sm">Удалить</button>
         `;
-        
-        div.querySelector('.btn-delete').onclick = () => { 
-            images.splice(i, 1); 
-            renderImages(); 
-        };
+        div.querySelector('.btn-delete').onclick = () => { images.splice(i, 1); renderImages(); };
         imagesContainer.appendChild(div);
     });
 }
-
 
 function createOptionBtn(text, index, list, renderFunction) {
     const btn=document.createElement('button');
@@ -428,10 +342,7 @@ function renderCombinations(){
             options.forEach(opt => {
                 select.innerHTML += `<option value="${opt}" ${opt === currentValue ? 'selected' : ''}>${opt}</option>`;
             });
-            select.onchange = e => {
-                const key = field.toLowerCase(); 
-                c[key] = e.target.value;
-            };
+            select.onchange = e => { c[field.toLowerCase()] = e.target.value; };
             return select;
         };
 
@@ -459,6 +370,8 @@ function renderCombinations(){
         activeInput.checked = !!c.isActive;
         activeInput.onchange = e => {
             c.isActive = e.target.checked;
+            // Обновляем состояние полей при изменении активности
+            c.discount = c.isActive ? c.discount : 0; // Сбрасываем скидку, если неактивно
             renderCombinations(); 
         };
         const activeLabel = document.createElement('label');
@@ -471,7 +384,7 @@ function renderCombinations(){
         discountInput.className = `input-field w-20 flex-grow-0 transition duration-150 ${!c.isActive ? 'bg-gray-200 cursor-not-allowed' : ''}`;
         discountInput.value = c.discount || 0;
         discountInput.placeholder = "Скидка %";
-        discountInput.disabled = !c.isActive;
+        discountInput.disabled = !c.isActive; // Блокировка поля скидки
         discountInput.oninput = e => c.discount = parseInt(e.target.value) || 0;
 
         const deleteBtn = document.createElement('button');
@@ -480,7 +393,6 @@ function renderCombinations(){
         deleteBtn.onclick = () => { combinations.splice(i,1); renderCombinations(); };
 
         priceActiveDiv.append(priceInput, activeContainer, discountInput, deleteBtn);
-        
         div.append(optionsDiv, priceActiveDiv);
         combinationsContainer.appendChild(div);
     });
@@ -495,8 +407,7 @@ function loadExistingProducts(){
         existingProductsDiv.innerHTML='';
         snapshot.docs.forEach(docSnap=>{
             const data=docSnap.data();
-            const firstActiveCombo = data.combinations ? data.combinations.find(c => c.isActive) : null;
-            const overallActive = !!firstActiveCombo;
+            const overallActive = data.combinations ? data.combinations.some(c => c.isActive) : false;
 
             const div=document.createElement('div');
             div.className="flex justify-between items-center bg-white p-3 rounded-xl shadow-md border-l-4" + (overallActive ? ' border-green-500' : ' border-red-500');
@@ -512,8 +423,8 @@ function loadExistingProducts(){
             
             div.innerHTML=`${titleStatus}
                                 <div class="flex gap-2 flex-shrink-0">
-                                   <button class="btn btn-save py-2 px-3 text-sm">Редактировать</button>
-                                   <button class="btn btn-delete py-2 px-3 text-sm">Удалить</button>
+                                    <button class="btn btn-save py-2 px-3 text-sm">Редактировать</button>
+                                    <button class="btn btn-delete py-2 px-3 text-sm">Удалить</button>
                                 </div>`;
             
             div.querySelectorAll('button')[0].onclick=()=>editProduct(docSnap.id);
@@ -535,7 +446,6 @@ function loadExistingProducts(){
 
 async function editProduct(id){
     if (!db) return showMessage("Ошибка: База данных не инициализирована.");
-
     try {
         const docSnap=await getDoc(doc(db, productCollectionPath, id));
         if(!docSnap.exists()) return showMessage("Товар не найден!");
@@ -551,12 +461,8 @@ async function editProduct(id){
         colors=data.colors||[]; renderColors();
         combinations=data.combinations||[]; renderCombinations();
         
-        // Скрываем динамические области ввода и активируем кнопки
         document.querySelectorAll('[id$="-dynamic-input-area"]').forEach(el => el.classList.add('hidden'));
-        addFacadeBtn.disabled = false;
-        addMaterialBtn.disabled = false;
-        addColorBtn.disabled = false;
-        addImageBtn.disabled = false; // Важно для кнопки добавления URL
+        [addFacadeBtn, addMaterialBtn, addColorBtn, addImageBtn].forEach(btn => btn.disabled = false);
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
@@ -585,15 +491,11 @@ function setupFacadeHandlers() {
         facadeInput.value = '';
         facadeInput.focus();
     };
-
     facadeOkBtn.onclick = () => {
         const val = facadeInput.value.trim();
-        if (val && !facades.includes(val)) { 
-            facades.push(val); 
-        }
+        if (val && !facades.includes(val)) { facades.push(val); }
         finishInput(facadeDynamicArea, addFacadeBtn, renderFacades);
     };
-
     facadeCancelBtn.onclick = () => {
         finishInput(facadeDynamicArea, addFacadeBtn, renderFacades);
     };
@@ -609,15 +511,11 @@ function setupMaterialHandlers() {
         materialInput.value = '';
         materialInput.focus();
     };
-
     materialOkBtn.onclick = () => {
         const val = materialInput.value.trim();
-        if (val && !materials.includes(val)) { 
-            materials.push(val); 
-        }
+        if (val && !materials.includes(val)) { materials.push(val); }
         finishInput(materialDynamicArea, addMaterialBtn, renderMaterials);
     };
-
     materialCancelBtn.onclick = () => {
         finishInput(materialDynamicArea, addMaterialBtn, renderMaterials);
     };
@@ -634,12 +532,10 @@ function setupColorHandlers() {
         colorHexInput.value = '#f97316';
         colorNameInput.focus();
     };
-
     colorOkBtn.onclick = () => {
         const name = colorNameInput.value.trim();
         const hex = colorHexInput.value;
         if (name && hex) { 
-            // Проверка на дублирование цвета
             const isDuplicate = colors.some(c => c.name.toLowerCase() === name.toLowerCase());
             if (!isDuplicate) {
                 colors.push({ name, hex }); 
@@ -649,7 +545,6 @@ function setupColorHandlers() {
         }
         finishInput(colorDynamicArea, addColorBtn, renderColors);
     };
-
     colorCancelBtn.onclick = () => {
         finishInput(colorDynamicArea, addColorBtn, renderColors);
     };
@@ -657,39 +552,32 @@ function setupColorHandlers() {
 
 // --- Общие Хендлеры ---
 function setupGeneralHandlers() {
-    // 1. Обработчик кнопки "Добавить URL изображения"
+    // 1. Добавление URL изображения
     addImageBtn.onclick = () => {
         imageUrlInputArea.classList.remove('hidden');
         addImageBtn.disabled = true;
         imageUrlInput.value = '';
         imageUrlInput.focus();
     };
-    
-    // 2. Обработчик кнопки "ОК" для URL
     imageUrlOkBtn.onclick = () => {
         const url = imageUrlInput.value.trim();
-        if (url) {
-            // Простая проверка URL, можно добавить более строгую, если нужно
-            if (url.startsWith('http')) {
-                if (!images.includes(url)) {
-                    images.push(url);
-                } else {
-                    showMessage("Этот URL уже добавлен.");
-                }
+        if (url && url.startsWith('http')) {
+            if (!images.includes(url)) {
+                images.push(url);
             } else {
-                showMessage("Пожалуйста, введите корректный URL, начинающийся с 'http'.");
+                showMessage("Этот URL уже добавлен.");
             }
+        } else if (url) {
+            showMessage("Пожалуйста, введите корректный URL, начинающийся с 'http'.");
         }
         imageUrlInputArea.classList.add('hidden');
         addImageBtn.disabled = false;
         renderImages();
     };
-    
-    // 3. Обработчик кнопки "Отмена" для URL
     imageUrlCancelBtn.onclick = () => {
         imageUrlInputArea.classList.add('hidden');
         addImageBtn.disabled = false;
-        imageUrlInput.value = ''; // Очищаем поле
+        imageUrlInput.value = '';
     };
 
 
@@ -706,9 +594,7 @@ function setupGeneralHandlers() {
     };
 
     saveBtn.onclick=async()=>{
-        if (!db) {
-            return showMessage("Ошибка: База данных не инициализирована. Проверьте конфигурацию Firebase.");
-        }
+        if (!db) { return showMessage("Ошибка: База данных не инициализирована. Проверьте конфигурацию Firebase."); }
         
         const data={
             title:titleInput.value.trim(),
@@ -717,16 +603,12 @@ function setupGeneralHandlers() {
             facades: facades.filter(f => f.trim() !== ''),
             materials: materials.filter(m => m.trim() !== ''),
             colors,
+            // Фильтруем комбинации, чтобы не сохранять пустые
             combinations: combinations.filter(c => c.material || c.facade || c.color || c.price > 0)
         };
 
-        if(!data.title){ 
-            return showMessage("Введите название товара!"); 
-        }
-        if(!data.category){ 
-            return showMessage("Выберите категорию товара!"); 
-        }
-
+        if(!data.title){ return showMessage("Введите название товара!"); }
+        if(!data.category){ return showMessage("Выберите категорию товара!"); }
 
         try {
             if(productId){
@@ -747,16 +629,8 @@ function setupGeneralHandlers() {
         productId=null; 
         titleInput.value=''; 
         categoryInput.value='';
-        images=[]; 
-        facades=[]; 
-        materials=[]; 
-        colors=[]; 
-        combinations=[];
-        renderImages();
-        renderFacades();
-        renderMaterials();
-        renderColors();
-        renderCombinations();
+        images=[], facades=[], materials=[], colors=[], combinations=[];
+        renderImages(); renderFacades(); renderMaterials(); renderColors(); renderCombinations();
         showMessage("Форма очищена. Вы готовы к созданию нового товара.");
     };
 }
@@ -767,20 +641,17 @@ window.onload = () => {
     initializeFirebase();
     initializeAuth(); 
     
-    // Инициализация всех обработчиков после загрузки DOM
     setupFacadeHandlers();
     setupMaterialHandlers();
     setupColorHandlers();
     setupGeneralHandlers();
     
-    // Первичный рендер пустых списков
     renderImages();
     renderFacades();
     renderMaterials();
     renderColors();
     renderCombinations();
 };
-
 </script>
 </body>
 </html>
