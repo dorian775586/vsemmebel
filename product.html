@@ -12,29 +12,34 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 .orange-accent { background-color: #f97316; color:white; font-weight:700; transition:0.3s; }
 .orange-accent:hover:not(:disabled) { background-color: #ea580c; }
 .orange-accent:disabled { background-color: #fca5a5; cursor: not-allowed; } 
+
 .option-button-style { 
     border:2px solid #f97316; 
     background:#ffedd5; 
     color:#f97316; 
     font-weight:600; 
-    transition:0.3s; 
+    transition:0.2s; 
     padding: 0.5rem 1rem; 
     border-radius: 0.5rem; 
     cursor:pointer; 
     min-width: 80px; 
     text-align: center;
-    box-shadow: 0 0 0 rgba(249,115,22,0);
 }
-.option-button-style:hover { box-shadow: 0 4px 8px rgba(249,115,22,0.3); } 
+.option-button-style:hover { 
+    background:#f97316; 
+    color:#fff; 
+}
 .option-button-style.active { 
-    background: #f97316; 
-    color: white; 
-    box-shadow: 0 0 0 3px #f97316 inset, 0 4px 12px rgba(0,0,0,0.4); 
-    border-color: #f97316; 
+    background:#fff; 
+    color:#f97316; 
+    border:3px solid #f97316; 
+    box-shadow:0 0 0 3px rgba(249,115,22,0.4);
 }
+
 .thumbnail { width:60px; height:60px; border:2px solid transparent; cursor:pointer; border-radius:0.5rem; transition:0.2s; object-fit: cover; }
 .thumbnail:hover { transform: scale(1.05); box-shadow:0 2px 5px rgba(249,115,22,0.3); } 
 .thumbnail.active { border-color:#f97316; box-shadow:0 4px 12px rgba(249,115,22,0.4); } 
+
 #main-product-image { transition: opacity 0.3s ease-in-out; } 
 #message-box { position: fixed; top: 20px; right: 20px; z-index: 1000; min-width: 300px; padding: 1rem; background-color: #10b981; color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.5s, transform 0.5s; transform: translateY(-10px); } 
 #message-box.show { opacity: 1; transform: translateY(0); }
@@ -74,17 +79,17 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 
       <p class="text-gray-600 mb-6" id="product-description">Загрузка описания...</p>
 
-      <div class="mb-5" id="facade-section">
+      <div class="mb-5 hidden" id="facade-section">
         <p class="font-bold text-gray-800 mb-3">Фасад:</p>
         <div class="flex flex-wrap gap-3" id="facade-options"></div>
       </div>
 
-      <div class="mb-5" id="material-section">
+      <div class="mb-5 hidden" id="material-section">
         <p class="font-bold text-gray-800 mb-3">Материал:</p>
         <div class="flex flex-wrap gap-3" id="material-options"></div>
       </div>
 
-      <div class="mb-8" id="color-section">
+      <div class="mb-8 hidden" id="color-section">
         <p class="font-bold text-gray-800 mb-3">Цвет/Текстура:</p>
         <div class="flex flex-wrap gap-3" id="color-options"></div>
       </div>
@@ -201,8 +206,13 @@ function renderGallery(images) {
 
 function renderOptions(containerId, options, clickHandler) {
   const container = document.getElementById(containerId);
+  if (!options || options.length === 0) {
+    container.parentElement.classList.add("hidden");
+    return;
+  }
+  container.parentElement.classList.remove("hidden");
   container.innerHTML = "";
-  (options || []).forEach(o => {
+  options.forEach(o => {
     const btn = document.createElement("button");
     btn.textContent = o;
     btn.dataset.value = o;
@@ -217,8 +227,13 @@ function renderOptions(containerId, options, clickHandler) {
 
 function renderColorOptions(containerId, colors, clickHandler) {
   const container = document.getElementById(containerId);
+  if (!colors || colors.length === 0) {
+    container.parentElement.classList.add("hidden");
+    return;
+  }
+  container.parentElement.classList.remove("hidden");
   container.innerHTML = "";
-  (colors || []).forEach(c => {
+  colors.forEach(c => {
     const btn = document.createElement("button");
     btn.textContent = c.name;
     btn.dataset.value = c.name;
@@ -252,7 +267,7 @@ function findCombination() {
     c.color === selectedColor
   );
   if (combo) return combo;
-  combo = productData.combinations.find(c => true); // Берем первую доступную
+  combo = productData.combinations.find(c => true);
   selectedMaterial = combo.material;
   selectedFacade = combo.facade;
   selectedColor = combo.color;
@@ -316,18 +331,8 @@ function updateOptionButtons(containerId, value) {
   container.querySelectorAll("button").forEach(btn=>{
     if(btn.dataset.value===value){
       btn.classList.add("active");
-      if(containerId==="color-options"){
-        const hex = productData.colors.find(c=>c.name===value)?.hex;
-        btn.style.background=hex; 
-        btn.style.color=getTextColorForBackground(hex);
-      }
     }else{
       btn.classList.remove("active");
-      if(containerId==="color-options"){
-        const hex = productData.colors.find(c=>c.name===btn.dataset.value)?.hex;
-        btn.style.background=hex;
-        btn.style.color=getTextColorForBackground(hex);
-      }
     }
   });
 }
