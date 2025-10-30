@@ -258,6 +258,10 @@ function initializeProductView(data) {
   document.getElementById("product-title").textContent = data.title || "Без названия";
   document.getElementById("breadcrumb-title").textContent = data.title || "Без названия";
   document.getElementById("breadcrumb-category").textContent = data.category || "-";
+  
+  // Вот здесь изменение
+  document.getElementById("product-category").textContent = data.category || "-";
+
   document.getElementById("product-description").textContent = data.description || "Подробное описание товара отсутствует.";
 
   renderGallery(data.images || [data.image].filter(Boolean));
