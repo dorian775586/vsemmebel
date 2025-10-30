@@ -25,7 +25,7 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 
 <header class="sticky top-0 header-bg z-20">
   <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-    <a href="index.html" class="text-3xl font-black text-gray-900 tracking-tight">Mebel.by</a>
+    <a href="/" class="text-3xl font-black text-gray-900 tracking-tight">Mebel.by</a>
   </div>
 </header>
 
@@ -33,9 +33,9 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 
   <!-- Хлебные крошки -->
   <div class="mb-6 text-sm text-gray-500">
-    <a href="index.html" class="hover:text-orange-500 transition">Главная</a>
+    <a href="/" class="hover:text-orange-500 transition">Главная</a>
     <span class="mx-2">/</span>
-    <span class="hover:text-orange-500 transition" id="breadcrumb-category">Категория</span>
+    <a href="#" class="hover:text-orange-500 transition" id="breadcrumb-category">Категория</a>
     <span class="mx-2">/</span>
     <span class="text-gray-900 font-medium" id="breadcrumb-title">Товар</span>
   </div>
@@ -57,6 +57,9 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
         <span id="old-price" class="line-through text-xl text-gray-400 mr-3 transition duration-300 ease-in-out">0 BYN</span>
         <span id="new-price" class="text-4xl font-black text-orange-600 transition duration-300 ease-in-out">0 BYN</span>
       </div>
+      
+      <!-- Добавлено поле для описания -->
+      <p class="text-gray-600 mb-6" id="product-description">Загрузка описания...</p>
 
       <div class="mb-5" id="facade-section">
         <p class="font-bold text-gray-800 mb-3">Фасад:</p>
@@ -101,6 +104,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // Конфигурация Firebase:
+// Используем глобальную переменную, предоставляемую средой, с запасными данными.
 const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : JSON.stringify({
     apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
     authDomain: "vsemmebel-90d48.firebaseapp.com",
@@ -131,9 +135,9 @@ if(!productId){
 }
 
 /**
- * Ищет первый доступный ID товара в базе и перезагружает страницу.
- * Если товар не найден, показывает ошибку.
- */
+ * Ищет первый доступный ID товара в базе и перезагружает страницу.
+ * Если товар не найден, показывает ошибку.
+ */
 async function findFirstAvailableProduct() {
     try {
         const q = query(collection(db, "offers"), limit(1));
@@ -144,7 +148,7 @@ async function findFirstAvailableProduct() {
             const newProductId = firstDoc.id;
             console.log(`[FIREBASE] Найден первый доступный ID: ${newProductId}. Перезагрузка.`);
             
-            // Устанавливаем новый ID в URL и перезагружаем страницу
+            // Устанавливаем новый ID в URL и запускаем загрузку
             const newUrl = window.location.pathname + `?id=${newProductId}`;
             window.history.pushState({}, '', newUrl); // Изменяем URL без полной перезагрузки
             productId = newProductId; // Обновляем глобальную переменную
@@ -165,6 +169,7 @@ async function findFirstAvailableProduct() {
 async function loadProduct(id){
     console.log(`[FIREBASE] Попытка загрузить товар с ID: ${id}`);
     try {
+        // Использование коллекции "offers" и ID из URL
         const docRef = doc(db, "offers", id);
         const docSnap = await getDoc(docRef);
         
@@ -189,14 +194,17 @@ async function loadProduct(id){
 }
 
 
-// --- Функции рендеринга и обновления (без изменений) ---
+// --- Функции рендеринга и обновления ---
 
 function initializeProductView(data) {
-    if (!data) return; 
-    
+    if (!data) return; 
+    
     document.getElementById("product-title").textContent = data.title || "Без названия";
     document.getElementById("breadcrumb-title").textContent = data.title || "Без названия";
     document.getElementById("breadcrumb-category").textContent = data.category || "-";
+    // Отображение описания
+    document.getElementById("product-description").textContent = data.description || "Подробное описание товара отсутствует.";
+
 
     // Инициализация галереи
     renderGallery(data.images || [data.image].filter(Boolean)); 
@@ -259,8 +267,8 @@ function renderGallery(images) {
     if (images.length > 0) {
          mainImage.src = images[0];
     } else {
-        mainImage.src = "https://placehold.co/800x600?text=Нет+изображения";
-    }
+        mainImage.src = "https://placehold.co/800x600?text=Нет+изображения";
+    }
     mainImage.onerror = () => mainImage.src = "https://placehold.co/800x600?text=Нет+изображения";
 }
 
