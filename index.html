@@ -37,26 +37,46 @@
 </head>
 <body>
 
-    <!-- Верхняя навигация -->
-    <header class="sticky top-0 header-bg z-20">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-            <!-- При клике на лого теперь просто скроллим вверх -->
-            <h1 class="text-3xl font-black text-gray-900 tracking-tight cursor-pointer" onclick="window.scrollTo(0, 0)">Mebel.by</h1>
-            <div class="flex items-center space-x-4">
-                <div class="flex items-center space-x-2 text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
-                    <span id="current-city" class="font-bold text-gray-700">Гомель</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-gray-600 cursor-pointer hover:text-orange-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+  <!-- Верхняя навигация -->
+<header class="sticky top-0 header-bg z-20">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+        <!-- При клике на лого теперь просто скроллим вверх -->
+        <h1 class="text-3xl font-black text-gray-900 tracking-tight cursor-pointer" onclick="window.scrollTo(0, 0)">Mebel.by</h1>
+
+        <div class="flex items-center space-x-4">
+            <!-- Город -->
+            <div class="flex items-center space-x-2 text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
+                <span id="current-city" class="font-bold text-gray-700">Гомель</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
-                <!-- Кнопка для входа админа -->
-                <button id="admin-login-btn" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">Админ</button>
             </div>
+
+            <!-- Профиль -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-gray-600 cursor-pointer hover:text-orange-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+
+            <!-- Кнопка для входа админа -->
+            <button id="admin-login-btn" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">Админ</button>
+
+            <!-- Кнопки Избранное и Корзина -->
+            <a href="favorites.html" class="relative text-gray-700 hover:text-orange-500 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+                <span class="sr-only">Избранное</span>
+            </a>
+            <a href="order.html" class="relative text-gray-700 hover:text-orange-500 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.6 8h13.2L17 13M7 13H5.4M17 13l1.6 8M9 21h6" />
+                </svg>
+                <span class="sr-only">Корзина</span>
+            </a>
         </div>
-    </header>
+    </div>
+</header>
+
 
     <!-- ОСНОВНОЙ КОНТЕЙНЕР ДЛЯ СПИСКА ТОВАРОВ (Единственный видимый вид) -->
     <div id="main-view-container">

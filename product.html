@@ -50,8 +50,25 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 <header class="sticky top-0 header-bg z-20">
   <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
     <a href="/" class="text-3xl font-black text-gray-900 tracking-tight">Mebel.by</a>
+    
+    <!-- Кнопки избранного и корзины -->
+    <div class="flex gap-4">
+      <a href="favorites.html" class="relative text-gray-700 hover:text-orange-500 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+        </svg>
+        <span class="sr-only">Избранное</span>
+      </a>
+      <a href="order.html" class="relative text-gray-700 hover:text-orange-500 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.6 8h13.2L17 13M7 13H5.4M17 13l1.6 8M9 21h6" />
+        </svg>
+        <span class="sr-only">Корзина</span>
+      </a>
+    </div>
   </div>
 </header>
+
 
 <main class="max-w-6xl mx-auto px-4 mt-6">
   <div class="mb-6 text-sm text-gray-500">
