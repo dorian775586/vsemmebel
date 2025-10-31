@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Избранное — Mebel.by</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; }
+.orange-btn { background:#f97316; color:white; font-weight:700; transition:0.3s; }
+.orange-btn:hover { background:#ea580c; }
+</style>
+</head>
+<body>
+
+<header class="sticky top-0 bg-white shadow z-10">
+  <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+    <a href="/" class="text-3xl font-black text-gray-900 tracking-tight">Mebel.by</a>
+    <div class="flex gap-6">
+      <a href="favorites.html" class="text-orange-500 font-medium underline">Избранное</a>
+      <a href="order.html" class="text-gray-700 font-medium hover:text-orange-500">Корзина</a>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-10">
+  <h1 class="text-3xl font-black mb-8">Избранное ❤️</h1>
+  <div id="favorites-container" class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+  <p id="empty-msg" class="text-gray-500 text-center mt-20 text-lg hidden">Избранное пусто 😔</p>
+</main>
+
+<script>
+// === LOAD FAVORITES ===
+let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+const container = document.getElementById("favorites-container");
+const emptyMsg = document.getElementById("empty-msg");
+
+function renderFavorites() {
+  container.innerHTML = "";
+  if (favorites.length === 0) {
+    emptyMsg.classList.remove("hidden");
+    return;
+  }
+  emptyMsg.classList.add("hidden");
+
+  favorites.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden cursor-pointer flex flex-col";
+
+    card.innerHTML = `
+      <img src="${item.image}" alt="${item.title}" class="w-full h-56 object-cover">
+      <div class="p-4 flex flex-col flex-grow">
+        <h3 class="text-lg font-bold mb-1">${item.title}</h3>
+        <p class="text-gray-500 mb-2 text-sm">${item.material || ''} ${item.color || ''}</p>
+        <p class="text-orange-600 font-semibold mb-4">${item.price} BYN</p>
+        <button class="orange-btn py-2 rounded-xl mt-auto">Добавить в корзину</button>
+      </div>
+    `;
+
+    // переход на страницу товара
+    card.querySelector("img").addEventListener("click", () => {
+      if (item.id) {
+        window.location.href = `product.html?id=${item.id}`;
+      }
+    });
+
+    // кнопка добавления в корзину
+    card.querySelector("button").addEventListener("click", (e) => {
+      e.stopPropagation();
+      addToCart(item);
+      e.target.textContent = "✅ В корзине";
+      e.target.disabled = true;
+    });
+
+    container.appendChild(card);
+  });
+}
+
+function addToCart(item) {
+  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  const exists = cart.some(p => p.id === item.id);
+  if (!exists) {
+    cart.push(item);
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }
+}
+
+renderFavorites();
+</script>
+</body>
+</html>
