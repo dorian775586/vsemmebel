@@ -94,6 +94,14 @@ await signInAnonymously(auth);
 
 // === LOAD CART FROM LOCALSTORAGE ===
 let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+// Здесь мы добавляем shopId каждому товару
+// Например, если товары загружаются с главной страницы, где есть info о магазине
+cart = cart.map(item => ({
+    ...item,
+    shopId: item.shopId || "default-shop" // временный shopId, замените реальным
+}));
+
 const cartItemsContainer = document.getElementById("cart-items");
 const totalPriceEl = document.getElementById("total-price");
 const emptyCartMsg = document.getElementById("empty-cart");
@@ -146,19 +154,32 @@ document.getElementById("order-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (cart.length === 0) return alert("Корзина пуста");
 
-  const orderData = {
-    name: document.getElementById("name").value.trim(),
-    phone: document.getElementById("phone").value.trim(),
-    email: document.getElementById("email").value.trim(),
-    address: document.getElementById("address").value.trim(),
-    payment: document.querySelector('input[name="payment"]:checked').value,
-    items: cart,
-    total: totalPriceEl.textContent,
-    date: new Date().toISOString(),
-  };
+  // --- Составляем список shopId для каждого заказа (если товары от разных магазинов) ---
+  const groupedByShop = {};
+  cart.forEach(item => {
+    const shopId = item.shopId || "default-shop";
+    if (!groupedByShop[shopId]) groupedByShop[shopId] = [];
+    groupedByShop[shopId].push(item);
+  });
 
   try {
-    await addDoc(collection(db, "orders"), orderData);
+    // Создаём отдельный заказ для каждого магазина
+    for (const shopId in groupedByShop) {
+      const orderData = {
+        name: document.getElementById("name").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        address: document.getElementById("address").value.trim(),
+        payment: document.querySelector('input[name="payment"]:checked').value,
+        items: groupedByShop[shopId],
+        total: groupedByShop[shopId].reduce((sum, item) => sum + Math.round(item.price * (1 - (item.discount || 0)/100)), 0),
+        date: new Date().toISOString(),
+        status: "Новый",
+        shopId: shopId
+      };
+      await addDoc(collection(db, "orders"), orderData);
+    }
+
     alert("✅ Заказ успешно оформлен!");
     localStorage.removeItem("cart");
     window.location.href = "/";

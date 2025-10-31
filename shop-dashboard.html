@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Кабинет магазина</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body { font-family: 'Inter', sans-serif; background-color: #f9f9f9; min-height: 100vh; }
+.order-card, .product-card { background: white; border-radius: 1rem; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+.status { font-weight: bold; padding: 0.2rem 0.5rem; border-radius: 0.25rem; }
+.status.new { background-color: #fee2e2; color: #b91c1c; }
+.status.processing { background-color: #fef3c7; color: #b45309; }
+.status.completed { background-color: #dcfce7; color: #15803d; }
+</style>
+</head>
+<body>
+<div class="max-w-4xl mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-6">Кабинет магазина</h1>
+
+    <!-- Авторизация магазина -->
+    <div id="auth-section" class="mb-6">
+        <input id="shop-email" type="email" placeholder="Email магазина" class="p-2 border rounded mb-2 w-full">
+        <input id="shop-password" type="password" placeholder="Пароль" class="p-2 border rounded mb-2 w-full">
+        <button id="shop-login" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">Войти</button>
+        <div id="auth-message" class="mt-2 text-red-600"></div>
+    </div>
+
+    <!-- Фильтр заказов -->
+    <div id="filter-section" class="hidden mb-4">
+        <label class="font-semibold mr-2">Фильтр по статусу:</label>
+        <select id="status-filter" class="border rounded p-1">
+            <option value="Все">Все</option>
+            <option value="Новый">Новые</option>
+            <option value="В обработке">В обработке</option>
+            <option value="Выполнен">Выполненные</option>
+        </select>
+    </div>
+
+    <!-- Секция заказов -->
+    <div id="orders-section" class="hidden mb-10">
+        <h2 class="text-2xl font-semibold mb-4">Заказы</h2>
+        <div id="orders-list" class="space-y-4"></div>
+    </div>
+
+    <!-- Секция товаров (CRUD) -->
+    <div id="products-section" class="hidden mt-10">
+        <h2 class="text-2xl font-semibold mb-4">Мои товары</h2>
+
+        <!-- Форма добавления / редактирования товара -->
+        <div class="mb-6 p-4 bg-white rounded-lg shadow space-y-3">
+            <input id="product-title" type="text" placeholder="Название товара" class="p-2 border rounded w-full">
+            <input id="product-category" type="text" placeholder="Категория" class="p-2 border rounded w-full">
+            <input id="product-price" type="number" placeholder="Цена" class="p-2 border rounded w-full">
+            <input id="product-discount" type="number" placeholder="Скидка %" class="p-2 border rounded w-full">
+            <input id="product-image" type="text" placeholder="URL изображения" class="p-2 border rounded w-full">
+            <div class="flex space-x-2">
+                <button id="add-product" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Добавить товар</button>
+                <button id="update-product" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 hidden">Обновить товар</button>
+            </div>
+            <div id="product-message" class="text-red-600 mt-2"></div>
+        </div>
+
+        <!-- Список товаров -->
+        <div id="products-list" class="space-y-4"></div>
+    </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// --- Конфигурация Firebase ---
+const firebaseConfig = {
+    apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
+    authDomain: "vsemmebel-90d48.firebaseapp.com",
+    projectId: "vsemmebel-90d48",
+    storageBucket: "vsemmebel-90d48.firebasestorage.app",
+    messagingSenderId: "958123504041",
+    appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// --- Элементы DOM ---
+const shopLoginBtn = document.getElementById('shop-login');
+const emailInput = document.getElementById('shop-email');
+const passwordInput = document.getElementById('shop-password');
+const authMessage = document.getElementById('auth-message');
+const ordersSection = document.getElementById('orders-section');
+const ordersList = document.getElementById('orders-list');
+const authSection = document.getElementById('auth-section');
+
+const filterSection = document.getElementById('filter-section');
+const statusFilter = document.getElementById('status-filter');
+
+const productsSection = document.getElementById('products-section');
+const productsList = document.getElementById('products-list');
+const productMessage = document.getElementById('product-message');
+
+const titleInput = document.getElementById('product-title');
+const categoryInput = document.getElementById('product-category');
+const priceInput = document.getElementById('product-price');
+const discountInput = document.getElementById('product-discount');
+const imageInput = document.getElementById('product-image');
+
+const addProductBtn = document.getElementById('add-product');
+const updateProductBtn = document.getElementById('update-product');
+
+let currentShopId = null;
+let editingProductId = null;
+
+// --- Вход магазина ---
+shopLoginBtn.onclick = async () => {
+    const email = emailInput.value;
+    const password = passwordInput.value;
+    authMessage.textContent = '';
+
+    if (!email || !password) {
+        authMessage.textContent = 'Введите email и пароль';
+        return;
+    }
+
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        currentShopId = userCredential.user.uid;
+        console.log("Магазин вошёл:", currentShopId);
+    } catch (err) {
+        console.error(err);
+        authMessage.textContent = 'Ошибка входа. Проверьте email/пароль';
+    }
+};
+
+// --- Слежение за авторизацией ---
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        currentShopId = user.uid;
+        authSection.classList.add('hidden');
+        ordersSection.classList.remove('hidden');
+        productsSection.classList.remove('hidden');
+        filterSection.classList.remove('hidden');
+        loadShopOrders();
+        loadShopProducts();
+    }
+});
+
+// --- Загрузка заказов с фильтром ---
+function loadShopOrders() {
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, where('shopId', '==', currentShopId));
+
+    onSnapshot(q, snapshot => {
+        renderOrders(snapshot);
+    });
+}
+
+function renderOrders(snapshot) {
+    const filter = statusFilter.value;
+    ordersList.innerHTML = '';
+    let hasOrders = false;
+
+    snapshot.forEach(docSnap => {
+        const order = docSnap.data();
+        if (filter !== 'Все' && order.status !== filter) return;
+        hasOrders = true;
+
+        const orderCard = document.createElement('div');
+        orderCard.className = 'order-card';
+        orderCard.innerHTML = `
+            <p><strong>Товары:</strong> ${order.items?.length || order.quantity || 1}</p>
+            <p><strong>Имя:</strong> ${order.name || ''}</p>
+            <p><strong>Телефон:</strong> ${order.phone || ''}</p>
+            <p><strong>Адрес:</strong> ${order.address || ''}</p>
+            <p><strong>Оплата:</strong> ${order.payment || ''}</p>
+            <p><strong>Итог:</strong> ${order.total || ''} BYN</p>
+            <p><strong>Статус:</strong> <span class="status ${statusClass(order.status)}">${order.status || 'Новый'}</span></p>
+            <div class="mt-2 flex gap-2">
+                ${order.status !== 'Выполнен' ? `<button class="status-btn bg-yellow-300 px-2 py-1 rounded" data-id="${docSnap.id}" data-action="В обработке">В обработке</button>` : ''}
+                ${order.status !== 'Выполнен' ? `<button class="status-btn bg-green-300 px-2 py-1 rounded" data-id="${docSnap.id}" data-action="Выполнен">Выполнен</button>` : ''}
+                <button class="delete-btn bg-red-300 px-2 py-1 rounded" data-id="${docSnap.id}">Удалить</button>
+            </div>
+        `;
+        ordersList.appendChild(orderCard);
+    });
+
+    if (!hasOrders) ordersList.innerHTML = '<p class="text-gray-500">Нет заказов для выбранного фильтра.</p>';
+
+    // --- Обновление статуса ---
+    ordersList.querySelectorAll('.status-btn').forEach(btn => {
+        btn.onclick = async () => {
+            const docRef = doc(db, 'orders', btn.dataset.id);
+            await updateDoc(docRef, { status: btn.dataset.action });
+        };
+    });
+
+    // --- Удаление заказа ---
+    ordersList.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.onclick = async () => {
+            if (!confirm('Удалить заказ?')) return;
+            const docRef = doc(db, 'orders', btn.dataset.id);
+            await deleteDoc(docRef);
+        };
+    });
+}
+
+// --- Фильтр по статусу ---
+statusFilter.onchange = loadShopOrders;
+
+// --- Цвета статуса ---
+function statusClass(status) {
+    switch(status) {
+        case 'Новый': return 'new';
+        case 'В обработке': return 'processing';
+        case 'Выполнен': return 'completed';
+        default: return '';
+    }
+}
+
+// --- CRUD товаров ---
+function loadShopProducts() {
+    const productsRef = collection(db, 'offers');
+    const q = query(productsRef, where('shopId', '==', currentShopId));
+
+    onSnapshot(q, snapshot => {
+        productsList.innerHTML = '';
+        if (snapshot.empty) {
+            productsList.innerHTML = '<p class="text-gray-500">Товары отсутствуют.</p>';
+            return;
+        }
+
+        snapshot.forEach(doc => {
+            const product = doc.data();
+            const card = document.createElement('div');
+            card.className = 'product-card flex justify-between items-center';
+            card.innerHTML = `
+                <div>
+                    <p class="font-semibold">${product.title}</p>
+                    <p class="text-sm text-gray-500">Категория: ${product.category} | Цена: ${product.price} BYN | Скидка: ${product.discount || 0}%</p>
+                </div>
+                <div class="space-x-2">
+                    <button class="edit-btn bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Редактировать</button>
+                    <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Удалить</button>
+                </div>
+            `;
+            card.querySelector('.edit-btn').onclick = () => startEditingProduct(doc.id, product);
+            card.querySelector('.delete-btn').onclick = () => deleteProduct(doc.id);
+            productsList.appendChild(card);
+        });
+    });
+}
+
+addProductBtn.onclick = async () => {
+    const title = titleInput.value.trim();
+    const category = categoryInput.value.trim();
+    const price = parseFloat(priceInput.value);
+    const discount = parseFloat(discountInput.value) || 0;
+    const image = imageInput.value.trim();
+
+    if (!title || !category || isNaN(price)) {
+        productMessage.textContent = 'Заполните все обязательные поля.';
+        return;
+    }
+
+    try {
+        await addDoc(collection(db, 'offers'), {
+            title,
+            category,
+            price,
+            discount,
+            images: [image],
+            shopId: currentShopId,
+            createdAt: new Date()
+        });
+        productMessage.textContent = 'Товар добавлен!';
+        clearProductForm();
+    } catch (err) {
+        console.error(err);
+        productMessage.textContent = 'Ошибка добавления товара.';
+    }
+};
+
+function startEditingProduct(id, product) {
+    editingProductId = id;
+    titleInput.value = product.title;
+    categoryInput.value = product.category;
+    priceInput.value = product.price;
+    discountInput.value = product.discount || 0;
+    imageInput.value = product.images?.[0] || '';
+
+    addProductBtn.classList.add('hidden');
+    updateProductBtn.classList.remove('hidden');
+}
+
+updateProductBtn.onclick = async () => {
+    if (!editingProductId) return;
+
+    const title = titleInput.value.trim();
+    const category = categoryInput.value.trim();
+    const price = parseFloat(priceInput.value);
+    const discount = parseFloat(discountInput.value) || 0;
+    const image = imageInput.value.trim();
+
+    if (!title || !category || isNaN(price)) {
+        productMessage.textContent = 'Заполните все обязательные поля.';
+        return;
+    }
+
+    try {
+        const productRef = doc(db, 'offers', editingProductId);
+        await updateDoc(productRef, {
+            title,
+            category,
+            price,
+            discount,
+            images: [image],
+            updatedAt: new Date()
+        });
+        productMessage.textContent = 'Товар обновлён!';
+        clearProductForm();
+    } catch (err) {
+        console.error(err);
+        productMessage.textContent = 'Ошибка обновления товара.';
+    }
+};
+
+async function deleteProduct(id) {
+    if (!confirm('Вы уверены, что хотите удалить этот товар?')) return;
+
+    try {
+        const productRef = doc(db, 'offers', id);
+        await deleteDoc(productRef);
+        productMessage.textContent = 'Товар удалён!';
+    } catch (err) {
+        console.error(err);
+        productMessage.textContent = 'Ошибка удаления товара.';
+    }
+}
+
+function clearProductForm() {
+    editingProductId = null;
+    titleInput.value = '';
+    categoryInput.value = '';
+    priceInput.value = '';
+    discountInput.value = '';
+    imageInput.value = '';
+    addProductBtn.classList.remove('hidden');
+    updateProductBtn.classList.add('hidden');
+}
+</script>
+</body>
+</html>
