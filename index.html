@@ -250,7 +250,6 @@
         // Примечание: предполагается, что admin.html существует в корневом каталоге.
         const ADMIN_REDIRECT_URL = 'admin.html'; 
 
-        adminLoginBtn.onclick = () => adminModal.classList.remove('hidden');
         adminCloseBtn.onclick = () => adminModal.classList.add('hidden');
 
         function showAdminMessage(message, isError = false) {
