@@ -41,24 +41,19 @@
 <header class="sticky top-0 header-bg z-20">
     <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
         <!-- При клике на лого теперь просто скроллим вверх -->
+         <!-- Скрытая кнопка админа слева от логотипа -->
+        <div id="hidden-admin-btn" style="width:20px;height:20px;opacity:0;cursor:pointer;margin-right:8px;"></div>
+
         <h1 class="text-3xl font-black text-gray-900 tracking-tight cursor-pointer" onclick="window.scrollTo(0, 0)">Mebel.by</h1>
 
-        <div class="flex items-center space-x-4">
-            <!-- Город -->
-            <div class="flex items-center space-x-2 text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
-                <span id="current-city" class="font-bold text-gray-700">Гомель</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-            </div>
-
-            <!-- Профиль -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-gray-600 cursor-pointer hover:text-orange-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-
-            <!-- Кнопка для входа админа -->
-            <button id="admin-login-btn" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition">Админ</button>
+            <div class="flex items-center space-x-4">
+                <!-- Город -->
+                <div class="flex items-center space-x-2 text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
+                    <span id="current-city" class="font-bold text-gray-700">Гомель</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
 
             <!-- Кнопки Избранное и Корзина -->
             <a href="favorites.html" class="relative text-gray-700 hover:text-orange-500 transition">
@@ -245,7 +240,6 @@
 
         // --- Admin Login Modal Logic ---
         const adminModal = document.getElementById('admin-modal');
-        const adminLoginBtn = document.getElementById('admin-login-btn');
         const adminCloseBtn = document.getElementById('admin-close');
         const adminEmailInput = document.getElementById('admin-email');
         const adminPasswordInput = document.getElementById('admin-password');
@@ -497,6 +491,16 @@
         window.onload = () => {
             renderCategories(); // Рендерим кнопки категорий
             // Рендеринг товаров будет вызван после успешной аутентификации в initializeAuth -> setupRealtimeOffersListener
+        };
+            // --- Секретная кнопка админа слева от логотипа ---
+        const hiddenAdminBtn = document.getElementById('hidden-admin-btn');
+        hiddenAdminBtn.onclick = () => {
+            const password = prompt("Введите пароль для админа:");
+            if (password === "1234") {  // <-- здесь твой пароль
+                adminModal.classList.remove('hidden'); // открываем модалку админа
+            } else {
+                alert("Неверный пароль!");
+            }
         };
 
     </script>
