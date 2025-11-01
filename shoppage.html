@@ -82,7 +82,9 @@ loginBtn.addEventListener('click', async () => {
     const userCredential = await auth.signInWithEmailAndPassword(email, password);
     const uid = userCredential.user.uid;
 
-    const shopDoc = await db.collection('shops').doc(uid).get();
+    const shopDoc = await db.collection('artifacts').doc('default-app-id')
+                        .collection('public').doc('data')
+                        .collection('shops').doc(uid).get();
     if(!shopDoc.exists){
       loginMessage.textContent = 'Магазин не найден';
       auth.signOut();
