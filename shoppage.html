@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мои товары - Mebel.by</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Noto Sans', sans-serif; background:#f7f7f7; }
+    .section { background:white; padding:1.5rem; border-radius:1rem; margin-bottom:1.5rem; box-shadow:0 6px 15px rgba(0,0,0,0.08); }
+  </style>
+</head>
+<body class="p-4 sm:p-6">
+
+<h1 class="text-3xl font-bold mb-6 text-gray-800">Мой магазин</h1>
+
+<div id="login-section" class="section max-w-md mx-auto">
+  <h2 class="text-xl font-semibold mb-4">Вход в магазин</h2>
+  <input id="shop-email" type="email" placeholder="Email" class="input-field mb-2">
+  <input id="shop-password" type="password" placeholder="Пароль" class="input-field mb-2">
+  <button id="login-btn" class="btn btn-save w-full">Войти</button>
+  <p id="login-message" class="text-sm text-red-600 mt-2"></p>
+</div>
+
+<div id="shop-dashboard" class="hidden">
+  <div class="section">
+    <h2 class="text-2xl font-semibold mb-4">Мои товары</h2>
+    <div id="my-products" class="space-y-2"></div>
+  </div>
+
+  <div class="section">
+    <h2 class="text-2xl font-semibold mb-4">Мои заказы</h2>
+    <div id="my-orders" class="space-y-2"></div>
+  </div>
+
+  <button id="logout-btn" class="btn bg-gray-300 text-gray-700 hover:bg-gray-400 mt-4">Выйти</button>
+</div>
+
+<script>
+  // === Firebase config ===
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_ID",
+    appId: "YOUR_APP_ID"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const loginSection = document.getElementById('login-section');
+  const dashboard = document.getElementById('shop-dashboard');
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+  const loginMessage = document.getElementById('login-message');
+
+  loginBtn.addEventListener('click', async () => {
+    const email = document.getElementById('shop-email').value;
+    const password = document.getElementById('shop-password').value;
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch (err) {
+      loginMessage.textContent = err.message;
+    }
+  });
+
+  logoutBtn.addEventListener('click', () => {
+    auth.signOut();
+  });
+
+  auth.onAuthStateChanged(async user => {
+    if (user) {
+      loginSection.classList.add('hidden');
+      dashboard.classList.remove('hidden');
+      loadProducts(user.uid);
+      loadOrders(user.uid);
+    } else {
+      loginSection.classList.remove('hidden');
+      dashboard.classList.add('hidden');
+    }
+  });
+
+  async function loadProducts(uid) {
+    const container = document.getElementById('my-products');
+    container.innerHTML = 'Загрузка...';
+    const snapshot = await db.collection('products').where('shopId', '==', uid).get();
+    if (snapshot.empty) {
+      container.innerHTML = '<p class="text-gray-500">Нет товаров</p>';
+      return;
+    }
+    container.innerHTML = '';
+    snapshot.forEach(doc => {
+      const p = doc.data();
+      const div = document.createElement('div');
+      div.className = 'p-3 border rounded-lg bg-gray-50';
+      div.innerHTML = `<strong>${p.title}</strong> — ${p.category}`;
+      container.appendChild(div);
+    });
+  }
+
+  async function loadOrders(uid) {
+    const container = document.getElementById('my-orders');
+    container.innerHTML = 'Загрузка...';
+    const snapshot = await db.collection('orders').where('shopId', '==', uid).get();
+    if (snapshot.empty) {
+      container.innerHTML = '<p class="text-gray-500">Нет заказов</p>';
+      return;
+    }
+    container.innerHTML = '';
+    snapshot.forEach(doc => {
+      const o = doc.data();
+      const div = document.createElement('div');
+      div.className = 'p-3 border rounded-lg bg-gray-50';
+      div.innerHTML = `<strong>${o.buyerName}</strong> заказал ${o.quantity} × ${o.productTitle} <br> Email: ${o.buyerEmail}`;
+      container.appendChild(div);
+    });
+  }
+</script>
+
+</body>
+</html>
