@@ -63,30 +63,49 @@
   const logoutBtn = document.getElementById('logout-btn');
   const loginMessage = document.getElementById('login-message');
 
+  // при загрузке всегда показываем форму входа
+  loginSection.classList.remove('hidden');
+  dashboard.classList.add('hidden');
+
   loginBtn.addEventListener('click', async () => {
-    const email = document.getElementById('shop-email').value;
+    loginMessage.textContent = '';
+    const email = document.getElementById('shop-email').value.trim();
     const password = document.getElementById('shop-password').value;
+    if (!email || !password) {
+      loginMessage.textContent = 'Введите email и пароль';
+      return;
+    }
+
     try {
-      await auth.signInWithEmailAndPassword(email, password);
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      const uid = userCredential.user.uid;
+
+      // проверяем, есть ли магазин с этим uid
+      const shopDoc = await db.collection('shops').doc(uid).get();
+      if (!shopDoc.exists) {
+        loginMessage.textContent = 'Магазин не найден';
+        auth.signOut();
+        return;
+      }
+
+      // скрываем форму и показываем дашборд
+      loginSection.classList.add('hidden');
+      dashboard.classList.remove('hidden');
+
+      loadProducts(uid);
+      loadOrders(uid);
+
     } catch (err) {
       loginMessage.textContent = err.message;
     }
   });
 
-  logoutBtn.addEventListener('click', () => {
-    auth.signOut();
-  });
-
-  auth.onAuthStateChanged(async user => {
-    if (user) {
-      loginSection.classList.add('hidden');
-      dashboard.classList.remove('hidden');
-      loadProducts(user.uid);
-      loadOrders(user.uid);
-    } else {
-      loginSection.classList.remove('hidden');
-      dashboard.classList.add('hidden');
-    }
+  logoutBtn.addEventListener('click', async () => {
+    await auth.signOut();
+    loginSection.classList.remove('hidden');
+    dashboard.classList.add('hidden');
+    document.getElementById('shop-email').value = '';
+    document.getElementById('shop-password').value = '';
   });
 
   async function loadProducts(uid) {
@@ -102,7 +121,7 @@
       const p = doc.data();
       const div = document.createElement('div');
       div.className = 'p-3 border rounded-lg bg-gray-50';
-      div.innerHTML = `<strong>${p.title}</strong> — ${p.category}`;
+      div.innerHTML = `<strong>${p.title}</strong> — ${p.category || 'Без категории'}`;
       container.appendChild(div);
     });
   }
