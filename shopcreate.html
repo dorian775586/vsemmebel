@@ -4,11 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Создание магазина</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs, doc, updateDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, collection, getDocs, updateDoc, deleteField, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // ======== Firebase config ========
     const firebaseConfig = {
@@ -24,18 +23,33 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const appId = 'default-app-id'; // замените на ваш appId, если нужно
-    const productCollectionPath = `artifacts/${appId}/public/data/offers`;
-
     // ======== Пароль для доступа ========
     const ACCESS_PASSWORD = "create775586";
 
+    // ======== DOM Elements ========
     const passwordCheckDiv = document.getElementById("password-check");
     const mainInterface = document.getElementById("main-interface");
     const checkBtn = document.getElementById("check-password-btn");
     const passwordInput = document.getElementById("access-password");
     const passwordError = document.getElementById("password-error");
 
+    const tabCreate = document.getElementById("tab-create-shop");
+    const tabManage = document.getElementById("tab-manage-products");
+    const createFormDiv = document.getElementById("create-shop-form");
+    const manageDiv = document.getElementById("manage-products");
+
+    const createBtn = document.getElementById("create-shop-btn");
+    const shopNameInput = document.getElementById("shop-name");
+    const shopEmailInput = document.getElementById("shop-email");
+    const shopPasswordInput = document.getElementById("shop-password");
+    const messageP = document.getElementById("create-shop-message");
+
+    const shopSelect = document.getElementById("shop-select");
+    const productsListDiv = document.getElementById("products-list");
+    const saveAssignmentsBtn = document.getElementById("save-assignments");
+    const assignMessage = document.getElementById("assign-message");
+
+    // ======== Пароль доступа ========
     checkBtn.addEventListener("click", () => {
       if(passwordInput.value === ACCESS_PASSWORD){
         passwordCheckDiv.classList.add("hidden");
@@ -48,12 +62,7 @@
       }
     });
 
-    // ======== Вкладки ====
-    const tabCreate = document.getElementById("tab-create-shop");
-    const tabManage = document.getElementById("tab-manage-products");
-    const createFormDiv = document.getElementById("create-shop-form");
-    const manageDiv = document.getElementById("manage-products");
-
+    // ======== Вкладки ========
     tabCreate.addEventListener("click", () => {
       createFormDiv.classList.remove("hidden");
       manageDiv.classList.add("hidden");
@@ -73,12 +82,6 @@
     });
 
     // ======== Создание магазина ========
-    const createBtn = document.getElementById("create-shop-btn");
-    const shopNameInput = document.getElementById("shop-name");
-    const shopEmailInput = document.getElementById("shop-email");
-    const shopPasswordInput = document.getElementById("shop-password");
-    const messageP = document.getElementById("create-shop-message");
-
     createBtn.addEventListener("click", async () => {
       const name = shopNameInput.value.trim();
       const email = shopEmailInput.value.trim();
@@ -95,19 +98,11 @@
         const uid = userCredential.user.uid;
 
         const shopRef = doc(db, "shops", uid);
-        await updateDoc(shopRef, {
+        await setDoc(shopRef, {
           shopName: name,
           email: email,
           ownerUid: uid,
           createdAt: serverTimestamp()
-        }).catch(async () => {
-          // если документа не существует, создаем
-          await db.collection("shops").doc(uid).set({
-            shopName: name,
-            email: email,
-            ownerUid: uid,
-            createdAt: serverTimestamp()
-          });
         });
 
         messageP.textContent = "Магазин успешно создан!";
@@ -125,16 +120,11 @@
       }
     });
 
-    // ======== Привязка товаров к магазину ========
-    const shopSelect = document.getElementById("shop-select");
-    const productsListDiv = document.getElementById("products-list");
-    const saveAssignmentsBtn = document.getElementById("save-assignments");
-    const assignMessage = document.getElementById("assign-message");
-
+    // ======== Загрузка магазинов ========
     async function loadShops(){
       shopSelect.innerHTML = '<option value="" disabled selected>-- Выберите магазин --</option>';
-      const shopsSnapshot = await getDocs(collection(db, "shops"));
-      shopsSnapshot.forEach(docSnap => {
+      const snapshot = await getDocs(collection(db, "shops"));
+      snapshot.forEach(docSnap => {
         const shop = docSnap.data();
         const option = document.createElement("option");
         option.value = docSnap.id;
@@ -143,10 +133,11 @@
       });
     }
 
+    // ======== Загрузка товаров ========
     async function loadProducts(){
       productsListDiv.innerHTML = '';
-      const productsSnapshot = await getDocs(collection(db, productCollectionPath));
-      productsSnapshot.forEach(docSnap => {
+      const snapshot = await getDocs(collection(db, "products"));
+      snapshot.forEach(docSnap => {
         const product = docSnap.data();
         const div = document.createElement("div");
         div.className = "flex items-center justify-between p-2 border-b";
@@ -158,6 +149,7 @@
       });
     }
 
+    // ======== Сохранение привязки товаров ========
     saveAssignmentsBtn.addEventListener("click", async () => {
       const selectedShop = shopSelect.value;
       if(!selectedShop){
@@ -167,19 +159,19 @@
       }
 
       const checkboxes = productsListDiv.querySelectorAll('input[type=checkbox]');
-      const batchUpdates = [];
+      const batch = writeBatch(db);
 
       checkboxes.forEach(cb => {
-        const productRef = doc(db, productCollectionPath, cb.dataset.id);
+        const docRef = doc(db, "products", cb.dataset.id);
         if(cb.checked){
-          batchUpdates.push(updateDoc(productRef, { shopId: selectedShop }));
+          batch.update(docRef, { shopId: selectedShop });
         } else {
-          batchUpdates.push(updateDoc(productRef, { shopId: deleteField() }));
+          batch.update(docRef, { shopId: deleteField() });
         }
       });
 
       try {
-        await Promise.all(batchUpdates);
+        await batch.commit();
         assignMessage.textContent = "Товары успешно обновлены!";
         assignMessage.classList.remove("text-red-500");
         assignMessage.classList.add("text-green-600");
@@ -201,11 +193,13 @@
 </div>
 
 <div id="main-interface" class="hidden max-w-4xl mx-auto mt-6">
+  <!-- Вкладки -->
   <div class="flex gap-4 mb-6">
     <button id="tab-create-shop" class="bg-orange-500 text-white px-4 py-2 rounded">Создание магазина</button>
     <button id="tab-manage-products" class="bg-gray-300 text-gray-700 px-4 py-2 rounded">Привязка товаров</button>
   </div>
 
+  <!-- === Создание магазина === -->
   <div id="create-shop-form" class="bg-white p-6 rounded-xl shadow">
     <h2 class="text-2xl font-bold mb-4">Создание интернет-магазина</h2>
     <input id="shop-name" type="text" placeholder="Название магазина" class="p-2 border rounded w-full mb-3">
@@ -215,6 +209,7 @@
     <p id="create-shop-message" class="mt-3 text-sm text-gray-700"></p>
   </div>
 
+  <!-- === Привязка товаров к магазинам === -->
   <div id="manage-products" class="bg-white p-6 rounded-xl shadow hidden">
     <h2 class="text-2xl font-bold mb-4">Привязка товаров к магазину</h2>
     
