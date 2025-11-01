@@ -11,6 +11,10 @@
   <style>
     body { font-family: 'Noto Sans', sans-serif; background:#f7f7f7; }
     .section { background:white; padding:1.5rem; border-radius:1rem; margin-bottom:1.5rem; box-shadow:0 6px 15px rgba(0,0,0,0.08); }
+    .input-field { width: 100%; padding:0.5rem; margin-bottom:0.5rem; border:1px solid #ccc; border-radius:0.5rem; }
+    .btn { padding:0.5rem 1rem; border:none; border-radius:0.5rem; cursor:pointer; }
+    .btn-save { background:#3b82f6; color:white; }
+    .btn-save:hover { background:#2563eb; }
   </style>
 </head>
 <body class="p-4 sm:p-6">
@@ -42,12 +46,12 @@
 <script>
   // === Firebase config ===
   const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
+    authDomain: "vsemmebel-90d48.firebaseapp.com",
+    projectId: "vsemmebel-90d48",
+    storageBucket: "vsemmebel-90d48.appspot.com",
+    messagingSenderId: "958123504041",
+    appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
   };
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
