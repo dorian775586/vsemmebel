@@ -1,233 +1,268 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Создание магазина</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs, doc, updateDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление магазинами и товарами</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Установка шрифта Inter для Tailwind CSS
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Стиль для обеспечения плавности переходов */
+        .tab-button {
+            transition: background-color 0.2s, color 0.2s;
+        }
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteField, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // ======== Firebase config ========
-    const firebaseConfig = {
-      apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
-      authDomain: "vsemmebel-90d48.firebaseapp.com",
-      projectId: "vsemmebel-90d48",
-      storageBucket: "vsemmebel-90d48.appspot.com",
-      messagingSenderId: "958123504041",
-      appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
-    };
+        // Установка уровня логирования для Firestore
+        setLogLevel('error');
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+        // ======== Использование глобальных переменных Canvas (ОБЯЗАТЕЛЬНО) ========
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-    const appId = 'default-app-id'; // замените на ваш appId, если нужно
-    const productCollectionPath = `artifacts/${appId}/public/data/offers`;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-    // ======== Пароль для доступа ========
-    const ACCESS_PASSWORD = "create775586";
+        // Пути к коллекциям
+        const shopCollectionPath = "shops"; // Используем ваше название коллекции
+        const productCollectionPath = `artifacts/${appId}/public/data/offers`;
 
-    const passwordCheckDiv = document.getElementById("password-check");
-    const mainInterface = document.getElementById("main-interface");
-    const checkBtn = document.getElementById("check-password-btn");
-    const passwordInput = document.getElementById("access-password");
-    const passwordError = document.getElementById("password-error");
+        // ======== Пароль для доступа (Hardcoded, как у вас) ========
+        const ACCESS_PASSWORD = "create775586";
 
-    checkBtn.addEventListener("click", () => {
-      if(passwordInput.value === ACCESS_PASSWORD){
-        passwordCheckDiv.classList.add("hidden");
-        mainInterface.classList.remove("hidden");
-        loadShops();
-        loadProducts();
-      } else {
-        passwordError.textContent = "Неверный пароль";
-        passwordError.classList.remove("hidden");
-      }
-    });
+        // ======== Элементы DOM ========
+        const passwordCheckDiv = document.getElementById("password-check");
+        const mainInterface = document.getElementById("main-interface");
+        const checkBtn = document.getElementById("check-password-btn");
+        const passwordInput = document.getElementById("access-password");
+        const passwordError = document.getElementById("password-error");
+        
+        // Элементы вкладок
+        const tabCreate = document.getElementById("tab-create-shop");
+        const tabManage = document.getElementById("tab-manage-products");
+        const createFormDiv = document.getElementById("create-shop-form");
+        const manageDiv = document.getElementById("manage-products");
 
-    // ======== Вкладки ====
-    const tabCreate = document.getElementById("tab-create-shop");
-    const tabManage = document.getElementById("tab-manage-products");
-    const createFormDiv = document.getElementById("create-shop-form");
-    const manageDiv = document.getElementById("manage-products");
+        // Элементы формы создания
+        const createBtn = document.getElementById("create-shop-btn");
+        const shopNameInput = document.getElementById("shop-name");
+        const shopEmailInput = document.getElementById("shop-email");
+        const shopPasswordInput = document.getElementById("shop-password");
+        const messageP = document.getElementById("create-shop-message");
 
-    tabCreate.addEventListener("click", () => {
-      createFormDiv.classList.remove("hidden");
-      manageDiv.classList.add("hidden");
-      tabCreate.classList.add("bg-orange-500","text-white");
-      tabCreate.classList.remove("bg-gray-300","text-gray-700");
-      tabManage.classList.remove("bg-orange-500","text-white");
-      tabManage.classList.add("bg-gray-300","text-gray-700");
-    });
+        // Элементы привязки товаров
+        const shopSelect = document.getElementById("shop-select");
+        const productsListDiv = document.getElementById("products-list");
+        const saveAssignmentsBtn = document.getElementById("save-assignments");
+        const assignMessage = document.getElementById("assign-message");
 
-    tabManage.addEventListener("click", () => {
-      createFormDiv.classList.add("hidden");
-      manageDiv.classList.remove("hidden");
-      tabManage.classList.add("bg-orange-500","text-white");
-      tabManage.classList.remove("bg-gray-300","text-gray-700");
-      tabCreate.classList.remove("bg-orange-500","text-white");
-      tabCreate.classList.add("bg-gray-300","text-gray-700");
-    });
-
-    // ======== Создание магазина ========
-    const createBtn = document.getElementById("create-shop-btn");
-    const shopNameInput = document.getElementById("shop-name");
-    const shopEmailInput = document.getElementById("shop-email");
-    const shopPasswordInput = document.getElementById("shop-password");
-    const messageP = document.getElementById("create-shop-message");
-
-    createBtn.addEventListener("click", async () => {
-      const name = shopNameInput.value.trim();
-      const email = shopEmailInput.value.trim();
-      const password = shopPasswordInput.value;
-
-      if(!name || !email || !password){
-        messageP.textContent = "Заполните все поля!";
-        messageP.classList.add("text-red-500");
-        return;
-      }
-
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const uid = userCredential.user.uid;
-
-        const shopRef = doc(db, "shops", uid);
-        await updateDoc(shopRef, {
-          shopName: name,
-          email: email,
-          ownerUid: uid,
-          createdAt: serverTimestamp()
-        }).catch(async () => {
-          // если документа не существует, создаем
-          await db.collection("shops").doc(uid).set({
-            shopName: name,
-            email: email,
-            ownerUid: uid,
-            createdAt: serverTimestamp()
-          });
+        // ======== Обработка входа по паролю ========
+        checkBtn.addEventListener("click", () => {
+            if(passwordInput.value === ACCESS_PASSWORD){
+                passwordCheckDiv.classList.add("hidden");
+                mainInterface.classList.remove("hidden");
+                loadShops();
+                loadProducts();
+            } else {
+                passwordError.textContent = "Неверный пароль";
+                passwordError.classList.remove("hidden");
+            }
         });
 
-        messageP.textContent = "Магазин успешно создан!";
-        messageP.classList.remove("text-red-500");
-        messageP.classList.add("text-green-600");
-
-        shopNameInput.value = "";
-        shopEmailInput.value = "";
-        shopPasswordInput.value = "";
-
-        loadShops();
-      } catch (error) {
-        messageP.textContent = error.message;
-        messageP.classList.add("text-red-500");
-      }
-    });
-
-    // ======== Привязка товаров к магазину ========
-    const shopSelect = document.getElementById("shop-select");
-    const productsListDiv = document.getElementById("products-list");
-    const saveAssignmentsBtn = document.getElementById("save-assignments");
-    const assignMessage = document.getElementById("assign-message");
-
-    async function loadShops(){
-      shopSelect.innerHTML = '<option value="" disabled selected>-- Выберите магазин --</option>';
-      const shopsSnapshot = await getDocs(collection(db, "shops"));
-      shopsSnapshot.forEach(docSnap => {
-        const shop = docSnap.data();
-        const option = document.createElement("option");
-        option.value = docSnap.id;
-        option.textContent = shop.shopName;
-        shopSelect.appendChild(option);
-      });
-    }
-
-    async function loadProducts(){
-      productsListDiv.innerHTML = '';
-      const productsSnapshot = await getDocs(collection(db, productCollectionPath));
-      productsSnapshot.forEach(docSnap => {
-        const product = docSnap.data();
-        const div = document.createElement("div");
-        div.className = "flex items-center justify-between p-2 border-b";
-        div.innerHTML = `
-          <span>${product.title || 'Без названия'}</span>
-          <input type="checkbox" data-id="${docSnap.id}" ${product.shopId ? 'checked' : ''}>
-        `;
-        productsListDiv.appendChild(div);
-      });
-    }
-
-    saveAssignmentsBtn.addEventListener("click", async () => {
-      const selectedShop = shopSelect.value;
-      if(!selectedShop){
-        assignMessage.textContent = "Выберите магазин!";
-        assignMessage.classList.add("text-red-500");
-        return;
-      }
-
-      const checkboxes = productsListDiv.querySelectorAll('input[type=checkbox]');
-      const batchUpdates = [];
-
-      checkboxes.forEach(cb => {
-        const productRef = doc(db, productCollectionPath, cb.dataset.id);
-        if(cb.checked){
-          batchUpdates.push(updateDoc(productRef, { shopId: selectedShop }));
-        } else {
-          batchUpdates.push(updateDoc(productRef, { shopId: deleteField() }));
+        // ======== Переключение вкладок ====
+        function setActiveTab(activeTab, inactiveTab, activeContent, inactiveContent) {
+            activeContent.classList.remove("hidden");
+            inactiveContent.classList.add("hidden");
+            activeTab.classList.add("bg-orange-500", "text-white");
+            activeTab.classList.remove("bg-gray-300", "text-gray-700");
+            inactiveTab.classList.remove("bg-orange-500", "text-white");
+            inactiveTab.classList.add("bg-gray-300", "text-gray-700");
         }
-      });
 
-      try {
-        await Promise.all(batchUpdates);
-        assignMessage.textContent = "Товары успешно обновлены!";
-        assignMessage.classList.remove("text-red-500");
-        assignMessage.classList.add("text-green-600");
-        loadProducts();
-      } catch(e){
-        assignMessage.textContent = "Ошибка при сохранении!";
-        assignMessage.classList.add("text-red-500");
-      }
-    });
-  </script>
+        tabCreate.addEventListener("click", () => {
+            setActiveTab(tabCreate, tabManage, createFormDiv, manageDiv);
+        });
+
+        tabManage.addEventListener("click", () => {
+            setActiveTab(tabManage, tabCreate, manageDiv, createFormDiv);
+        });
+
+        // ======== Создание магазина (ИСПРАВЛЕННАЯ ЛОГИКА) ========
+        createBtn.addEventListener("click", async () => {
+            const name = shopNameInput.value.trim();
+            const email = shopEmailInput.value.trim();
+            const password = shopPasswordInput.value;
+
+            if(!name || !email || !password){
+                messageP.textContent = "Заполните все поля!";
+                messageP.className = "mt-4 text-sm text-red-500 font-medium";
+                return;
+            }
+
+            try {
+                // 1. Создание пользователя в Firebase Auth
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const uid = userCredential.user.uid;
+
+                // 2. Создание документа магазина в Firestore
+                // Используем setDoc для создания документа с известным ID (UID пользователя)
+                const shopRef = doc(db, shopCollectionPath, uid);
+                await setDoc(shopRef, {
+                    shopName: name,
+                    email: email,
+                    ownerUid: uid,
+                    createdAt: serverTimestamp()
+                });
+
+                messageP.textContent = "Магазин успешно создан и связан с аккаунтом!";
+                messageP.className = "mt-4 text-sm text-green-600 font-medium";
+
+                shopNameInput.value = "";
+                shopEmailInput.value = "";
+                shopPasswordInput.value = "";
+
+                loadShops(); // Обновляем список магазинов
+            } catch (error) {
+                console.error("Ошибка при создании магазина:", error);
+                messageP.textContent = `Ошибка: ${error.message}`;
+                messageP.className = "mt-4 text-sm text-red-500 font-medium";
+            }
+        });
+
+        // ======== Загрузка магазинов ========
+        async function loadShops(){
+            shopSelect.innerHTML = '<option value="" disabled selected>-- Выберите магазин --</option>';
+            try {
+                const shopsSnapshot = await getDocs(collection(db, shopCollectionPath));
+                shopsSnapshot.forEach(docSnap => {
+                    const shop = docSnap.data();
+                    const option = document.createElement("option");
+                    option.value = docSnap.id;
+                    option.textContent = shop.shopName;
+                    shopSelect.appendChild(option);
+                });
+            } catch(e) {
+                console.error("Ошибка загрузки магазинов:", e);
+            }
+        }
+
+        // ======== Загрузка товаров ========
+        async function loadProducts(){
+            productsListDiv.innerHTML = '';
+            try {
+                const productsSnapshot = await getDocs(collection(db, productCollectionPath));
+                productsSnapshot.forEach(docSnap => {
+                    const product = docSnap.data();
+                    const div = document.createElement("div");
+                    div.className = "flex items-center justify-between p-2 border-b hover:bg-gray-50 transition duration-150";
+                    
+                    // Проверяем, привязан ли товар
+                    const isChecked = product.shopId ? 'checked' : ''; 
+
+                    div.innerHTML = `
+                        <span class="truncate pr-4">${product.title || 'Без названия'}</span>
+                        <input type="checkbox" data-id="${docSnap.id}" ${isChecked} class="h-5 w-5 text-blue-600 rounded">
+                    `;
+                    productsListDiv.appendChild(div);
+                });
+            } catch(e) {
+                console.error("Ошибка загрузки товаров:", e);
+                productsListDiv.innerHTML = `<p class="text-red-500 p-4">Не удалось загрузить список товаров: ${e.message}</p>`;
+            }
+        }
+
+        // ======== Сохранение привязки товаров ========
+        saveAssignmentsBtn.addEventListener("click", async () => {
+            const selectedShop = shopSelect.value;
+            if(!selectedShop){
+                assignMessage.textContent = "Выберите магазин!";
+                assignMessage.className = "mt-4 text-sm text-red-500 font-medium";
+                return;
+            }
+
+            const checkboxes = productsListDiv.querySelectorAll('input[type=checkbox]');
+            const batchUpdates = [];
+
+            checkboxes.forEach(cb => {
+                const productRef = doc(db, productCollectionPath, cb.dataset.id);
+                if(cb.checked){
+                    // Привязка товара к выбранному магазину
+                    batchUpdates.push(updateDoc(productRef, { shopId: selectedShop }));
+                } else {
+                    // Отвязка товара
+                    batchUpdates.push(updateDoc(productRef, { shopId: deleteField() }));
+                }
+            });
+
+            try {
+                await Promise.all(batchUpdates);
+                assignMessage.textContent = "Товары успешно обновлены!";
+                assignMessage.className = "mt-4 text-sm text-green-600 font-medium";
+                loadProducts(); // Перезагружаем список, чтобы увидеть актуальные статусы
+            } catch(e){
+                console.error("Ошибка при сохранении привязки:", e);
+                assignMessage.textContent = "Ошибка при сохранении привязки!";
+                assignMessage.className = "mt-4 text-sm text-red-500 font-medium";
+            }
+        });
+    </script>
 </head>
-<body class="bg-gray-100 p-6">
+<body class="bg-gray-100 min-h-screen p-4 sm:p-6 font-sans">
 
-<div id="password-check" class="max-w-md mx-auto mt-20 bg-white p-6 rounded-xl shadow">
-  <h2 class="text-xl font-bold mb-4">Введите пароль для создания магазина</h2>
-  <input id="access-password" type="password" placeholder="Пароль" class="p-2 border rounded w-full mb-4">
-  <button id="check-password-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">Войти</button>
-  <p id="password-error" class="text-red-500 mt-2 hidden"></p>
+<div id="password-check" class="max-w-md mx-auto mt-20 bg-white p-6 rounded-xl shadow-2xl border border-gray-200">
+    <h2 class="text-2xl font-extrabold mb-4 text-gray-800 text-center">🔐 Панель администратора</h2>
+    <input id="access-password" type="password" placeholder="Пароль доступа" class="p-3 border border-gray-300 rounded-lg w-full mb-4 focus:ring-orange-500 focus:border-orange-500">
+    <button id="check-password-btn" class="bg-blue-600 text-white font-bold px-4 py-3 rounded-lg hover:bg-blue-700 transition duration-300 w-full shadow-md">Войти</button>
+    <p id="password-error" class="text-red-500 mt-3 text-center text-sm hidden"></p>
 </div>
 
 <div id="main-interface" class="hidden max-w-4xl mx-auto mt-6">
-  <div class="flex gap-4 mb-6">
-    <button id="tab-create-shop" class="bg-orange-500 text-white px-4 py-2 rounded">Создание магазина</button>
-    <button id="tab-manage-products" class="bg-gray-300 text-gray-700 px-4 py-2 rounded">Привязка товаров</button>
-  </div>
+    <div class="flex gap-2 sm:gap-4 mb-6">
+        <button id="tab-create-shop" class="tab-button bg-orange-500 text-white font-semibold px-4 py-2 rounded-lg shadow-md flex-1">Создание магазина</button>
+        <button id="tab-manage-products" class="tab-button bg-gray-300 text-gray-700 font-semibold px-4 py-2 rounded-lg shadow-md flex-1">Привязка товаров</button>
+    </div>
 
-  <div id="create-shop-form" class="bg-white p-6 rounded-xl shadow">
-    <h2 class="text-2xl font-bold mb-4">Создание интернет-магазина</h2>
-    <input id="shop-name" type="text" placeholder="Название магазина" class="p-2 border rounded w-full mb-3">
-    <input id="shop-email" type="email" placeholder="Email (логин)" class="p-2 border rounded w-full mb-3">
-    <input id="shop-password" type="password" placeholder="Пароль для входа" class="p-2 border rounded w-full mb-3">
-    <button id="create-shop-btn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full">Создать магазин</button>
-    <p id="create-shop-message" class="mt-3 text-sm text-gray-700"></p>
-  </div>
+    <div id="create-shop-form" class="bg-white p-6 sm:p-8 rounded-xl shadow-2xl border border-gray-200">
+        <h2 class="text-2xl font-bold mb-6 text-orange-600">Создание нового интернет-магазина</h2>
+        <input id="shop-name" type="text" placeholder="Название магазина (Например: Мебель от Ивана)" class="p-3 border border-gray-300 rounded-lg w-full mb-4 focus:ring-green-500 focus:border-green-500">
+        <input id="shop-email" type="email" placeholder="Email (Логин владельца)" class="p-3 border border-gray-300 rounded-lg w-full mb-4 focus:ring-green-500 focus:border-green-500">
+        <input id="shop-password" type="password" placeholder="Пароль для входа (мин. 6 символов)" class="p-3 border border-gray-300 rounded-lg w-full mb-4 focus:ring-green-500 focus:border-green-500">
+        <button id="create-shop-btn" class="bg-green-600 text-white font-bold px-4 py-3 rounded-lg hover:bg-green-700 transition duration-300 w-full shadow-md">Создать магазин</button>
+        <p id="create-shop-message" class="mt-4 text-sm text-gray-700"></p>
+    </div>
 
-  <div id="manage-products" class="bg-white p-6 rounded-xl shadow hidden">
-    <h2 class="text-2xl font-bold mb-4">Привязка товаров к магазину</h2>
-    
-    <label class="font-semibold mb-2">Выберите магазин:</label>
-    <select id="shop-select" class="p-2 border rounded w-full mb-4">
-      <option value="" disabled selected>-- Выберите магазин --</option>
-    </select>
+    <div id="manage-products" class="bg-white p-6 sm:p-8 rounded-xl shadow-2xl border border-gray-200 hidden">
+        <h2 class="text-2xl font-bold mb-6 text-blue-600">Привязка товаров к магазину</h2>
+        
+        <label for="shop-select" class="font-semibold mb-2 block text-gray-700">Выберите магазин:</label>
+        <select id="shop-select" class="p-3 border border-gray-300 rounded-lg w-full mb-6 focus:ring-blue-500 focus:border-blue-500">
+            <option value="" disabled selected>-- Выберите магазин --</option>
+        </select>
 
-    <div id="products-list" class="max-h-96 overflow-y-auto border p-2 mb-4 rounded"></div>
+        <h3 class="font-semibold mb-2 text-gray-700">Список товаров (отметьте, которые нужно привязать к выбранному магазину):</h3>
+        <div id="products-list" class="max-h-[50vh] overflow-y-auto border border-gray-300 p-4 mb-6 rounded-lg bg-gray-50">
+            <p class="text-gray-500 text-center py-4">Загрузка товаров...</p>
+        </div>
 
-    <button id="save-assignments" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Сохранить привязку</button>
-    <p id="assign-message" class="mt-3 text-sm text-gray-700"></p>
-  </div>
+        <button id="save-assignments" class="bg-blue-600 text-white font-bold px-4 py-3 rounded-lg hover:bg-blue-700 transition duration-300 w-full shadow-md">Сохранить привязку</button>
+        <p id="assign-message" class="mt-4 text-sm text-gray-700"></p>
+    </div>
 </div>
 
 </body>
