@@ -4,10 +4,192 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Создание магазина</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // ======== Firebase config ========
+    const firebaseConfig = {
+      apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
+      authDomain: "vsemmebel-90d48.firebaseapp.com",
+      projectId: "vsemmebel-90d48",
+      storageBucket: "vsemmebel-90d48.appspot.com",
+      messagingSenderId: "958123504041",
+      appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const appId = 'default-app-id'; // замените на ваш appId, если нужно
+    const productCollectionPath = `artifacts/${appId}/public/data/offers`;
+
+    // ======== Пароль для доступа ========
+    const ACCESS_PASSWORD = "create775586";
+
+    const passwordCheckDiv = document.getElementById("password-check");
+    const mainInterface = document.getElementById("main-interface");
+    const checkBtn = document.getElementById("check-password-btn");
+    const passwordInput = document.getElementById("access-password");
+    const passwordError = document.getElementById("password-error");
+
+    checkBtn.addEventListener("click", () => {
+      if(passwordInput.value === ACCESS_PASSWORD){
+        passwordCheckDiv.classList.add("hidden");
+        mainInterface.classList.remove("hidden");
+        loadShops();
+        loadProducts();
+      } else {
+        passwordError.textContent = "Неверный пароль";
+        passwordError.classList.remove("hidden");
+      }
+    });
+
+    // ======== Вкладки ====
+    const tabCreate = document.getElementById("tab-create-shop");
+    const tabManage = document.getElementById("tab-manage-products");
+    const createFormDiv = document.getElementById("create-shop-form");
+    const manageDiv = document.getElementById("manage-products");
+
+    tabCreate.addEventListener("click", () => {
+      createFormDiv.classList.remove("hidden");
+      manageDiv.classList.add("hidden");
+      tabCreate.classList.add("bg-orange-500","text-white");
+      tabCreate.classList.remove("bg-gray-300","text-gray-700");
+      tabManage.classList.remove("bg-orange-500","text-white");
+      tabManage.classList.add("bg-gray-300","text-gray-700");
+    });
+
+    tabManage.addEventListener("click", () => {
+      createFormDiv.classList.add("hidden");
+      manageDiv.classList.remove("hidden");
+      tabManage.classList.add("bg-orange-500","text-white");
+      tabManage.classList.remove("bg-gray-300","text-gray-700");
+      tabCreate.classList.remove("bg-orange-500","text-white");
+      tabCreate.classList.add("bg-gray-300","text-gray-700");
+    });
+
+    // ======== Создание магазина ========
+    const createBtn = document.getElementById("create-shop-btn");
+    const shopNameInput = document.getElementById("shop-name");
+    const shopEmailInput = document.getElementById("shop-email");
+    const shopPasswordInput = document.getElementById("shop-password");
+    const messageP = document.getElementById("create-shop-message");
+
+    createBtn.addEventListener("click", async () => {
+      const name = shopNameInput.value.trim();
+      const email = shopEmailInput.value.trim();
+      const password = shopPasswordInput.value;
+
+      if(!name || !email || !password){
+        messageP.textContent = "Заполните все поля!";
+        messageP.classList.add("text-red-500");
+        return;
+      }
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = userCredential.user.uid;
+
+        const shopRef = doc(db, "shops", uid);
+        await updateDoc(shopRef, {
+          shopName: name,
+          email: email,
+          ownerUid: uid,
+          createdAt: serverTimestamp()
+        }).catch(async () => {
+          // если документа не существует, создаем
+          await db.collection("shops").doc(uid).set({
+            shopName: name,
+            email: email,
+            ownerUid: uid,
+            createdAt: serverTimestamp()
+          });
+        });
+
+        messageP.textContent = "Магазин успешно создан!";
+        messageP.classList.remove("text-red-500");
+        messageP.classList.add("text-green-600");
+
+        shopNameInput.value = "";
+        shopEmailInput.value = "";
+        shopPasswordInput.value = "";
+
+        loadShops();
+      } catch (error) {
+        messageP.textContent = error.message;
+        messageP.classList.add("text-red-500");
+      }
+    });
+
+    // ======== Привязка товаров к магазину ========
+    const shopSelect = document.getElementById("shop-select");
+    const productsListDiv = document.getElementById("products-list");
+    const saveAssignmentsBtn = document.getElementById("save-assignments");
+    const assignMessage = document.getElementById("assign-message");
+
+    async function loadShops(){
+      shopSelect.innerHTML = '<option value="" disabled selected>-- Выберите магазин --</option>';
+      const shopsSnapshot = await getDocs(collection(db, "shops"));
+      shopsSnapshot.forEach(docSnap => {
+        const shop = docSnap.data();
+        const option = document.createElement("option");
+        option.value = docSnap.id;
+        option.textContent = shop.shopName;
+        shopSelect.appendChild(option);
+      });
+    }
+
+    async function loadProducts(){
+      productsListDiv.innerHTML = '';
+      const productsSnapshot = await getDocs(collection(db, productCollectionPath));
+      productsSnapshot.forEach(docSnap => {
+        const product = docSnap.data();
+        const div = document.createElement("div");
+        div.className = "flex items-center justify-between p-2 border-b";
+        div.innerHTML = `
+          <span>${product.title || 'Без названия'}</span>
+          <input type="checkbox" data-id="${docSnap.id}" ${product.shopId ? 'checked' : ''}>
+        `;
+        productsListDiv.appendChild(div);
+      });
+    }
+
+    saveAssignmentsBtn.addEventListener("click", async () => {
+      const selectedShop = shopSelect.value;
+      if(!selectedShop){
+        assignMessage.textContent = "Выберите магазин!";
+        assignMessage.classList.add("text-red-500");
+        return;
+      }
+
+      const checkboxes = productsListDiv.querySelectorAll('input[type=checkbox]');
+      const batchUpdates = [];
+
+      checkboxes.forEach(cb => {
+        const productRef = doc(db, productCollectionPath, cb.dataset.id);
+        if(cb.checked){
+          batchUpdates.push(updateDoc(productRef, { shopId: selectedShop }));
+        } else {
+          batchUpdates.push(updateDoc(productRef, { shopId: deleteField() }));
+        }
+      });
+
+      try {
+        await Promise.all(batchUpdates);
+        assignMessage.textContent = "Товары успешно обновлены!";
+        assignMessage.classList.remove("text-red-500");
+        assignMessage.classList.add("text-green-600");
+        loadProducts();
+      } catch(e){
+        assignMessage.textContent = "Ошибка при сохранении!";
+        assignMessage.classList.add("text-red-500");
+      }
+    });
+  </script>
 </head>
 <body class="bg-gray-100 p-6">
 
@@ -19,13 +201,11 @@
 </div>
 
 <div id="main-interface" class="hidden max-w-4xl mx-auto mt-6">
-  <!-- Вкладки -->
   <div class="flex gap-4 mb-6">
     <button id="tab-create-shop" class="bg-orange-500 text-white px-4 py-2 rounded">Создание магазина</button>
     <button id="tab-manage-products" class="bg-gray-300 text-gray-700 px-4 py-2 rounded">Привязка товаров</button>
   </div>
 
-  <!-- === Создание магазина === -->
   <div id="create-shop-form" class="bg-white p-6 rounded-xl shadow">
     <h2 class="text-2xl font-bold mb-4">Создание интернет-магазина</h2>
     <input id="shop-name" type="text" placeholder="Название магазина" class="p-2 border rounded w-full mb-3">
@@ -35,7 +215,6 @@
     <p id="create-shop-message" class="mt-3 text-sm text-gray-700"></p>
   </div>
 
-  <!-- === Привязка товаров к магазинам === -->
   <div id="manage-products" class="bg-white p-6 rounded-xl shadow hidden">
     <h2 class="text-2xl font-bold mb-4">Привязка товаров к магазину</h2>
     
@@ -44,184 +223,12 @@
       <option value="" disabled selected>-- Выберите магазин --</option>
     </select>
 
-    <div id="products-list" class="max-h-96 overflow-y-auto border p-2 mb-4 rounded">
-      <!-- Список товаров с чекбоксами будет сюда -->
-    </div>
+    <div id="products-list" class="max-h-96 overflow-y-auto border p-2 mb-4 rounded"></div>
 
     <button id="save-assignments" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Сохранить привязку</button>
     <p id="assign-message" class="mt-3 text-sm text-gray-700"></p>
   </div>
 </div>
-
-<script>
-  // ======== Firebase config ========
-  const firebaseConfig = {
-    apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
-    authDomain: "vsemmebel-90d48.firebaseapp.com",
-    projectId: "vsemmebel-90d48",
-    storageBucket: "vsemmebel-90d48.appspot.com",
-    messagingSenderId: "958123504041",
-    appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-
-  // ======== Пароль для доступа ========
-  const ACCESS_PASSWORD = "create775586";
-
-  const passwordCheckDiv = document.getElementById("password-check");
-  const mainInterface = document.getElementById("main-interface");
-  const checkBtn = document.getElementById("check-password-btn");
-  const passwordInput = document.getElementById("access-password");
-  const passwordError = document.getElementById("password-error");
-
-  checkBtn.addEventListener("click", () => {
-    if(passwordInput.value === ACCESS_PASSWORD){
-      passwordCheckDiv.classList.add("hidden");
-      mainInterface.classList.remove("hidden");
-      loadShops();
-      loadProducts();
-    } else {
-      passwordError.textContent = "Неверный пароль";
-      passwordError.classList.remove("hidden");
-    }
-  });
-
-  // ======== Вкладки ====
-  const tabCreate = document.getElementById("tab-create-shop");
-  const tabManage = document.getElementById("tab-manage-products");
-  const createFormDiv = document.getElementById("create-shop-form");
-  const manageDiv = document.getElementById("manage-products");
-
-  tabCreate.addEventListener("click", () => {
-    createFormDiv.classList.remove("hidden");
-    manageDiv.classList.add("hidden");
-    tabCreate.classList.add("bg-orange-500","text-white");
-    tabCreate.classList.remove("bg-gray-300","text-gray-700");
-    tabManage.classList.remove("bg-orange-500","text-white");
-    tabManage.classList.add("bg-gray-300","text-gray-700");
-  });
-
-  tabManage.addEventListener("click", () => {
-    createFormDiv.classList.add("hidden");
-    manageDiv.classList.remove("hidden");
-    tabManage.classList.add("bg-orange-500","text-white");
-    tabManage.classList.remove("bg-gray-300","text-gray-700");
-    tabCreate.classList.remove("bg-orange-500","text-white");
-    tabCreate.classList.add("bg-gray-300","text-gray-700");
-  });
-
-  // ======== Создание магазина ========
-  const createBtn = document.getElementById("create-shop-btn");
-  const shopNameInput = document.getElementById("shop-name");
-  const shopEmailInput = document.getElementById("shop-email");
-  const shopPasswordInput = document.getElementById("shop-password");
-  const messageP = document.getElementById("create-shop-message");
-
-  createBtn.addEventListener("click", async () => {
-    const name = shopNameInput.value.trim();
-    const email = shopEmailInput.value.trim();
-    const password = shopPasswordInput.value;
-
-    if(!name || !email || !password){
-      messageP.textContent = "Заполните все поля!";
-      messageP.classList.add("text-red-500");
-      return;
-    }
-
-    try {
-      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-      const uid = userCredential.user.uid;
-
-      await db.collection("shops").doc(uid).set({
-        shopName: name,
-        email: email,
-        ownerUid: uid,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      messageP.textContent = "Магазин успешно создан!";
-      messageP.classList.remove("text-red-500");
-      messageP.classList.add("text-green-600");
-
-      shopNameInput.value = "";
-      shopEmailInput.value = "";
-      shopPasswordInput.value = "";
-
-      loadShops(); // обновляем список магазинов во вкладке товаров
-    } catch (error) {
-      messageP.textContent = error.message;
-      messageP.classList.add("text-red-500");
-    }
-  });
-
-  // ======== Привязка товаров к магазину ========
-  const shopSelect = document.getElementById("shop-select");
-  const productsListDiv = document.getElementById("products-list");
-  const saveAssignmentsBtn = document.getElementById("save-assignments");
-  const assignMessage = document.getElementById("assign-message");
-
-  async function loadShops(){
-    shopSelect.innerHTML = '<option value="" disabled selected>-- Выберите магазин --</option>';
-    const shopsSnapshot = await db.collection("shops").get();
-    shopsSnapshot.forEach(doc => {
-      const shop = doc.data();
-      const option = document.createElement("option");
-      option.value = doc.id;
-      option.textContent = shop.shopName;
-      shopSelect.appendChild(option);
-    });
-  }
-
-  async function loadProducts(){
-    productsListDiv.innerHTML = '';
-    const productsSnapshot = await db.collection("products").get();
-    productsSnapshot.forEach(doc => {
-      const product = doc.data();
-      const div = document.createElement("div");
-      div.className = "flex items-center justify-between p-2 border-b";
-      div.innerHTML = `
-        <span>${product.title || 'Без названия'}</span>
-        <input type="checkbox" data-id="${doc.id}" ${product.shopId ? 'checked' : ''}>
-      `;
-      productsListDiv.appendChild(div);
-    });
-  }
-
-  saveAssignmentsBtn.addEventListener("click", async () => {
-    const selectedShop = shopSelect.value;
-    if(!selectedShop){
-      assignMessage.textContent = "Выберите магазин!";
-      assignMessage.classList.add("text-red-500");
-      return;
-    }
-
-    const checkboxes = productsListDiv.querySelectorAll('input[type=checkbox]');
-    const batch = db.batch();
-
-    checkboxes.forEach(cb => {
-      const docRef = db.collection("products").doc(cb.dataset.id);
-      if(cb.checked){
-        batch.update(docRef, { shopId: selectedShop });
-      } else {
-        batch.update(docRef, { shopId: firebase.firestore.FieldValue.delete() });
-      }
-    });
-
-    try {
-      await batch.commit();
-      assignMessage.textContent = "Товары успешно обновлены!";
-      assignMessage.classList.remove("text-red-500");
-      assignMessage.classList.add("text-green-600");
-      loadProducts();
-    } catch(e){
-      assignMessage.textContent = "Ошибка при сохранении!";
-      assignMessage.classList.add("text-red-500");
-    }
-  });
-</script>
 
 </body>
 </html>
