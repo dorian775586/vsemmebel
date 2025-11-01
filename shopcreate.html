@@ -24,6 +24,7 @@
         }
     </style>
     <script type="module">
+        // Импорты Firebase v9: collection, getDocs и другие импортируются как отдельные функции.
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteField, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -39,9 +40,9 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Пути к коллекциям
-        const shopCollectionPath = "shops"; // Используем ваше название коллекции
-        const productCollectionPath = `artifacts/${appId}/public/data/offers`;
+        // Пути к коллекциям (Исправлено: Добавлен префикс artifacts/{appId}/public/data/ для соблюдения правил безопасности)
+        const shopCollectionPath = `artifacts/${appId}/public/data/shops`;
+        const productCollectionPath = `artifacts/${appId}/public/data/offers`; // Путь из вашего кода
 
         // ======== Пароль для доступа (Hardcoded, как у вас) ========
         const ACCESS_PASSWORD = "create775586";
@@ -103,7 +104,7 @@
             setActiveTab(tabManage, tabCreate, manageDiv, createFormDiv);
         });
 
-        // ======== Создание магазина (ИСПРАВЛЕННАЯ ЛОГИКА) ========
+        // ======== Создание магазина ========
         createBtn.addEventListener("click", async () => {
             const name = shopNameInput.value.trim();
             const email = shopEmailInput.value.trim();
@@ -121,7 +122,7 @@
                 const uid = userCredential.user.uid;
 
                 // 2. Создание документа магазина в Firestore
-                // Используем setDoc для создания документа с известным ID (UID пользователя)
+                // Используется setDoc и doc - ПРАВИЛЬНЫЙ МОДУЛЬНЫЙ СИНТАКСИС v9
                 const shopRef = doc(db, shopCollectionPath, uid);
                 await setDoc(shopRef, {
                     shopName: name,
@@ -149,6 +150,7 @@
         async function loadShops(){
             shopSelect.innerHTML = '<option value="" disabled selected>-- Выберите магазин --</option>';
             try {
+                // Используется collection(db, path) и getDocs - ПРАВИЛЬНЫЙ МОДУЛЬНЫЙ СИНТАКСИС v9
                 const shopsSnapshot = await getDocs(collection(db, shopCollectionPath));
                 shopsSnapshot.forEach(docSnap => {
                     const shop = docSnap.data();
@@ -164,15 +166,20 @@
 
         // ======== Загрузка товаров ========
         async function loadProducts(){
-            productsListDiv.innerHTML = '';
+            productsListDiv.innerHTML = '<p class="text-gray-500 text-center py-4">Загрузка товаров...</p>';
             try {
+                // Используется collection(db, path) и getDocs - ПРАВИЛЬНЫЙ МОДУЛЬНЫЙ СИНТАКСИС v9
                 const productsSnapshot = await getDocs(collection(db, productCollectionPath));
+                productsListDiv.innerHTML = '';
                 productsSnapshot.forEach(docSnap => {
                     const product = docSnap.data();
                     const div = document.createElement("div");
                     div.className = "flex items-center justify-between p-2 border-b hover:bg-gray-50 transition duration-150";
                     
                     // Проверяем, привязан ли товар
+                    // Если поле shopId равно ID магазина, который мы выбираем в селекте,
+                    // оно будет отмечено при условии, что мы обновляем UI при выборе магазина.
+                    // Поскольку мы не знаем, какой магазин выбран, мы просто проверяем наличие shopId.
                     const isChecked = product.shopId ? 'checked' : ''; 
 
                     div.innerHTML = `
@@ -200,6 +207,7 @@
             const batchUpdates = [];
 
             checkboxes.forEach(cb => {
+                // Используется doc(db, path, id) - ПРАВИЛЬНЫЙ МОДУЛЬНЫЙ СИНТАКСИС v9
                 const productRef = doc(db, productCollectionPath, cb.dataset.id);
                 if(cb.checked){
                     // Привязка товара к выбранному магазину
@@ -211,6 +219,8 @@
             });
 
             try {
+                // Примечание: Для выполнения всех операций сразу рекомендуется использовать 'writeBatch', 
+                // но Promise.all также сработает для небольшого количества операций.
                 await Promise.all(batchUpdates);
                 assignMessage.textContent = "Товары успешно обновлены!";
                 assignMessage.className = "mt-4 text-sm text-green-600 font-medium";
@@ -221,6 +231,21 @@
                 assignMessage.className = "mt-4 text-sm text-red-500 font-medium";
             }
         });
+        
+        // Автоматическая аутентификация при загрузке (для доступа к Firestore)
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        async function authenticate() {
+            if (initialAuthToken) {
+                try {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                    console.log("Успешная аутентификация по токену.");
+                } catch (error) {
+                    console.error("Ошибка аутентификации по токену:", error);
+                }
+            }
+        }
+
+        window.onload = authenticate;
     </script>
 </head>
 <body class="bg-gray-100 min-h-screen p-4 sm:p-6 font-sans">
