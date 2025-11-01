@@ -44,6 +44,11 @@
 
 <h1 class="text-3xl font-bold mb-6 text-gray-800">Админка Mebel.by</h1>
 
+<div class="flex gap-2 mb-6">
+  <button id="tab-products" class="bg-orange-500 text-white px-4 py-2 rounded">Товары</button>
+  <button id="tab-shops" class="bg-gray-200 text-gray-700 px-4 py-2 rounded">Создать магазин</button>
+</div>
+
 <div class="section">
     <h2 class="text-xl font-bold mb-4 text-gray-700">Создание / Редактирование товара</h2>
     
@@ -154,7 +159,25 @@
             <button id="modal-btn-confirm" class="btn btn-save">OK</button>
         </div>
     </div>
+</div> 
+
+<!-- === Страница "Создание магазина" === -->
+<div id="shops-page" class="hidden">
+  <div id="create-shop-section" class="p-6 bg-white rounded-xl shadow space-y-3">
+    <h2 class="text-2xl font-semibold mb-4">Создание интернет-магазина</h2>
+
+    <input id="new-shop-name" type="text" placeholder="Название магазина" class="p-2 border rounded w-full">
+    <input id="new-shop-email" type="email" placeholder="Email магазина" class="p-2 border rounded w-full">
+    <input id="new-shop-password" type="password" placeholder="Пароль" class="p-2 border rounded w-full">
+
+    <button id="create-shop-btn" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+      Создать магазин
+    </button>
+
+    <div id="create-shop-message" class="mt-2 text-sm font-medium"></div>
+  </div>
 </div>
+
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -564,7 +587,6 @@ async function editProduct(id){
     }
 }
 
-
 // --- Event Handlers for Dynamic Inputs ---
 
 function finishInput(dynamicArea, addButton, renderFunc) {
@@ -763,6 +785,28 @@ window.onload = () => {
     renderColors();
     renderCombinations();
 };
+// --- Переключение вкладок (Создание товаров / Создание магазина) ---
+const tabProducts = document.getElementById('tab-products');
+const tabShops = document.getElementById('tab-shops');
+const productsPage = document.getElementById('products-page');
+const shopsPage = document.getElementById('shops-page');
+
+tabProducts.onclick = () => {
+    tabProducts.classList.add('bg-orange-500', 'text-white');
+    tabShops.classList.remove('bg-orange-500', 'text-white');
+    tabShops.classList.add('bg-gray-200', 'text-gray-700');
+    productsPage.classList.remove('hidden');
+    shopsPage.classList.add('hidden');
+};
+
+tabShops.onclick = () => {
+    tabShops.classList.add('bg-orange-500', 'text-white');
+    tabProducts.classList.remove('bg-orange-500', 'text-white');
+    tabProducts.classList.add('bg-gray-200', 'text-gray-700');
+    shopsPage.classList.remove('hidden');
+    productsPage.classList.add('hidden');
+};
+
 </script>
 </body>
 </html>
