@@ -8,7 +8,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteField, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // ======== Firebase config ========
     const firebaseConfig = {
@@ -24,7 +24,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const appId = 'default-app-id'; 
+    const appId = 'default-app-id'; // замените на ваш appId, если нужно
     const productCollectionPath = `artifacts/${appId}/public/data/offers`;
 
     // ======== Пароль для доступа ========
@@ -48,7 +48,7 @@
       }
     });
 
-    // ======== Вкладки ========
+    // ======== Вкладки ====
     const tabCreate = document.getElementById("tab-create-shop");
     const tabManage = document.getElementById("tab-manage-products");
     const createFormDiv = document.getElementById("create-shop-form");
@@ -95,12 +95,19 @@
         const uid = userCredential.user.uid;
 
         const shopRef = doc(db, "shops", uid);
-        // создаем документ магазина
-        await setDoc(shopRef, {
+        await updateDoc(shopRef, {
           shopName: name,
           email: email,
           ownerUid: uid,
           createdAt: serverTimestamp()
+        }).catch(async () => {
+          // если документа не существует, создаем
+          await db.collection("shops").doc(uid).set({
+            shopName: name,
+            email: email,
+            ownerUid: uid,
+            createdAt: serverTimestamp()
+          });
         });
 
         messageP.textContent = "Магазин успешно создан!";
@@ -160,19 +167,19 @@
       }
 
       const checkboxes = productsListDiv.querySelectorAll('input[type=checkbox]');
-      const batch = writeBatch(db);
+      const batchUpdates = [];
 
       checkboxes.forEach(cb => {
         const productRef = doc(db, productCollectionPath, cb.dataset.id);
         if(cb.checked){
-          batch.update(productRef, { shopId: selectedShop });
+          batchUpdates.push(updateDoc(productRef, { shopId: selectedShop }));
         } else {
-          batch.update(productRef, { shopId: deleteField() });
+          batchUpdates.push(updateDoc(productRef, { shopId: deleteField() }));
         }
       });
 
       try {
-        await batch.commit();
+        await Promise.all(batchUpdates);
         assignMessage.textContent = "Товары успешно обновлены!";
         assignMessage.classList.remove("text-red-500");
         assignMessage.classList.add("text-green-600");
