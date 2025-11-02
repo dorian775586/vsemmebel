@@ -45,18 +45,20 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 #message-box.show { opacity: 1; transform: translateY(0); }
 
 /* --- НОВЫЕ СТИЛИ --- */
-/* Ограничивает высоту контейнера описания и скрывает лишнее */
-#description-container {
-    max-height: 90px; /* Установите желаемую высоту по умолчанию */
-    overflow: hidden;
-    position: relative;
-    transition: max-height 0.5s ease-in-out;
-}
-/* Стили для кнопки, которые сделают фиксированный блок */
+
+/* Стили для фиксированной правой колонки */
 .sticky-column {
-    /* Фиксация блока */
     position: sticky;
-    top: 2rem; /* Отступ сверху от sticky header */
+    top: 2rem; /* Отступ сверху. Можно поменять на top: 6rem; если хедер очень высокий. */
+    align-self: flex-start; /* Убеждаемся, что блок не растягивается на всю высоту */
+}
+
+/* Стили для раскрывающегося описания */
+#description-content {
+    max-height: 120px; /* Изначальная ограниченная высота */
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out;
+    padding-bottom: 0.5rem;
 }
 .description-expanded {
     max-height: 1000px !important; /* Достаточно большое значение для раскрытия */
@@ -83,7 +85,7 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
              stroke="currentColor" 
              class="w-7 h-7">
           <path stroke-linecap="round" stroke-linejoin="round" 
-                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.933 0-3.666 1.259-4.332 3.113a4.725 4.725 0 00-.002 0c-.666-1.854-2.399-3.113-4.331-3.113C3.098 3.75 1 5.765 1 8.25c0 7.22 9.57 11.235 11 15 1.43-3.765 11-7.78 11-15z" />
+                d="M12 21s-6.5-4.6-9.3-8.7C.7 9.2 2.4 4.5 6.3 3.4c1.9-.5 3.9.3 5.1 1.9 1.2-1.6 3.2-2.4 5.1-1.9 3.9 1.1 5.6 5.8 3.6 8.9C18.5 16.4 12 21 12 21z" />
         </svg>
       </a>
 
@@ -91,13 +93,12 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
          class="text-gray-700 hover:text-orange-500 transition transform hover:scale-110" 
          title="Корзина">
         <svg xmlns="http://www.w3.org/2000/svg" 
-             fill="none" 
-             viewBox="0 0 24 24" 
-             stroke-width="1.8" 
-             stroke="currentColor" 
-             class="w-7 h-7">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.5zM12 11.25h.008v.008H12v-.008z" />
-             <path stroke-linecap="round" stroke-linejoin="round" d="M12 11.25v6.5m0 0l-3-3.5m3 3.5l3-3.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+             fill="none" 
+             viewBox="0 0 24 24" 
+             stroke-width="1.8" 
+             stroke="currentColor" 
+             class="w-7 h-7">
+                       <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.5l-2.404-9.35A.75.75 0 0017.37 3H6.63a.75.75 0 00-.732.65L3.52 9.056M15.75 10.5H18M7.5 10.5H5.25M7.5 10.5L6.63 19.056A1.5 1.5 0 008.13 21h7.74a1.5 1.5 0 001.499-1.944L15.75 10.5z" />
         </svg>
       </a>
     </div>
@@ -118,6 +119,17 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
         <div class="mb-8 lg:mb-0">
       <div id="thumbnail-gallery" class="flex gap-3 mb-3"></div>
       <img id="main-product-image" src="https://placehold.co/800x600?text=Нет+изображения" class="w-full h-auto rounded-3xl object-cover" style="max-height: 600px;">
+
+      <div class="mt-8 p-6 bg-white rounded-3xl shadow-lg">
+          <h2 class="text-2xl font-bold text-gray-900 mb-4">Описание</h2>
+          
+          <div id="description-content">
+            <p class="text-gray-600 mb-0" id="product-description">Загрузка описания...</p>
+          </div>
+          
+          <button id="toggle-description-btn" class="text-orange-600 font-bold hover:text-orange-700 transition mt-2 text-sm">Читать далее</button>
+      </div>
+
     </div>
 
         <div class="p-6 bg-white rounded-3xl shadow-2xl sticky-column h-fit">
@@ -129,12 +141,7 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
         <span id="new-price" class="text-4xl font-black text-orange-600 transition duration-300 ease-in-out">0 BYN</span>
       </div>
 
-      <div id="description-container" class="mb-3">
-        <p class="text-gray-600" id="product-description">Загрузка описания...</p>
-      </div>
-      <button id="toggle-description-btn" class="text-orange-600 font-bold hover:text-orange-700 transition mb-6 block text-sm">Читать далее...</button>
-
-      <div class="mb-5 hidden" id="facade-section">
+            <div class="mb-5 hidden" id="facade-section">
         <p class="font-bold text-gray-800 mb-3">Фасад:</p>
         <div class="flex flex-wrap gap-3" id="facade-options"></div>
       </div>
@@ -354,6 +361,7 @@ function initializeProductView(data) {
   document.getElementById("breadcrumb-title").textContent = data.title || "Без названия";
   document.getElementById("breadcrumb-category").textContent = data.category || "-";
   document.getElementById("product-category").textContent = data.category || "-";
+  // Инициализируем текст в новом контейнере описания
   document.getElementById("product-description").textContent = data.description || "Подробное описание товара отсутствует.";
 
   renderGallery(data.images || [data.image].filter(Boolean));
@@ -482,22 +490,22 @@ document.getElementById("favorite-button").addEventListener("click", () => {
   showMessage(`❤️ Товар добавлен в избранное`, false);
 });
 
-
 // ==========================
 // НОВАЯ ЛОГИКА ДЛЯ ОПИСАНИЯ
 // ==========================
 document.getElementById("toggle-description-btn").addEventListener("click", (e) => {
-    const container = document.getElementById("description-container");
+    const container = document.getElementById("description-content");
     const button = e.currentTarget;
 
     if (container.classList.contains("description-expanded")) {
         container.classList.remove("description-expanded");
-        button.textContent = "Читать далее...";
+        button.textContent = "Читать далее";
     } else {
         container.classList.add("description-expanded");
         button.textContent = "Свернуть";
     }
 });
+
 
 // ==========================
 // Сообщения
