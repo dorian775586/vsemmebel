@@ -74,8 +74,7 @@
     <label class="font-semibold text-gray-600">Привязка к магазину</label>
     <select id="shop-select" class="input-field">
         <option value="" disabled selected>-- Выберите магазин --</option>
-        <!-- Магазины будут подгружаться динамически из базы -->
-    </select>
+        </select>
 </div>
 
     <div class="mb-4">
@@ -84,7 +83,6 @@
     </div>
 
     
-    <!-- БЛОК ИЗОБРАЖЕНИЙ -->
     <div class="mb-4">
         <label class="font-semibold text-gray-600">Изображения (URL) — можно привязать изображение к цвету</label>
         <div id="images-container" class="space-y-2"></div>
@@ -101,7 +99,6 @@
         <p class="text-xs text-gray-500 mt-2">Привязав изображение к цвету, на странице товара при выборе цвета можно показывать связанное изображение.</p>
     </div>
 
-    <!-- БЛОК УПРАВЛЕНИЯ ФАСАДАМИ -->
     <div class="mb-4">
         <label class="font-semibold text-gray-600">Фасады</label>
         <div id="facades-container" class="flex gap-2 flex-wrap mt-2 mb-2"></div>
@@ -114,7 +111,6 @@
         <button id="add-facade-btn" class="btn btn-save mt-2">Добавить фасад</button>
     </div>
     
-    <!-- БЛОК УПРАВЛЕНИЯ МАТЕРИАЛАМИ -->
     <div class="mb-4">
         <label class="font-semibold text-gray-600">Материалы</label>
         <div id="materials-container" class="flex gap-2 flex-wrap mt-2 mb-2"></div>
@@ -127,7 +123,6 @@
         <button id="add-material-btn" class="btn btn-save mt-2">Добавить материал</button>
     </div>
 
-    <!-- БЛОК УПРАВЛЕНИЯ ЦВЕТАМИ -->
     <div class="mb-4">
         <label class="font-semibold text-gray-600">Цвета</label>
         <div id="colors-container" class="flex gap-2 flex-wrap mt-2 mb-2"></div>
@@ -144,7 +139,6 @@
         <button id="add-color-btn" class="btn btn-save mt-2">Добавить цвет</button>
     </div>
 
-    <!-- БЛОК УПРАВЛЕНИЯ КОМБИНАЦИЯМИ -->
     <div class="mb-4">
         <label class="font-semibold text-gray-600">Варианты товара (Комбинации Материал - Фасад - Цвет)</label>
         <div id="combinations-container"></div>
@@ -160,7 +154,6 @@
 <h2 class="text-xl font-bold mb-4 text-gray-700">Существующие товары</h2>
 <div id="existing-products" class="space-y-3"></div>
 
-<!-- Custom Message Modal -->
 <div id="custom-modal" class="modal-overlay hidden" onclick="if(event.target.id === 'custom-modal') closeModal()">
     <div class="modal-content" id="modal-content" onclick="event.stopPropagation()">
         <p id="modal-message" class="text-gray-700 mb-4"></p>
@@ -193,6 +186,8 @@ const HARDCODED_FIREBASE_CONFIG = {
 
 let firebaseConfig = null, app = null, db = null, auth = null, userId = null;
 const productCollectionPath = `artifacts/${appId}/public/data/offers`;
+// ✅ ИСПРАВЛЕНИЕ 1: Объявление shopsCollectionPath вынесено на глобальный уровень
+const shopsCollectionPath = `artifacts/${appId}/public/data/shops`;
 
 // 1. Инициализация Firebase
 function initializeFirebase() {
@@ -230,6 +225,7 @@ async function initializeAuth() {
         document.getElementById('user-id-display').textContent = userId;
         console.log("Аутентификация успешна. UID:", userId);
         loadExistingProducts();
+        loadShops(); // Вызываем loadShops после успешной инициализации
     } catch (error) {
         console.error("Ошибка аутентификации Firebase:", error);
         if (error.code === 'auth/admin-restricted-operation' || error.code === 'auth/operation-not-allowed') {
@@ -661,6 +657,26 @@ function setupColorHandlers() {
     };
 }
 
+// ✅ ИСПРАВЛЕНИЕ 2: Функция loadShops вынесена на глобальный уровень
+async function loadShops() {
+    if (!db) return;
+    try {
+        const snapshot = await getDocs(collection(db, shopsCollectionPath));
+        shopSelect.innerHTML = `<option value="" disabled selected>-- Выберите магазин --</option>`;
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            const opt = document.createElement('option');
+            opt.value = docSnap.id; // id магазина
+            opt.textContent = data.shopName || `(Магазин ${docSnap.id})`;
+            shopSelect.appendChild(opt);
+        });
+    } catch (e) {
+        console.error("Ошибка загрузки магазинов:", e);
+        showMessage("Не удалось загрузить список магазинов.");
+    }
+}
+
+
 // --- Общие Хендлеры ---
 function setupGeneralHandlers() {
     // 1. Добавление URL изображения
@@ -716,7 +732,6 @@ function setupGeneralHandlers() {
         const data={
             title:titleInput.value.trim(),
             category:categoryInput.value.trim(),
-            images: images.filter(url => url.trim() !== ''), // legacy arrays of urls
             description: descriptionInput.value.trim(),
             facades: facades.filter(f => f.trim() !== ''),
             materials: materials.filter(m => m.trim() !== ''),
@@ -733,7 +748,9 @@ function setupGeneralHandlers() {
                     discount: Number(c.discount) || 0,
                     isActive: !!c.isActive
                 }))
-                .filter(c => c.material || c.facade || c.color)
+                .filter(c => c.material || c.facade || c.color),
+            images: images.filter(url => url.trim() !== ''), // legacy arrays of urls
+            shopId: shopSelect.value || null // Привязка магазина
         };
 
         if(!data.title){ return showMessage("Введите название товара!"); }
@@ -753,29 +770,9 @@ function setupGeneralHandlers() {
             showMessage("Ошибка при сохранении данных. Проверьте консоль.");
         }
     };
-        const data = {
-        title: titleInput.value.trim(),
-        category: categoryInput.value.trim(),
-        images: images.filter(url => url.trim() !== ''),
-        description: descriptionInput.value.trim(),
-        facades: facades.filter(f => f.trim() !== ''),
-        materials: materials.filter(m => m.trim() !== ''),
-        colors,
-        image_color_map: imagesMeta.map(m => ({ url: m.url, color: m.color || "" })).filter(m => m.url),
-        combinations: combinations
-            .map(c => ({
-                material: c.material || "",
-                facade: c.facade || "",
-                color: c.color || "",
-                price: Number(c.price) || 0,
-                discount: Number(c.discount) || 0,
-                isActive: !!c.isActive
-            }))
-            .filter(c => c.material || c.facade || c.color),
-        shopId: shopSelect.value || null // <-- здесь
-    };
-
-
+    
+    // ✅ ИСПРАВЛЕНИЕ 3: Удален дублирующийся блок data = {} после saveBtn.onclick
+    
     clearBtn.onclick=()=>{
         productId=null; 
         titleInput.value=''; 
@@ -793,29 +790,9 @@ function setupGeneralHandlers() {
 window.onload = () => {
     initializeFirebase();
     initializeAuth();
-    loadShops();
     
-    // --- Загрузка магазинов из Firestore ---
-const shopsCollectionPath = `artifacts/${appId}/public/data/shops`;
-
-async function loadShops() {
-    if (!db) return;
-    try {
-        const snapshot = await getDocs(collection(db, shopsCollectionPath));
-        shopSelect.innerHTML = `<option value="" disabled selected>-- Выберите магазин --</option>`;
-        snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            const opt = document.createElement('option');
-            opt.value = docSnap.id; // id магазина
-            opt.textContent = data.shopName || `(Магазин ${docSnap.id})`;
-            shopSelect.appendChild(opt);
-        });
-    } catch (e) {
-        console.error("Ошибка загрузки магазинов:", e);
-        showMessage("Не удалось загрузить список магазинов.");
-    }
-}
-
+    // loadShops() теперь вызывается внутри initializeAuth()
+    
     setupFacadeHandlers();
     setupMaterialHandlers();
     setupColorHandlers();
