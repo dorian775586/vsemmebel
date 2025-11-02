@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -45,6 +45,9 @@ body { font-family: 'Inter', sans-serif; background:#f5f5f5; }
   transition: all 0.4s ease;
 }
 .toast.show { opacity: 1; transform: translateY(0); }
+
+/* Модальное окно */
+#delete-modal { display: none; }
 </style>
 </head>
 <body class="p-4 sm:p-6">
@@ -83,10 +86,29 @@ body { font-family: 'Inter', sans-serif; background:#f5f5f5; }
         <option value="Отменён">Отменён</option>
       </select>
     </div>
+
+    <!-- Поисковая строка -->
+    <div class="flex items-center mb-4">
+      <input id="search-order" type="text" placeholder="Поиск по номеру заказа" 
+             class="border rounded-lg p-2 flex-1 mr-2">
+      <button id="clear-search" class="btn bg-gray-400 text-white">Сбросить</button>
+    </div>
+
     <div id="my-orders" class="space-y-4"></div>
   </div>
 
   <button id="logout-btn" class="btn bg-gray-300 text-gray-700 hover:bg-gray-400">Выйти</button>
+</div>
+
+<!-- Модальное окно удаления -->
+<div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-lg max-w-sm w-full text-center">
+    <p class="text-lg mb-4">Вы точно хотите удалить заказ?<br>Он будет стёрт из базы данных навсегда.</p>
+    <div class="flex justify-center gap-4">
+      <button id="confirm-delete-btn" class="btn bg-red-600">Да, удалить</button>
+      <button id="cancel-delete-btn" class="btn bg-gray-400">Отмена</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -110,6 +132,15 @@ const logoutBtn = document.getElementById('logout-btn');
 const loginMessage = document.getElementById('login-message');
 const shopTitle = document.getElementById('shop-title');
 const filterSelect = document.getElementById('status-filter');
+
+const searchInput = document.getElementById('search-order');
+const clearSearchBtn = document.getElementById('clear-search');
+
+const deleteModal = document.getElementById('delete-modal');
+const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+let orderToDelete = null;
+
 const appId = 'default-app-id';
 
 // === Вход в систему ===
@@ -145,8 +176,7 @@ loginBtn.addEventListener('click', async () => {
     loadProducts(uid);
     loadOrders(uid);
 
-    filterSelect.addEventListener('change', () => loadOrders(uid, filterSelect.value));
-
+    filterSelect.addEventListener('change', () => loadOrders(uid, filterSelect.value, searchInput.value.trim()));
   } catch(err) {
     loginMessage.textContent = err.message;
   }
@@ -188,14 +218,14 @@ async function loadProducts(uid){
 }
 
 // === Загрузка заказов ===
-async function loadOrders(uid, statusFilter = 'all'){
+async function loadOrders(uid, statusFilter = 'all', searchTerm = ''){
   const container = document.getElementById('my-orders');
   container.innerHTML = 'Загрузка...';
 
   let query = db.collection('orders').where('shopId','==',uid);
   if(statusFilter !== 'all') query = query.where('status', '==', statusFilter);
-  const snapshot = await query.get();
 
+  const snapshot = await query.get();
   if(snapshot.empty){
     container.innerHTML = '<p class="text-gray-500">Нет заказов</p>';
     return;
@@ -205,6 +235,10 @@ async function loadOrders(uid, statusFilter = 'all'){
   snapshot.forEach(doc => {
     const o = doc.data();
     const orderId = doc.id;
+    const orderNum = o.orderNumber ? `#${o.orderNumber}` : `ID: ${orderId}`;
+
+    if(searchTerm && !orderNum.includes(searchTerm)) return; // фильтр по поиску
+
     const date = new Date(o.date).toLocaleString('ru-RU');
     const colorClass = o.status === 'В обработке' ? 'status-processing' :
                        o.status === 'В пути' ? 'status-shipping' :
@@ -215,14 +249,16 @@ async function loadOrders(uid, statusFilter = 'all'){
                     o.status === 'Выполнено' ? 'bg-done' :
                     o.status === 'Отменён' ? 'bg-cancel' : 'bg-new';
 
-    const orderNum = o.orderNumber ? `#${o.orderNumber}` : `ID: ${orderId}`;
-
     const div = document.createElement('div');
-    div.className = `p-4 border rounded-xl shadow-sm ${bgClass}`;
+    div.className = `p-4 border rounded-xl shadow-sm relative ${bgClass}`;
     div.innerHTML = `
       <div class="flex justify-between items-center mb-2">
         <h3 class="font-semibold text-lg">Заказ ${orderNum} от ${o.name}</h3>
-        <span class="px-3 py-1 rounded-full text-sm ${colorClass}">${o.status}</span>
+        <div class="flex items-center gap-2">
+          <span class="px-3 py-1 rounded-full text-sm ${colorClass}">${o.status}</span>
+          <span class="cursor-pointer text-red-600 font-bold text-xl" 
+                title="Удалить заказ" onclick="showDeleteModal('${orderId}')">&times;</span>
+        </div>
       </div>
       <p><strong>Телефон:</strong> ${o.phone}</p>
       <p><strong>Email:</strong> ${o.email || '-'}</p>
@@ -258,7 +294,7 @@ async function loadOrders(uid, statusFilter = 'all'){
 async function updateStatus(orderId, newStatus){
   await db.collection('orders').doc(orderId).update({ status: newStatus });
   showToast(`Статус обновлён на "${newStatus}"`);
-  loadOrders(auth.currentUser.uid, filterSelect.value);
+  loadOrders(auth.currentUser.uid, filterSelect.value, searchInput.value.trim());
 }
 
 // === Toast уведомление ===
@@ -274,6 +310,41 @@ function showToast(message){
     setTimeout(() => toast.remove(), 400);
   }, 3000);
 }
+
+// === Поиск ===
+searchInput.addEventListener('input', () => {
+  loadOrders(auth.currentUser.uid, filterSelect.value, searchInput.value.trim());
+});
+clearSearchBtn.addEventListener('click', () => {
+  searchInput.value = '';
+  loadOrders(auth.currentUser.uid, filterSelect.value);
+});
+
+// === Модальное окно удаления ===
+function showDeleteModal(orderId){
+  orderToDelete = orderId;
+  deleteModal.style.display = 'flex';
+}
+
+cancelDeleteBtn.addEventListener('click', () => {
+  orderToDelete = null;
+  deleteModal.style.display = 'none';
+});
+
+confirmDeleteBtn.addEventListener('click', async () => {
+  if(orderToDelete){
+    try {
+      await db.collection('orders').doc(orderToDelete).delete();
+      showToast('Заказ успешно удалён');
+      loadOrders(auth.currentUser.uid, filterSelect.value, searchInput.value.trim());
+    } catch(err){
+      showToast('Ошибка при удалении заказа: ' + err.message);
+    } finally {
+      deleteModal.style.display = 'none';
+      orderToDelete = null;
+    }
+  }
+});
 </script>
 </body>
 </html>
