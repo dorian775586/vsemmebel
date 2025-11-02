@@ -10,6 +10,15 @@
 body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; }
 .orange-btn { background:#f97316; color:white; font-weight:700; transition:0.3s; }
 .orange-btn:hover { background:#ea580c; }
+.modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 50; backdrop-filter: blur(2px);
+}
+.modal-content {
+  background: white; padding: 2rem; border-radius: 1rem;
+  text-align: center; max-width: 400px; width: 90%;
+}
 </style>
 </head>
 <body class="pb-20">
@@ -43,10 +52,33 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; }
         <label class="block font-medium mb-1">Email</label>
         <input type="email" id="email" class="w-full border rounded-lg p-3">
       </div>
+
+      <!-- Выбор доставки -->
       <div>
-        <label class="block font-medium mb-1">Адрес доставки</label>
-        <textarea id="address" class="w-full border rounded-lg p-3" rows="3" placeholder="Город, улица, дом, квартира" required></textarea>
+        <label class="block font-medium mb-2">Способ получения</label>
+        <div class="flex gap-4">
+          <label class="flex items-center gap-2">
+            <input type="radio" name="delivery" value="Доставка" checked> Доставка
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="radio" name="delivery" value="Самовывоз"> Самовывоз
+          </label>
+        </div>
       </div>
+
+      <!-- Адрес доставки -->
+      <div id="delivery-address-block">
+        <label class="block font-medium mb-1">Адрес доставки</label>
+        <textarea id="address" class="w-full border rounded-lg p-3" rows="3" placeholder="Город, улица, дом, квартира"></textarea>
+      </div>
+
+      <!-- Адрес самовывоза -->
+      <div id="pickup-info" class="hidden text-sm text-gray-700 bg-gray-100 p-3 rounded-lg">
+        Самовывоз из магазина: <br>
+        <strong>г. Минск, ул. Примерная, 10</strong> <br>
+        (адрес будет уточнён)
+      </div>
+
       <div>
         <label class="block font-medium mb-2">Способ оплаты</label>
         <div class="flex gap-4">
@@ -71,12 +103,22 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; }
   </aside>
 </main>
 
+<!-- Модальное окно -->
+<div id="success-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="text-green-600 text-5xl mb-3">✅</div>
+    <h3 class="text-2xl font-bold mb-2 text-gray-800">Заказ оформлен!</h3>
+    <p class="text-gray-700 mb-3">С вами свяжутся для подтверждения.</p>
+    <p class="font-semibold text-lg mb-4">Номер заказа: <span id="order-number" class="text-orange-600"></span></p>
+    <button id="close-modal" class="orange-btn px-6 py-2 rounded-lg">Закрыть</button>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-// === FIREBASE INIT ===
 const firebaseConfig = {
   apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
   authDomain: "vsemmebel-90d48.firebaseapp.com",
@@ -90,16 +132,8 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 await signInAnonymously(auth);
 
-// === LOAD CART FROM LOCALSTORAGE ===
+// === CART ===
 let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-
-// Проверяем, что каждый товар имеет shopId
-cart.forEach(item => {
-  if(!item.shopId) {
-    alert(`Товар "${item.title}" не привязан к магазину!`);
-  }
-});
-
 const cartItemsContainer = document.getElementById("cart-items");
 const totalPriceEl = document.getElementById("total-price");
 const emptyCartMsg = document.getElementById("empty-cart");
@@ -112,14 +146,12 @@ function renderCart() {
     return;
   }
   emptyCartMsg.classList.add("hidden");
-
   let total = 0;
   cart.forEach((item, index) => {
     const itemEl = document.createElement("div");
     itemEl.className = "flex items-center justify-between border-b pb-4";
     const price = Math.round(item.price * (1 - (item.discount || 0) / 100));
     total += price;
-
     itemEl.innerHTML = `
       <div class="flex items-center gap-4">
         <img src="${item.image}" class="w-20 h-20 rounded-lg object-cover">
@@ -129,17 +161,13 @@ function renderCart() {
           <p class="text-orange-600 font-semibold">${price} BYN</p>
         </div>
       </div>
-      <button class="text-red-500 font-bold" data-index="${index}">✕</button>
-    `;
+      <button class="text-red-500 font-bold" data-index="${index}">✕</button>`;
     cartItemsContainer.appendChild(itemEl);
   });
-
   totalPriceEl.textContent = `${total.toLocaleString("ru-RU")} BYN`;
-
   cartItemsContainer.querySelectorAll("button").forEach(btn => {
     btn.onclick = () => {
-      const i = parseInt(btn.dataset.index);
-      cart.splice(i, 1);
+      cart.splice(parseInt(btn.dataset.index), 1);
       localStorage.setItem("cart", JSON.stringify(cart));
       renderCart();
     };
@@ -147,17 +175,35 @@ function renderCart() {
 }
 renderCart();
 
-// === SUBMIT ORDER ===
+// === SWITCH DELIVERY METHOD ===
+const deliveryRadios = document.querySelectorAll('input[name="delivery"]');
+const deliveryAddressBlock = document.getElementById("delivery-address-block");
+const pickupInfo = document.getElementById("pickup-info");
+deliveryRadios.forEach(radio => {
+  radio.addEventListener("change", () => {
+    if (radio.value === "Доставка") {
+      deliveryAddressBlock.classList.remove("hidden");
+      pickupInfo.classList.add("hidden");
+    } else {
+      deliveryAddressBlock.classList.add("hidden");
+      pickupInfo.classList.remove("hidden");
+    }
+  });
+});
+
+// === ORDER SUBMIT ===
 document.getElementById("order-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (cart.length === 0) return alert("Корзина пуста");
 
-  // --- Группировка товаров по shopId ---
+  const deliveryType = document.querySelector('input[name="delivery"]:checked').value;
+  const address = deliveryType === "Доставка" ? document.getElementById("address").value.trim() : "Самовывоз из магазина";
+
+  // Генерация номера заказа
+  const orderNumber = "MBL-" + new Date().getFullYear() + "-" + Math.floor(Math.random() * 100000).toString().padStart(5, "0");
+
   const groupedByShop = {};
   cart.forEach(item => {
-    if(!item.shopId) {
-      throw new Error(`Товар "${item.title}" не имеет shopId`);
-    }
     const shopId = item.shopId;
     if (!groupedByShop[shopId]) groupedByShop[shopId] = [];
     groupedByShop[shopId].push(item);
@@ -166,27 +212,36 @@ document.getElementById("order-form").addEventListener("submit", async (e) => {
   try {
     for (const shopId in groupedByShop) {
       const orderData = {
+        orderNumber,
         name: document.getElementById("name").value.trim(),
         phone: document.getElementById("phone").value.trim(),
         email: document.getElementById("email").value.trim(),
-        address: document.getElementById("address").value.trim(),
+        address,
+        deliveryType,
         payment: document.querySelector('input[name="payment"]:checked').value,
         items: groupedByShop[shopId],
-        total: groupedByShop[shopId].reduce((sum, item) => sum + Math.round(item.price * (1 - (item.discount || 0)/100)), 0),
+        total: groupedByShop[shopId].reduce((sum, i) => sum + Math.round(i.price * (1 - (i.discount || 0) / 100)), 0),
         date: new Date().toISOString(),
         status: "Новый",
-        shopId: shopId
+        shopId
       };
       await addDoc(collection(db, "orders"), orderData);
     }
 
-    alert("✅ Заказ успешно оформлен!");
-    localStorage.removeItem("cart");
-    window.location.href = "/";
+    // Показываем модалку
+    document.getElementById("order-number").textContent = orderNumber;
+    document.getElementById("success-modal").classList.remove("hidden");
+
   } catch (err) {
     console.error(err);
     alert("Ошибка при оформлении заказа 😢");
   }
+});
+
+// === CLOSE MODAL ===
+document.getElementById("close-modal").addEventListener("click", () => {
+  localStorage.removeItem("cart");
+  window.location.href = "/";
 });
 </script>
 </body>
