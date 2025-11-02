@@ -55,23 +55,41 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
     </a>
 
     <!-- Кнопки избранного и корзины -->
-    <div class="flex items-center gap-6 text-2xl">
+    <div class="flex items-center gap-6">
+      
       <!-- Избранное -->
       <a href="favorites.html" 
-         class="text-gray-700 hover:text-orange-500 transition" 
+         class="text-gray-700 hover:text-orange-500 transition transform hover:scale-110" 
          title="Избранное">
-        ❤️
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             fill="none" 
+             viewBox="0 0 24 24" 
+             stroke-width="1.8" 
+             stroke="currentColor" 
+             class="w-7 h-7">
+          <path stroke-linecap="round" stroke-linejoin="round" 
+                d="M12 21s-6.5-4.6-9.3-8.7C.7 9.2 2.4 4.5 6.3 3.4c1.9-.5 3.9.3 5.1 1.9 1.2-1.6 3.2-2.4 5.1-1.9 3.9 1.1 5.6 5.8 3.6 8.9C18.5 16.4 12 21 12 21z" />
+        </svg>
       </a>
 
       <!-- Корзина -->
       <a href="order.html" 
-         class="text-gray-700 hover:text-orange-500 transition" 
+         class="text-gray-700 hover:text-orange-500 transition transform hover:scale-110" 
          title="Корзина">
-        🛍️
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             fill="none" 
+             viewBox="0 0 24 24" 
+             stroke-width="1.8" 
+             stroke="currentColor" 
+             class="w-7 h-7">
+          <path stroke-linecap="round" stroke-linejoin="round" 
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.6 8h13.2L17 13M9 21h6" />
+        </svg>
       </a>
     </div>
   </div>
 </header>
+
 
 <main class="max-w-6xl mx-auto px-4 mt-6">
   <div class="mb-6 text-sm text-gray-500">
