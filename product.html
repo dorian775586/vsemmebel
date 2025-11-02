@@ -43,107 +43,105 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 #main-product-image { transition: opacity 0.3s ease-in-out; } 
 #message-box { position: fixed; top: 20px; right: 20px; z-index: 1000; min-width: 300px; padding: 1rem; background-color: #10b981; color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.5s, transform 0.5s; transform: translateY(-10px); } 
 #message-box.show { opacity: 1; transform: translateY(0); }
-
-/* --- НОВЫЙ СТИЛЬ ДЛЯ ЛИПКОЙ КОЛОНКИ --- */
-/* Используем Tail CSS классы sticky и top-20 вместо кастомного .sticky-column, как в правой колонке ниже */
 </style>
 </head>
 <body class="pb-20">
 
 <header class="sticky top-0 header-bg z-20">
-  <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-        <a href="/" class="text-3xl font-black text-gray-900 tracking-tight">
-      Mebel.by
-    </a>
+  <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+    <!-- Логотип -->
+    <a href="/" class="text-3xl font-black text-gray-900 tracking-tight">
+      Mebel.by
+    </a>
 
-        <div class="flex items-center gap-6">
-      
-            <a href="favorites.html" 
-         class="text-gray-700 hover:text-orange-500 transition transform hover:scale-110" 
-         title="Избранное">
-        <svg xmlns="http://www.w3.org/2000/svg" 
-             fill="none" 
-             viewBox="0 0 24 24" 
-             stroke-width="1.8" 
-             stroke="currentColor" 
-             class="w-7 h-7">
-          <path stroke-linecap="round" stroke-linejoin="round" 
-                d="M12 21s-6.5-4.6-9.3-8.7C.7 9.2 2.4 4.5 6.3 3.4c1.9-.5 3.9.3 5.1 1.9 1.2-1.6 3.2-2.4 5.1-1.9 3.9 1.1 5.6 5.8 3.6 8.9C18.5 16.4 12 21 12 21z" />
-        </svg>
-      </a>
+    <!-- Кнопки избранного и корзины -->
+    <div class="flex items-center gap-6">
+      
+      <!-- Избранное -->
+      <a href="favorites.html" 
+         class="text-gray-700 hover:text-orange-500 transition transform hover:scale-110" 
+         title="Избранное">
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             fill="none" 
+             viewBox="0 0 24 24" 
+             stroke-width="1.8" 
+             stroke="currentColor" 
+             class="w-7 h-7">
+          <path stroke-linecap="round" stroke-linejoin="round" 
+                d="M12 21s-6.5-4.6-9.3-8.7C.7 9.2 2.4 4.5 6.3 3.4c1.9-.5 3.9.3 5.1 1.9 1.2-1.6 3.2-2.4 5.1-1.9 3.9 1.1 5.6 5.8 3.6 8.9C18.5 16.4 12 21 12 21z" />
+        </svg>
+      </a>
 
-            <a href="order.html" 
-         class="text-gray-700 hover:text-orange-500 transition transform hover:scale-110" 
-         title="Корзина">
-        <svg xmlns="http://www.w3.org/2000/svg" 
-             fill="none" 
-             viewBox="0 0 24 24" 
-             stroke-width="1.8" 
-             stroke="currentColor" 
-             class="w-7 h-7">
-          <path stroke-linecap="round" stroke-linejoin="round" 
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.6 8h13.2L17 13M9 21h6" />
-        </svg>
-      </a>
-    </div>
-  </div>
+      <!-- Корзина -->
+      <a href="order.html" 
+         class="text-gray-700 hover:text-orange-500 transition transform hover:scale-110" 
+         title="Корзина">
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             fill="none" 
+             viewBox="0 0 24 24" 
+             stroke-width="1.8" 
+             stroke="currentColor" 
+             class="w-7 h-7">
+          <path stroke-linecap="round" stroke-linejoin="round" 
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.6 8h13.2L17 13M9 21h6" />
+        </svg>
+      </a>
+    </div>
+  </div>
 </header>
 
 
 <main class="max-w-6xl mx-auto px-4 mt-6">
-  <div class="mb-6 text-sm text-gray-500">
-    <a href="/" class="hover:text-orange-500 transition">Главная</a>
-    <span class="mx-2">/</span>
-    <a href="#" class="hover:text-orange-500 transition" id="breadcrumb-category">Категория</a>
-    <span class="mx-2">/</span>
-    <span class="text-gray-900 font-medium" id="breadcrumb-title">Товар</span>
-  </div>
+  <div class="mb-6 text-sm text-gray-500">
+    <a href="/" class="hover:text-orange-500 transition">Главная</a>
+    <span class="mx-2">/</span>
+    <a href="#" class="hover:text-orange-500 transition" id="breadcrumb-category">Категория</a>
+    <span class="mx-2">/</span>
+    <span class="text-gray-900 font-medium" id="breadcrumb-title">Товар</span>
+  </div>
 
-  <div class="lg:grid lg:grid-cols-2 lg:gap-10">
-        <div class="mb-8 lg:mb-0">
-      <div id="thumbnail-gallery" class="flex gap-3 mb-3"></div>
-      <img id="main-product-image" src="https://placehold.co/800x600?text=Нет+изображения" class="w-full h-auto rounded-3xl object-cover" style="max-height: 600px;">
-        
-        <div class="mt-8 p-6 bg-white rounded-3xl shadow-lg">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Описание</h2>
-            <p class="text-gray-600 mb-0" id="product-description">Загрузка описания...</p>
-        </div>
-            </div>
+  <div class="lg:grid lg:grid-cols-2 lg:gap-10">
+    <div class="mb-8 lg:mb-0">
+      <div id="thumbnail-gallery" class="flex gap-3 mb-3"></div>
+      <img id="main-product-image" src="https://placehold.co/800x600?text=Нет+изображения" class="w-full h-auto rounded-3xl object-cover" style="max-height: 600px;">
+    </div>
 
-        <div class="p-6 bg-white rounded-3xl shadow-2xl sticky top-20 h-fit">
-      <h1 class="text-4xl font-black text-gray-900 mb-2" id="product-title">Товар</h1>
-      <p class="text-lg font-medium text-orange-600 uppercase mb-4" id="product-category">Категория</p>
+    <div class="p-6 bg-white rounded-3xl shadow-2xl sticky top-20 h-fit">
+      <h1 class="text-4xl font-black text-gray-900 mb-2" id="product-title">Товар</h1>
+      <p class="text-lg font-medium text-orange-600 uppercase mb-4" id="product-category">Категория</p>
 
-      <div class="mb-5 flex items-end">
-        <span id="old-price" class="line-through text-xl text-gray-400 mr-3 transition duration-300 ease-in-out">0 BYN</span>
-        <span id="new-price" class="text-4xl font-black text-orange-600 transition duration-300 ease-in-out">0 BYN</span>
-      </div>
+      <div class="mb-5 flex items-end">
+        <span id="old-price" class="line-through text-xl text-gray-400 mr-3 transition duration-300 ease-in-out">0 BYN</span>
+        <span id="new-price" class="text-4xl font-black text-orange-600 transition duration-300 ease-in-out">0 BYN</span>
+      </div>
 
-            <div class="mb-5 hidden" id="facade-section">
-        <p class="font-bold text-gray-800 mb-3">Фасад:</p>
-        <div class="flex flex-wrap gap-3" id="facade-options"></div>
-      </div>
+      <p class="text-gray-600 mb-6" id="product-description">Загрузка описания...</p>
 
-      <div class="mb-5 hidden" id="material-section">
-        <p class="font-bold text-gray-800 mb-3">Материал:</p>
-        <div class="flex flex-wrap gap-3" id="material-options"></div>
-      </div>
+      <div class="mb-5 hidden" id="facade-section">
+        <p class="font-bold text-gray-800 mb-3">Фасад:</p>
+        <div class="flex flex-wrap gap-3" id="facade-options"></div>
+      </div>
 
-      <div class="mb-8 hidden" id="color-section">
-        <p class="font-bold text-gray-800 mb-3">Цвет/Текстура:</p>
-        <div class="flex flex-wrap gap-3" id="color-options"></div>
-      </div>
+      <div class="mb-5 hidden" id="material-section">
+        <p class="font-bold text-gray-800 mb-3">Материал:</p>
+        <div class="flex flex-wrap gap-3" id="material-options"></div>
+      </div>
 
-      <div class="flex flex-col space-y-4">
-        <button id="buy-button" class="orange-accent text-white font-black text-lg py-4 rounded-xl uppercase">В корзину</button>
-        <button id="favorite-button" class="border-2 border-orange-500 text-orange-500 font-bold text-lg py-3 rounded-xl uppercase hover:bg-orange-50 transition">Добавить в избранное ❤️</button>
-      </div>
+      <div class="mb-8 hidden" id="color-section">
+        <p class="font-bold text-gray-800 mb-3">Цвет/Текстура:</p>
+        <div class="flex flex-wrap gap-3" id="color-options"></div>
+      </div>
 
-      <div class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm hidden" id="error-message">
-        <p>Эта комбинация опций недоступна.</p>
-      </div>
-    </div>
-  </div>
+      <div class="flex flex-col space-y-4">
+        <button id="buy-button" class="orange-accent text-white font-black text-lg py-4 rounded-xl uppercase">В корзину</button>
+        <button id="favorite-button" class="border-2 border-orange-500 text-orange-500 font-bold text-lg py-3 rounded-xl uppercase hover:bg-orange-50 transition">Добавить в избранное ❤️</button>
+      </div>
+
+      <div class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm hidden" id="error-message">
+        <p>Эта комбинация опций недоступна.</p>
+      </div>
+    </div>
+  </div>
 </main>
 
 <div id="message-box" role="alert"></div>
@@ -162,12 +160,12 @@ const urlParams = new URLSearchParams(window.location.search);
 let productId = urlParams.get('id');
 
 const HARDCODED_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
-  authDomain: "vsemmebel-90d48.firebaseapp.com",
-  projectId: "vsemmebel-90d48",
-  storageBucket: "vsemmebel-90d48.appspot.com",
-  messagingSenderId: "958123504041",
-  appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
+  apiKey: "AIzaSyA-LeQHKV4NfJrTKQCGjG-VQGhfWxtPk70",
+  authDomain: "vsemmebel-90d48.firebaseapp.com",
+  projectId: "vsemmebel-90d48",
+  storageBucket: "vsemmebel-90d48.appspot.com",
+  messagingSenderId: "958123504041",
+  appId: "1:958123504041:web:1f14f4561d6bb6628494b8"
 };
 
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -176,10 +174,10 @@ const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial
 
 let firebaseConfig = {};
 try {
-  const parsedConfig = JSON.parse(firebaseConfigString);
-  firebaseConfig = parsedConfig?.projectId ? parsedConfig : HARDCODED_FIREBASE_CONFIG;
+  const parsedConfig = JSON.parse(firebaseConfigString);
+  firebaseConfig = parsedConfig?.projectId ? parsedConfig : HARDCODED_FIREBASE_CONFIG;
 } catch {
-  firebaseConfig = HARDCODED_FIREBASE_CONFIG;
+  firebaseConfig = HARDCODED_FIREBASE_CONFIG;
 }
 
 const COLLECTION_PATH = `/artifacts/${appId}/public/data/offers`;
@@ -189,217 +187,215 @@ let app, db, auth, isAuthReady = false;
 // Firebase и загрузка продукта
 // ==========================
 async function initializeAuthAndFirestore() {
-  app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  auth = getAuth(app);
-  setLogLevel('Debug');
-  try {
-    if (initialAuthToken) await signInWithCustomToken(auth, initialAuthToken);
-    else await signInAnonymously(auth);
-    isAuthReady = true;
-    if (!productId) findFirstAvailableProduct();
-    else loadProduct(productId);
-  } catch {
-    showMessage("Ошибка авторизации. Данные могут быть недоступны.", true);
-  }
+  app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  auth = getAuth(app);
+  setLogLevel('Debug');
+  try {
+    if (initialAuthToken) await signInWithCustomToken(auth, initialAuthToken);
+    else await signInAnonymously(auth);
+    isAuthReady = true;
+    if (!productId) findFirstAvailableProduct();
+    else loadProduct(productId);
+  } catch {
+    showMessage("Ошибка авторизации. Данные могут быть недоступны.", true);
+  }
 }
 
 async function findFirstAvailableProduct() {
-  if (!isAuthReady) return;
-  const q = query(collection(db, COLLECTION_PATH), limit(1));
-  const querySnapshot = await getDocs(q);
-  if (!querySnapshot.empty) {
-    const firstDoc = querySnapshot.docs[0];
-    productId = firstDoc.id;
-    window.history.pushState({}, '', `?id=${productId}`);
-    loadProduct(productId);
-  } else showMessage(`Ошибка: коллекция '${COLLECTION_PATH}' пуста.`, true);
+  if (!isAuthReady) return;
+  const q = query(collection(db, COLLECTION_PATH), limit(1));
+  const querySnapshot = await getDocs(q);
+  if (!querySnapshot.empty) {
+    const firstDoc = querySnapshot.docs[0];
+    productId = firstDoc.id;
+    window.history.pushState({}, '', `?id=${productId}`);
+    loadProduct(productId);
+  } else showMessage(`Ошибка: коллекция '${COLLECTION_PATH}' пуста.`, true);
 }
 
 async function loadProduct(id) {
-  if (!isAuthReady) return;
-  const docRef = doc(db, COLLECTION_PATH, id);
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    productData = docSnap.data();
-    if (productData.combinations && productData.image_color_map) {
-      productData.combinations.forEach(combo => {
-        const colorName = combo.color;
-        const imageObj = productData.image_color_map.find(m => m.color === colorName);
-        combo.colorImage = imageObj?.url || null;
-      });
-    }
-    initializeProductView(productData);
-  } else {
-    findFirstAvailableProduct();
-  }
+  if (!isAuthReady) return;
+  const docRef = doc(db, COLLECTION_PATH, id);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    productData = docSnap.data();
+    if (productData.combinations && productData.image_color_map) {
+      productData.combinations.forEach(combo => {
+        const colorName = combo.color;
+        const imageObj = productData.image_color_map.find(m => m.color === colorName);
+        combo.colorImage = imageObj?.url || null;
+      });
+    }
+    initializeProductView(productData);
+  } else {
+    findFirstAvailableProduct();
+  }
 }
 
 // ==========================
 // Вспомогательные функции
 // ==========================
 function renderGallery(images) {
-  const gallery = document.getElementById("thumbnail-gallery");
-  gallery.innerHTML = "";
-  images.forEach((img, i) => {
-    const thumb = document.createElement("img");
-    thumb.src = img;
-    thumb.className = "thumbnail" + (i === 0 ? " active" : "");
-    thumb.onerror = () => thumb.src = "https://placehold.co/60x60?text=IMG";
-    thumb.onclick = () => {
-      const mainImage = document.getElementById("main-product-image");
-      mainImage.style.opacity = 0;
-      setTimeout(() => { mainImage.src = img; mainImage.style.opacity = 1; }, 200);
-      gallery.querySelectorAll("img").forEach(t => t.classList.remove("active"));
-      thumb.classList.add("active");
-    };
-    gallery.appendChild(thumb);
-  });
-  const mainImage = document.getElementById("main-product-image");
-  mainImage.src = images[0] || "https://placehold.co/800x600?text=Нет+изображения";
+  const gallery = document.getElementById("thumbnail-gallery");
+  gallery.innerHTML = "";
+  images.forEach((img, i) => {
+    const thumb = document.createElement("img");
+    thumb.src = img;
+    thumb.className = "thumbnail" + (i === 0 ? " active" : "");
+    thumb.onerror = () => thumb.src = "https://placehold.co/60x60?text=IMG";
+    thumb.onclick = () => {
+      const mainImage = document.getElementById("main-product-image");
+      mainImage.style.opacity = 0;
+      setTimeout(() => { mainImage.src = img; mainImage.style.opacity = 1; }, 200);
+      gallery.querySelectorAll("img").forEach(t => t.classList.remove("active"));
+      thumb.classList.add("active");
+    };
+    gallery.appendChild(thumb);
+  });
+  const mainImage = document.getElementById("main-product-image");
+  mainImage.src = images[0] || "https://placehold.co/800x600?text=Нет+изображения";
 }
 
 function renderOptions(containerId, options, clickHandler) {
-  const container = document.getElementById(containerId);
-  if (!options || options.length === 0) {
-    container.parentElement.classList.add("hidden");
-    return;
-  }
-  container.parentElement.classList.remove("hidden");
-  container.innerHTML = "";
-  options.forEach(o => {
-    const btn = document.createElement("button");
-    btn.textContent = o;
-    btn.dataset.value = o;
-    btn.className = "option-button-style";
-    btn.onclick = () => {
-      clickHandler(o);
-      updateProductView();
-      saveSelectedOptions();
-    };
-    container.appendChild(btn);
-  });
+  const container = document.getElementById(containerId);
+  if (!options || options.length === 0) {
+    container.parentElement.classList.add("hidden");
+    return;
+  }
+  container.parentElement.classList.remove("hidden");
+  container.innerHTML = "";
+  options.forEach(o => {
+    const btn = document.createElement("button");
+    btn.textContent = o;
+    btn.dataset.value = o;
+    btn.className = "option-button-style";
+    btn.onclick = () => {
+      clickHandler(o);
+      updateProductView();
+      saveSelectedOptions();
+    };
+    container.appendChild(btn);
+  });
 }
 
 function renderColorOptions(containerId, colors, clickHandler) {
-  const container = document.getElementById(containerId);
-  if (!colors || colors.length === 0) {
-    container.parentElement.classList.add("hidden");
-    return;
-  }
-  container.parentElement.classList.remove("hidden");
-  container.innerHTML = "";
-  colors.forEach(c => {
-    const btn = document.createElement("button");
-    btn.textContent = c.name;
-    btn.dataset.value = c.name;
-    btn.className = "option-button-style";
-    btn.style.background = c.hex;
-    btn.style.color = getTextColorForBackground(c.hex);
-    btn.style.borderColor = c.hex;
-    btn.onclick = () => {
-      clickHandler(c.name);
-      updateProductView();
-      saveSelectedOptions();
-    };
-    container.appendChild(btn);
-  });
+  const container = document.getElementById(containerId);
+  if (!colors || colors.length === 0) {
+    container.parentElement.classList.add("hidden");
+    return;
+  }
+  container.parentElement.classList.remove("hidden");
+  container.innerHTML = "";
+  colors.forEach(c => {
+    const btn = document.createElement("button");
+    btn.textContent = c.name;
+    btn.dataset.value = c.name;
+    btn.className = "option-button-style";
+    btn.style.background = c.hex;
+    btn.style.color = getTextColorForBackground(c.hex);
+    btn.style.borderColor = c.hex;
+    btn.onclick = () => {
+      clickHandler(c.name);
+      updateProductView();
+      saveSelectedOptions();
+    };
+    container.appendChild(btn);
+  });
 }
 
 function getTextColorForBackground(bgColor) {
-  if (!bgColor) return "#f97316";
-  const c = bgColor.charAt(0) === '#' ? bgColor.substring(1,7) : bgColor;
-  const r = parseInt(c.substring(0,2),16);
-  const g = parseInt(c.substring(2,4),16);
-  const b = parseInt(c.substring(4,6),16);
-  const brightness = (r*299 + g*587 + b*114)/1000;
-  return brightness > 150 ? "#000" : "#fff";
+  if (!bgColor) return "#f97316";
+  const c = bgColor.charAt(0) === '#' ? bgColor.substring(1,7) : bgColor;
+  const r = parseInt(c.substring(0,2),16);
+  const g = parseInt(c.substring(2,4),16);
+  const b = parseInt(c.substring(4,6),16);
+  const brightness = (r*299 + g*587 + b*114)/1000;
+  return brightness > 150 ? "#000" : "#fff";
 }
 
 function findCombination() {
-  if (!productData || !productData.combinations) return null;
-  let combo = productData.combinations.find(c =>
-    c.material === selectedMaterial &&
-    c.facade === selectedFacade &&
-    c.color === selectedColor
-  );
-  if (combo) return combo;
-  combo = productData.combinations.find(c => true);
-  selectedMaterial = combo.material;
-  selectedFacade = combo.facade;
-  selectedColor = combo.color;
-  return combo;
+  if (!productData || !productData.combinations) return null;
+  let combo = productData.combinations.find(c =>
+    c.material === selectedMaterial &&
+    c.facade === selectedFacade &&
+    c.color === selectedColor
+  );
+  if (combo) return combo;
+  combo = productData.combinations.find(c => true);
+  selectedMaterial = combo.material;
+  selectedFacade = combo.facade;
+  selectedColor = combo.color;
+  return combo;
 }
 
 // ==========================
 // Инициализация вида продукта
 // ==========================
 function initializeProductView(data) {
-  document.getElementById("product-title").textContent = data.title || "Без названия";
-  document.getElementById("breadcrumb-title").textContent = data.title || "Без названия";
-  document.getElementById("breadcrumb-category").textContent = data.category || "-";
-  document.getElementById("product-category").textContent = data.category || "-";
-  
-  // ЭТОТ КОД ЗАПОЛНЯЕТ БЛОК ОПИСАНИЯ, ГДЕ БЫ ОН НИ НАХОДИЛСЯ
-  document.getElementById("product-description").textContent = data.description || "Подробное описание товара отсутствует.";
+  document.getElementById("product-title").textContent = data.title || "Без названия";
+  document.getElementById("breadcrumb-title").textContent = data.title || "Без названия";
+  document.getElementById("breadcrumb-category").textContent = data.category || "-";
+  document.getElementById("product-category").textContent = data.category || "-";
+  document.getElementById("product-description").textContent = data.description || "Подробное описание товара отсутствует.";
 
-  renderGallery(data.images || [data.image].filter(Boolean));
-  renderOptions("facade-options", data.facades, v => selectedFacade = v);
-  renderOptions("material-options", data.materials, v => selectedMaterial = v);
-  renderColorOptions("color-options", data.colors, v => selectedColor = v);
+  renderGallery(data.images || [data.image].filter(Boolean));
+  renderOptions("facade-options", data.facades, v => selectedFacade = v);
+  renderOptions("material-options", data.materials, v => selectedMaterial = v);
+  renderColorOptions("color-options", data.colors, v => selectedColor = v);
 
-  // Восстановление выбранных опций из localStorage
-  const savedOptions = JSON.parse(localStorage.getItem(`selected-options-${productId}`) || '{}');
-  selectedFacade = savedOptions.facade || data.combinations?.[0]?.facade || data.facades?.[0];
-  selectedMaterial = savedOptions.material || data.combinations?.[0]?.material || data.materials?.[0];
-  selectedColor = savedOptions.color || data.combinations?.[0]?.color || data.colors?.[0]?.name;
+  // Восстановление выбранных опций из localStorage
+  const savedOptions = JSON.parse(localStorage.getItem(`selected-options-${productId}`) || '{}');
+  selectedFacade = savedOptions.facade || data.combinations?.[0]?.facade || data.facades?.[0];
+  selectedMaterial = savedOptions.material || data.combinations?.[0]?.material || data.materials?.[0];
+  selectedColor = savedOptions.color || data.combinations?.[0]?.color || data.colors?.[0]?.name;
 
-  updateProductView();
+  updateProductView();
 }
 
 // ==========================
 // Обновление вида продукта
 // ==========================
 function updateProductView() {
-  if (!productData) return;
+  if (!productData) return;
 
-  const combo = findCombination();
-  if (!combo) return;
+  const combo = findCombination();
+  if (!combo) return;
 
-  updateOptionButtons("material-options", selectedMaterial);
-  updateOptionButtons("facade-options", selectedFacade);
-  updateOptionButtons("color-options", selectedColor);
+  updateOptionButtons("material-options", selectedMaterial);
+  updateOptionButtons("facade-options", selectedFacade);
+  updateOptionButtons("color-options", selectedColor);
 
-  const buyButton = document.getElementById("buy-button");
-  const errorMessage = document.getElementById("error-message");
+  const buyButton = document.getElementById("buy-button");
+  const errorMessage = document.getElementById("error-message");
 
-  errorMessage.classList.add("hidden");
+  errorMessage.classList.add("hidden");
 
-  const basePrice = combo.price || 0;
-  const discount = combo.discount || 0;
-  const oldPriceEl = document.getElementById("old-price");
-  const newPriceEl = document.getElementById("new-price");
-  oldPriceEl.textContent = formatPrice(basePrice);
-  newPriceEl.textContent = formatPrice(Math.round(basePrice * (1 - discount / 100)));
-  oldPriceEl.style.display = discount > 0 ? "inline" : "none";
+  const basePrice = combo.price || 0;
+  const discount = combo.discount || 0;
+  const oldPriceEl = document.getElementById("old-price");
+  const newPriceEl = document.getElementById("new-price");
+  oldPriceEl.textContent = formatPrice(basePrice);
+  newPriceEl.textContent = formatPrice(Math.round(basePrice * (1 - discount / 100)));
+  oldPriceEl.style.display = discount > 0 ? "inline" : "none";
 
-  const mainImage = document.getElementById("main-product-image");
-  mainImage.style.opacity = 0;
-  setTimeout(() => {
-      mainImage.src = combo.colorImage || productData.images?.[0] || "https://placehold.co/800x600?text=Нет+изображения";
-      mainImage.style.opacity = 1;
-  }, 150);
+  const mainImage = document.getElementById("main-product-image");
+  mainImage.style.opacity = 0;
+  setTimeout(() => {
+      mainImage.src = combo.colorImage || productData.images?.[0] || "https://placehold.co/800x600?text=Нет+изображения";
+      mainImage.style.opacity = 1;
+  }, 150);
 
-  buyButton.disabled = false;
-  buyButton.textContent = "В корзину";
+  buyButton.disabled = false;
+  buyButton.textContent = "В корзину";
 }
 
 function updateOptionButtons(containerId, value) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  container.querySelectorAll("button").forEach(btn=>{
-    btn.classList.toggle("active", btn.dataset.value === value);
-  });
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll("button").forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.value === value);
+  });
 }
 
 function formatPrice(price){return isNaN(price)?"N/A":price.toLocaleString("ru-RU",{style:"currency",currency:"BYN",maximumFractionDigits:0});}
@@ -408,74 +404,74 @@ function formatPrice(price){return isNaN(price)?"N/A":price.toLocaleString("ru-R
 // Корзина и избранное
 // ==========================
 function addToCart(item) {
-  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-  if (!cart.some(i => i.id === item.id && i.material===item.material && i.facade===item.facade && i.color===item.color)) {
-    cart.push(item);
-    localStorage.setItem("cart", JSON.stringify(cart));
-  }
+  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  if (!cart.some(i => i.id === item.id && i.material===item.material && i.facade===item.facade && i.color===item.color)) {
+    cart.push(item);
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }
 }
 
 function addToFavorites(item) {
-  let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
-  if (!favorites.some(i => i.id === item.id)) {
-    favorites.push(item);
-    localStorage.setItem("favorites", JSON.stringify(favorites));
-  }
+  let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+  if (!favorites.some(i => i.id === item.id)) {
+    favorites.push(item);
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+  }
 }
 
 function saveSelectedOptions() {
-  localStorage.setItem(`selected-options-${productId}`, JSON.stringify({
-    facade: selectedFacade,
-    material: selectedMaterial,
-    color: selectedColor
-  }));
+  localStorage.setItem(`selected-options-${productId}`, JSON.stringify({
+    facade: selectedFacade,
+    material: selectedMaterial,
+    color: selectedColor
+  }));
 }
 
 // ==========================
 // Кнопки действий
 // ==========================
 document.getElementById("buy-button").addEventListener("click", () => {
-  const comboText = `Материал: ${selectedMaterial||'-'}, Фасад: ${selectedFacade||'-'}, Цвет: ${selectedColor||'-'}`;
-  const price = productData.combinations.find(c => c.material===selectedMaterial && c.facade===selectedFacade && c.color===selectedColor)?.price || 0;
-  addToCart({
-    id: productId,
-    title: productData.title,
-    image: productData.images?.[0],
-    price: price,
-    material: selectedMaterial,
-    facade: selectedFacade,
-    shopId: productData.shopId,
-    color: selectedColor
-  });
-  saveSelectedOptions();
-  showMessage(`🛒 Товар добавлен в корзину.<br>${comboText}<br>Цена: ${formatPrice(price)}`, false);
+  const comboText = `Материал: ${selectedMaterial||'-'}, Фасад: ${selectedFacade||'-'}, Цвет: ${selectedColor||'-'}`;
+  const price = productData.combinations.find(c => c.material===selectedMaterial && c.facade===selectedFacade && c.color===selectedColor)?.price || 0;
+  addToCart({
+    id: productId,
+    title: productData.title,
+    image: productData.images?.[0],
+    price: price,
+    material: selectedMaterial,
+    facade: selectedFacade,
+    shopId: productData.shopId,
+    color: selectedColor
+  });
+  saveSelectedOptions();
+  showMessage(`🛒 Товар добавлен в корзину.<br>${comboText}<br>Цена: ${formatPrice(price)}`, false);
 });
 
 document.getElementById("favorite-button").addEventListener("click", () => {
-  const price = productData.combinations.find(c => c.material===selectedMaterial && c.facade===selectedFacade && c.color===selectedColor)?.price || 0;
-  addToFavorites({
-    id: productId,
-    title: productData.title,
-    image: productData.images?.[0],
-    price: price,
-    material: selectedMaterial,
-    facade: selectedFacade,
-    shopId: productData.shopId,
-    color: selectedColor
-  });
-  saveSelectedOptions();
-  showMessage(`❤️ Товар добавлен в избранное`, false);
+  const price = productData.combinations.find(c => c.material===selectedMaterial && c.facade===selectedFacade && c.color===selectedColor)?.price || 0;
+  addToFavorites({
+    id: productId,
+    title: productData.title,
+    image: productData.images?.[0],
+    price: price,
+    material: selectedMaterial,
+    facade: selectedFacade,
+    shopId: productData.shopId,
+    color: selectedColor
+  });
+  saveSelectedOptions();
+  showMessage(`❤️ Товар добавлен в избранное`, false);
 });
 
 // ==========================
 // Сообщения
 // ==========================
 function showMessage(text,isError){
-  const msgBox=document.getElementById("message-box");
-  msgBox.innerHTML=text;
-  msgBox.className="show";
-  msgBox.style.backgroundColor=isError?"#ef4444":"#10b981";
-  setTimeout(()=>msgBox.classList.remove("show"),5000);
+  const msgBox=document.getElementById("message-box");
+  msgBox.innerHTML=text;
+  msgBox.className="show";
+  msgBox.style.backgroundColor=isError?"#ef4444":"#10b981";
+  setTimeout(()=>msgBox.classList.remove("show"),5000);
 }
 
 window.onload=initializeAuthAndFirestore;
