@@ -70,17 +70,13 @@
     
     </div>
 
-    <div class="mb-4">
-        <label class="font-semibold text-gray-600">Привязка к магазину</label>
-        <select id="shop-select" class="input-field">
-            <option value="" disabled selected>-- Выберите магазин --</option>
-            <option value="shop1">Магазин 1</option>
-            <option value="shop2">Магазин 2</option>
-            <option value="shop3">Магазин 3</option>
-            <!-- сюда можно динамически подгружать магазины из базы -->
-        </select>
-    </div>
-
+ <div class="mb-4">
+    <label class="font-semibold text-gray-600">Привязка к магазину</label>
+    <select id="shop-select" class="input-field">
+        <option value="" disabled selected>-- Выберите магазин --</option>
+        <!-- Магазины будут подгружаться динамически из базы -->
+    </select>
+</div>
 
     <div class="mb-4">
     <label class="font-semibold text-gray-600">Описание товара</label>
@@ -796,8 +792,30 @@ function setupGeneralHandlers() {
 // --- RUNTIME INITIATION ---
 window.onload = () => {
     initializeFirebase();
-    initializeAuth(); 
+    initializeAuth();
+    loadShops();
     
+    // --- Загрузка магазинов из Firestore ---
+const shopsCollectionPath = `artifacts/${appId}/public/data/shops`;
+
+async function loadShops() {
+    if (!db) return;
+    try {
+        const snapshot = await getDocs(collection(db, shopsCollectionPath));
+        shopSelect.innerHTML = `<option value="" disabled selected>-- Выберите магазин --</option>`;
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            const opt = document.createElement('option');
+            opt.value = docSnap.id; // id магазина
+            opt.textContent = data.shopName || `(Магазин ${docSnap.id})`;
+            shopSelect.appendChild(opt);
+        });
+    } catch (e) {
+        console.error("Ошибка загрузки магазинов:", e);
+        showMessage("Не удалось загрузить список магазинов.");
+    }
+}
+
     setupFacadeHandlers();
     setupMaterialHandlers();
     setupColorHandlers();
