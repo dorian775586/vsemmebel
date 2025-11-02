@@ -17,7 +17,7 @@ export function saveCart(cart) {
 }
 
 // Добавить товар в корзину
-export function addToCart(productId, productTitle, options, price, image) {
+export function addToCart(productId, productTitle, options, price, image, shopId) {
   let cart = getCart();
   const existing = cart.find(
     item =>
@@ -34,6 +34,7 @@ export function addToCart(productId, productTitle, options, price, image) {
       options,
       price,
       image,
+      shopId, // вот это нужно добавить
       quantity: 1,
       addedAt: Date.now()
     });
