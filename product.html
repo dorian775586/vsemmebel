@@ -44,25 +44,8 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
 #message-box { position: fixed; top: 20px; right: 20px; z-index: 1000; min-width: 300px; padding: 1rem; background-color: #10b981; color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.5s, transform 0.5s; transform: translateY(-10px); } 
 #message-box.show { opacity: 1; transform: translateY(0); }
 
-/* --- НОВЫЕ СТИЛИ --- */
-
-/* Стили для фиксированной правой колонки */
-.sticky-column {
-    position: sticky;
-    top: 2rem; /* Отступ сверху. Можно поменять на top: 6rem; если хедер очень высокий. */
-    align-self: flex-start; /* Убеждаемся, что блок не растягивается на всю высоту */
-}
-
-/* Стили для раскрывающегося описания */
-#description-content {
-    max-height: 120px; /* Изначальная ограниченная высота */
-    overflow: hidden;
-    transition: max-height 0.5s ease-in-out;
-    padding-bottom: 0.5rem;
-}
-.description-expanded {
-    max-height: 1000px !important; /* Достаточно большое значение для раскрытия */
-}
+/* --- НОВЫЙ СТИЛЬ ДЛЯ ЛИПКОЙ КОЛОНКИ --- */
+/* Используем Tail CSS классы sticky и top-20 вместо кастомного .sticky-column, как в правой колонке ниже */
 </style>
 </head>
 <body class="pb-20">
@@ -93,12 +76,13 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
          class="text-gray-700 hover:text-orange-500 transition transform hover:scale-110" 
          title="Корзина">
         <svg xmlns="http://www.w3.org/2000/svg" 
-             fill="none" 
-             viewBox="0 0 24 24" 
-             stroke-width="1.8" 
-             stroke="currentColor" 
-             class="w-7 h-7">
-                       <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.5l-2.404-9.35A.75.75 0 0017.37 3H6.63a.75.75 0 00-.732.65L3.52 9.056M15.75 10.5H18M7.5 10.5H5.25M7.5 10.5L6.63 19.056A1.5 1.5 0 008.13 21h7.74a1.5 1.5 0 001.499-1.944L15.75 10.5z" />
+             fill="none" 
+             viewBox="0 0 24 24" 
+             stroke-width="1.8" 
+             stroke="currentColor" 
+             class="w-7 h-7">
+          <path stroke-linecap="round" stroke-linejoin="round" 
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.6 8h13.2L17 13M9 21h6" />
         </svg>
       </a>
     </div>
@@ -116,23 +100,17 @@ body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; min-height: 
   </div>
 
   <div class="lg:grid lg:grid-cols-2 lg:gap-10">
-        <div class="mb-8 lg:mb-0">
+        <div class="mb-8 lg:mb-0">
       <div id="thumbnail-gallery" class="flex gap-3 mb-3"></div>
       <img id="main-product-image" src="https://placehold.co/800x600?text=Нет+изображения" class="w-full h-auto rounded-3xl object-cover" style="max-height: 600px;">
-
-      <div class="mt-8 p-6 bg-white rounded-3xl shadow-lg">
-          <h2 class="text-2xl font-bold text-gray-900 mb-4">Описание</h2>
-          
-          <div id="description-content">
+        
+        <div class="mt-8 p-6 bg-white rounded-3xl shadow-lg">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Описание</h2>
             <p class="text-gray-600 mb-0" id="product-description">Загрузка описания...</p>
-          </div>
-          
-          <button id="toggle-description-btn" class="text-orange-600 font-bold hover:text-orange-700 transition mt-2 text-sm">Читать далее</button>
-      </div>
+        </div>
+            </div>
 
-    </div>
-
-        <div class="p-6 bg-white rounded-3xl shadow-2xl sticky-column h-fit">
+        <div class="p-6 bg-white rounded-3xl shadow-2xl sticky top-20 h-fit">
       <h1 class="text-4xl font-black text-gray-900 mb-2" id="product-title">Товар</h1>
       <p class="text-lg font-medium text-orange-600 uppercase mb-4" id="product-category">Категория</p>
 
@@ -361,7 +339,8 @@ function initializeProductView(data) {
   document.getElementById("breadcrumb-title").textContent = data.title || "Без названия";
   document.getElementById("breadcrumb-category").textContent = data.category || "-";
   document.getElementById("product-category").textContent = data.category || "-";
-  // Инициализируем текст в новом контейнере описания
+  
+  // ЭТОТ КОД ЗАПОЛНЯЕТ БЛОК ОПИСАНИЯ, ГДЕ БЫ ОН НИ НАХОДИЛСЯ
   document.getElementById("product-description").textContent = data.description || "Подробное описание товара отсутствует.";
 
   renderGallery(data.images || [data.image].filter(Boolean));
@@ -457,8 +436,7 @@ function saveSelectedOptions() {
 // ==========================
 document.getElementById("buy-button").addEventListener("click", () => {
   const comboText = `Материал: ${selectedMaterial||'-'}, Фасад: ${selectedFacade||'-'}, Цвет: ${selectedColor||'-'}`;
-  const combo = productData.combinations.find(c => c.material===selectedMaterial && c.facade===selectedFacade && c.color===selectedColor);
-  const price = combo?.price || 0;
+  const price = productData.combinations.find(c => c.material===selectedMaterial && c.facade===selectedFacade && c.color===selectedColor)?.price || 0;
   addToCart({
     id: productId,
     title: productData.title,
@@ -474,8 +452,7 @@ document.getElementById("buy-button").addEventListener("click", () => {
 });
 
 document.getElementById("favorite-button").addEventListener("click", () => {
-  const combo = productData.combinations.find(c => c.material===selectedMaterial && c.facade===selectedFacade && c.color===selectedColor);
-  const price = combo?.price || 0;
+  const price = productData.combinations.find(c => c.material===selectedMaterial && c.facade===selectedFacade && c.color===selectedColor)?.price || 0;
   addToFavorites({
     id: productId,
     title: productData.title,
@@ -489,23 +466,6 @@ document.getElementById("favorite-button").addEventListener("click", () => {
   saveSelectedOptions();
   showMessage(`❤️ Товар добавлен в избранное`, false);
 });
-
-// ==========================
-// НОВАЯ ЛОГИКА ДЛЯ ОПИСАНИЯ
-// ==========================
-document.getElementById("toggle-description-btn").addEventListener("click", (e) => {
-    const container = document.getElementById("description-content");
-    const button = e.currentTarget;
-
-    if (container.classList.contains("description-expanded")) {
-        container.classList.remove("description-expanded");
-        button.textContent = "Читать далее";
-    } else {
-        container.classList.add("description-expanded");
-        button.textContent = "Свернуть";
-    }
-});
-
 
 // ==========================
 // Сообщения
