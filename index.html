@@ -366,7 +366,7 @@ const indicatorsContainer = document.getElementById('carousel-indicators');
 const prevBtn = document.getElementById('carousel-prev');
 const nextBtn = document.getElementById('carousel-next');
 
-// Функция рендера карусели
+// Функция рендера карусели без затемнения
 function renderCarousel() {
     slidesContainer.innerHTML = '';
     indicatorsContainer.innerHTML = '';
@@ -375,13 +375,10 @@ function renderCarousel() {
         // Создание слайдов
         const slideDiv = document.createElement('div');
         slideDiv.className = `absolute inset-0 transition-opacity duration-700 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`;
+
+        // Только изображение без затемнения
         slideDiv.innerHTML = `
             <img src="${slide.url}" alt="${slide.title || ''}" class="w-full h-full object-cover">
-            <div class="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
-                ${slide.title ? `<h2 class="text-3xl md:text-5xl font-bold mb-2">${slide.title}</h2>` : ''}
-                ${slide.subtitle ? `<p class="text-lg md:text-xl mb-4">${slide.subtitle}</p>` : ''}
-                ${slide.buttonText ? `<a href="${slide.buttonLink || '#'}" class="bg-white text-orange-600 font-bold py-2 px-6 rounded-full hover:bg-gray-100 transition">${slide.buttonText}</a>` : ''}
-            </div>
         `;
         slidesContainer.appendChild(slideDiv);
 
