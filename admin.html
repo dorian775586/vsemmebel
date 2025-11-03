@@ -151,6 +151,20 @@
     </div>
 </div>
 
+<div class="section">
+    <h2 class="text-xl font-bold mb-4 text-gray-700">Карусель на главной странице</h2>
+
+    <div id="carousel-container" class="space-y-2"></div>
+
+    <div id="carousel-url-input-area" class="flex gap-2 mt-2 hidden">
+        <input id="carousel-url-input" class="input-field" type="url" placeholder="Вставьте URL изображения (http://...)">
+        <button id="carousel-url-ok-btn" class="btn btn-save text-sm px-4">ОК</button>
+        <button id="carousel-url-cancel-btn" class="btn bg-gray-300 text-gray-700 hover:bg-gray-400 text-sm px-4">Отмена</button>
+    </div>
+    <button id="add-carousel-btn" class="btn mt-2 btn-save">Добавить изображение в карусель</button>
+    <p class="text-xs text-gray-500 mt-2">Максимум 5 изображений для рекламной карусели.</p>
+</div>
+
 <h2 class="text-xl font-bold mb-4 text-gray-700">Существующие товары</h2>
 <div id="existing-products" class="space-y-3"></div>
 
@@ -263,7 +277,7 @@ function showConfirm(message, onConfirm) {
 }
 
 // --- GLOBAL STATE ---
-let productId = null, images = [], imagesMeta = [], facades = [], materials = [], colors = [], combinations = []; 
+let productId = null, images = [], imagesMeta = [], facades = [], materials = [], colors = [], combinations = [], carouselImages = [];
 // images: array of url strings (legacy + display)
 // imagesMeta: array of objects { url, color } - used to map image -> color
 
@@ -484,6 +498,26 @@ function renderCombinations() {
         controlsDiv.append(priceInput, discountInput, activeLabel, deleteBtn);
         div.append(selectsDiv, controlsDiv);
         combinationsContainer.appendChild(div);
+    });
+}
+
+function renderCarouselImages() { 
+    const container = document.getElementById('carousel-container');
+    container.innerHTML = carouselImages.length === 0 ? '<p class="text-sm text-gray-500">Нет изображений.</p>' : '';
+    carouselImages.forEach((url, i) => {
+        const div = document.createElement('div');
+        div.className = "images-list-item";
+        div.innerHTML = `
+            <div class="thumbnail"><img src="${url}" onerror="this.src='https://placehold.co/60x60/cccccc/333333?text=Нет'" alt="Превью"></div>
+            <div class="flex gap-2">
+                <button class="btn btn-delete small-btn">Удалить</button>
+            </div>
+        `;
+        div.querySelector('.btn-delete').onclick = () => {
+            carouselImages.splice(i, 1);
+            renderCarouselImages();
+        };
+        container.appendChild(div);
     });
 }
 
@@ -750,6 +784,7 @@ function setupGeneralHandlers() {
                 }))
                 .filter(c => c.material || c.facade || c.color),
             images: images.filter(url => url.trim() !== ''), // legacy arrays of urls
+            carouselImages: carouselImages.filter(url => url.trim() !== ''),
             shopId: shopSelect.value || null // Привязка магазина
         };
 
@@ -784,6 +819,12 @@ function setupGeneralHandlers() {
         showMessage("Форма очищена. Вы готовы к созданию нового товара.");
     };
 }
+
+// --- Карусель на главной ---
+// --- Карусель ---
+addCarouselBtn.onclick = ()=>{ if(carouselImages.length>=5)return showMessage("Максимум 5 изображений!"); carouselUrlInputArea.classList.remove('hidden'); addCarouselBtn.disabled=true; carouselUrlInput.value=''; carouselUrlInput.focus(); };
+carouselUrlOkBtn.onclick = ()=>{ const url=carouselUrlInput.value.trim(); if(!url||!url.startsWith('http'))return showMessage("Введите корректный URL!"); if(carouselImages.length>=5)return showMessage("Максимум 5 изображений!"); carouselImages.push(url); carouselUrlInputArea.classList.add('hidden'); addCarouselBtn.disabled=false; renderCarouselImages(); };
+carouselUrlCancelBtn.onclick = ()=>{ carouselUrlInputArea.classList.add('hidden'); addCarouselBtn.disabled=false; };
 
 
 // --- RUNTIME INITIATION ---
