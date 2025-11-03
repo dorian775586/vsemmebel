@@ -108,7 +108,7 @@
     <div id="main-view-container">
         <main class="max-w-4xl mx-auto px-4 mt-6">
             <!-- Баннер Карусель -->
-            <div id="carousel-banner" class="relative rounded-3xl overflow-hidden shadow-2xl mb-8 h-64 md:h-96 bg-gray-100">
+            <div id="carousel-banner" class="relative rounded-3xl overflow-hidden shadow-2xl mb-4 h-64 md:h-96 bg-gray-100">
                 <!-- Слайды будут добавляться через JS -->
                 <div id="carousel-slides" class="h-full w-full relative"></div>
 
@@ -142,7 +142,10 @@
             <!-- Предложения -->
             <h3 class="text-2xl font-bold text-gray-800 my-6">Выгодные предложения</h3>
             <div id="offers-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-                <div id="no-offers" class="col-span-full text-center text-gray-500 hidden p-8">Предложений по вашему запросу не найдено.</div>
+                <div id="offers-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+    </div>
+
+            <div id="no-offers" class="col-span-full text-center text-gray-500 hidden p-8">Предложений по вашему запросу не найдено.</div>  
                 <!-- Карточки товаров будут загружены сюда JavaScript'ом -->
             </div>
         </main>
@@ -542,13 +545,11 @@ function loadCarouselFromFirestore() {
             );
 
             if (finalOffers.length === 0) {
-                noOffersDiv.classList.remove('hidden');
-                // Важно: вставляем сообщение "Нет товаров" в контейнер offersListDiv
-                offersListDiv.appendChild(noOffersDiv);
-                return;
-            }
-            noOffersDiv.classList.add('hidden');
-
+                offersListDiv.innerHTML = ''; // Очищаем список
+                noOffersDiv.classList.remove('hidden'); // Показываем сообщение
+                return;
+            }
+            noOffersDiv.classList.add('hidden'); // Скрываем сообщение
             // 3. Рендеринг карточек
             finalOffers.forEach(offer => {
                 // Ищем первую активную комбинацию для отображения цены
