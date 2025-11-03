@@ -161,7 +161,12 @@
         <button id="carousel-url-ok-btn" class="btn btn-save text-sm px-4">ОК</button>
         <button id="carousel-url-cancel-btn" class="btn bg-gray-300 text-gray-700 hover:bg-gray-400 text-sm px-4">Отмена</button>
     </div>
-    <button id="add-carousel-btn" class="btn mt-2 btn-save">Добавить изображение в карусель</button>
+
+    <div class="flex gap-2 mt-2">
+        <button id="add-carousel-btn" class="btn btn-save">Добавить изображение в карусель</button>
+        <button id="save-carousel-btn" class="btn bg-green-500 text-white hover:bg-green-600">Сохранить</button>
+    </div>
+
     <p class="text-xs text-gray-500 mt-2">Максимум 5 изображений для рекламной карусели.</p>
 </div>
 
@@ -830,6 +835,32 @@ function setupGeneralHandlers() {
 addCarouselBtn.onclick = ()=>{ if(carouselImages.length>=5)return showMessage("Максимум 5 изображений!"); carouselUrlInputArea.classList.remove('hidden'); addCarouselBtn.disabled=true; carouselUrlInput.value=''; carouselUrlInput.focus(); };
 carouselUrlOkBtn.onclick = ()=>{ const url=carouselUrlInput.value.trim(); if(!url||!url.startsWith('http'))return showMessage("Введите корректный URL!"); if(carouselImages.length>=5)return showMessage("Максимум 5 изображений!"); carouselImages.push(url); carouselUrlInputArea.classList.add('hidden'); addCarouselBtn.disabled=false; renderCarouselImages(); };
 carouselUrlCancelBtn.onclick = ()=>{ carouselUrlInputArea.classList.add('hidden'); addCarouselBtn.disabled=false; };
+const saveCarouselBtn = document.getElementById('save-carousel-btn');
+
+saveCarouselBtn.onclick = async () => {
+    if (!db) return showMessage("База данных не инициализирована.");
+    
+    const url = carouselUrlInput.value.trim();
+    if (!url || !url.startsWith('http')) return showMessage("Введите корректный URL!");
+
+    try {
+        const carouselRef = collection(db, `artifacts/${appId}/public/data/carousel`);
+        await addDoc(carouselRef, { url, createdAt: new Date().toISOString() });
+        showMessage("URL изображения успешно сохранён в карусели!");
+        // Можно сразу добавить в массив и отрендерить
+        if (!carouselImages.includes(url)) {
+            carouselImages.push(url);
+            renderCarouselImages();
+        }
+        // очистка поля
+        carouselUrlInput.value = '';
+        carouselUrlInputArea.classList.add('hidden');
+        addCarouselBtn.disabled = false;
+    } catch (e) {
+        console.error("Ошибка при сохранении карусели:", e);
+        showMessage("Не удалось сохранить изображение в карусели.");
+    }
+};
 
 
 // --- RUNTIME INITIATION ---
