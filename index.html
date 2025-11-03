@@ -380,7 +380,7 @@ function renderCarousel() {
         // Только изображение без затемнения (растягивается ровно под контейнер)
         slideDiv.innerHTML = `
             <div class="relative w-full h-full overflow-hidden rounded-3xl">
-                <img src="${slide.url}" alt="${slide.title || ''}" class="w-full h-full object-fill">
+                <img src="${slide.url}" alt="${slide.title || ''}" class="w-full h-full object-cover">
             </div>
         `;
 
