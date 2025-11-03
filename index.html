@@ -228,6 +228,7 @@
                 db = getFirestore(app);
                 auth = getAuth(app); 
                 console.log("Firebase успешно инициализирован.");
+                loadCarouselFromFirestore();
             } catch (e) {
                 console.error("КРИТИЧЕСКАЯ ОШИБКА: Ошибка инициализации Firebase.", e);
                 db = null; auth = null; // Обеспечиваем, что переменные null в случае ошибки
@@ -455,9 +456,6 @@ function loadCarouselFromFirestore() {
 }
 
 // Запуск после инициализации Firebase
-loadCarouselFromFirestore();
-
-
         // --- MAIN APPLICATION LOGIC ---
 
         // Категории (заглушка)
