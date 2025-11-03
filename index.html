@@ -377,16 +377,9 @@ function renderCarousel() {
         slideDiv.className = `absolute inset-0 transition-opacity duration-700 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`;
 
         // Только изображение без затемнения
-        // Только изображение без затемнения (растягивается ровно под контейнер)
         slideDiv.innerHTML = `
-        <div class="relative w-full aspect-[16/9] md:aspect-[8/3] overflow-hidden rounded-3xl">
             <img src="${slide.url}" alt="${slide.title || ''}" class="w-full h-full object-cover">
-        </div>
         `;
-
-
-
-
         slidesContainer.appendChild(slideDiv);
 
         // Создание индикаторов
