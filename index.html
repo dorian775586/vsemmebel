@@ -378,8 +378,11 @@ function renderCarousel() {
 
         // Только изображение без затемнения
         slideDiv.innerHTML = `
-            <img src="${slide.url}" alt="${slide.title || ''}" class="w-full h-full object-cover">
+            <div class="relative w-full aspect-[8/3] overflow-hidden rounded-3xl">
+                <img src="${slide.url}" alt="${slide.title || ''}" class="w-full h-full object-fill">
+            </div>
         `;
+
         slidesContainer.appendChild(slideDiv);
 
         // Создание индикаторов
