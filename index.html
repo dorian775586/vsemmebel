@@ -51,19 +51,43 @@
         }
         }
 
+        #burger-btn.open span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+#burger-btn.open span:nth-child(2) {
+    opacity: 0;
+}
+#burger-btn.open span:nth-child(3) {
+    transform: rotate(-45deg) translate(5px, -5px);
+}
+
     </style>
 </head>
 <body>
 
 <!-- Верхняя навигация -->
-<!-- Верхняя навигация -->
 <header class="sticky top-0 header-bg z-20">
-  <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-    <!-- Скрытая кнопка админа -->
-    <div id="hidden-admin-btn" style="width:20px;height:20px;opacity:0;cursor:pointer;margin-right:8px;"></div>
+  <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+    
+    <!-- Левая часть: бургер + логотип -->
+    <div class="flex items-center space-x-3">
+      <!-- Бургер меню -->
+      <button id="burger-btn" class="flex flex-col justify-center items-center w-10 h-10 space-y-1.5 focus:outline-none">
+        <span class="block w-6 h-0.5 bg-gray-700 transition-all"></span>
+        <span class="block w-6 h-0.5 bg-gray-700 transition-all"></span>
+        <span class="block w-6 h-0.5 bg-gray-700 transition-all"></span>
+      </button>
 
-    <h1 class="text-3xl font-black text-gray-900 tracking-tight cursor-pointer" onclick="window.scrollTo(0, 0)">Mebel.by</h1>
+      <!-- Скрытая кнопка админа -->
+      <div id="hidden-admin-btn" style="width:20px;height:20px;opacity:0;cursor:pointer;"></div>
 
+      <!-- Логотип -->
+      <h1 class="text-3xl font-black text-gray-900 tracking-tight cursor-pointer" onclick="window.scrollTo(0, 0)">
+        Mebel.by
+      </h1>
+    </div>
+
+    <!-- Правая часть: город + избранное + корзина -->
     <div class="flex items-center space-x-4">
       <!-- Город -->
       <div class="flex items-center space-x-2 text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
@@ -74,35 +98,37 @@
       </div>
 
       <!-- Избранное -->
-      <a href="favorites.html"
-         class="group relative flex items-center justify-center w-12 h-12 rounded-full hover:bg-orange-100 transition"
-         title="Избранное">
-        <svg xmlns="http://www.w3.org/2000/svg" 
-             fill="none" 
-             viewBox="0 0 24 24" 
-             stroke-width="2" 
-             stroke="currentColor" 
-             class="w-6 h-6 text-gray-700 group-hover:text-orange-500 transition">
+      <a href="favorites.html" class="group relative flex items-center justify-center w-12 h-12 rounded-full hover:bg-orange-100 transition" title="Избранное">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-gray-700 group-hover:text-orange-500 transition">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 21C12 21 6 16 4 11C2 6 4 2 8 3C10 4 12 6 12 6C12 6 14 4 16 3C20 2 22 6 20 11C18 16 12 21 12 21Z" />
         </svg>
         <span class="sr-only">Избранное</span>
       </a>
 
-      <!-- Корзина (новый значок) -->
-      <a href="order.html" 
-         class="group relative flex items-center justify-center w-12 h-12 rounded-full hover:bg-orange-100 transition"
-         title="Корзина">
-        <svg xmlns="http://www.w3.org/2000/svg"
-             fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-             class="w-6 h-6 text-gray-700 group-hover:text-orange-500 transition">
-          <path stroke-linecap="round" stroke-linejoin="round"
-                d="M6 7V6a3 3 0 013-3h6a3 3 0 013 3v1m2 0a1 1 0 011 1v12a2 2 0 01-2 2H5a2 2 0 01-2-2V8a1 1 0 011-1h16z" />
+      <!-- Корзина -->
+      <a href="order.html" class="group relative flex items-center justify-center w-12 h-12 rounded-full hover:bg-orange-100 transition" title="Корзина">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-gray-700 group-hover:text-orange-500 transition">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 7V6a3 3 0 013-3h6a3 3 0 013 3v1m2 0a1 1 0 011 1v12a2 2 0 01-2 2H5a2 2 0 01-2-2V8a1 1 0 011-1h16z" />
         </svg>
         <span class="sr-only">Корзина</span>
       </a>
     </div>
+    
   </div>
 </header>
+
+<!-- Боковое меню -->
+<div id="side-menu" class="fixed inset-y-0 left-0 w-64 bg-white shadow-lg transform -translate-x-full transition-transform z-30">
+    <div class="p-6">
+        <h2 class="text-xl font-bold mb-4">Меню</h2>
+        <ul class="space-y-3">
+            <li><a href="#" class="text-gray-700 hover:text-orange-500">Главная</a></li>
+            <li><a href="#" class="text-gray-700 hover:text-orange-500">Каталог</a></li>
+            <li><a href="favorites.html" class="text-gray-700 hover:text-orange-500">Избранное</a></li>
+            <li><a href="order.html" class="text-gray-700 hover:text-orange-500">Корзина</a></li>
+        </ul>
+    </div>
+</div>
 
     <!-- ОСНОВНОЙ КОНТЕЙНЕР ДЛЯ СПИСКА ТОВАРОВ (Единственный видимый вид) -->
     <div id="main-view-container">
@@ -635,6 +661,14 @@ function loadCarouselFromFirestore() {
                 alert("Неверный пароль!");
             }
         };
+
+        const burgerBtn = document.getElementById('burger-btn');
+const sideMenu = document.getElementById('side-menu');
+
+burgerBtn.addEventListener('click', () => {
+    burgerBtn.classList.toggle('open');
+    sideMenu.classList.toggle('-translate-x-full'); // скрыть/показать
+});
 
     </script>
 </body>
