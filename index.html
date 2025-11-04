@@ -117,10 +117,13 @@
   </div>
 </header>
 
-<!-- Боковое меню -->
 <div id="side-menu" class="fixed inset-y-0 left-0 w-64 bg-white shadow-lg transform -translate-x-full transition-transform z-30">
     <div class="p-6">
-        <h2 class="text-xl font-bold mb-4">Меню</h2>
+        <!-- Заголовок с кнопкой "Назад" -->
+        <div id="side-menu-header" class="flex items-center justify-between mb-4 hidden">
+            <button id="side-menu-back" class="text-orange-500 font-semibold">&larr; Назад</button>
+            <h2 id="side-menu-title" class="text-xl font-bold">Меню</h2>
+        </div>
 
         <!-- Верхние кнопки -->
         <div class="flex flex-col space-y-2 mb-4">
@@ -676,6 +679,20 @@ const sideMenuContent = document.getElementById('side-menu-content');
 const menuCatalogBtn = document.getElementById('menu-catalog');
 const menuShopsBtn = document.getElementById('menu-shops');
 const menuDiscountsBtn = document.getElementById('menu-discounts');
+const sideMenuHeader = document.getElementById('side-menu-header');
+const sideMenuBack = document.getElementById('side-menu-back');
+
+function openSubMenu(title) {
+    document.getElementById('side-menu-title').textContent = title;
+    sideMenuHeader.classList.remove('hidden'); // показываем заголовок
+    document.querySelector('.flex.flex-col.space-y-2.mb-4').classList.add('hidden'); // скрываем верхние кнопки
+}
+
+sideMenuBack.onclick = () => {
+    sideMenuHeader.classList.add('hidden'); // скрываем заголовок
+    document.querySelector('.flex.flex-col.space-y-2.mb-4').classList.remove('hidden'); // показываем верхние кнопки
+    sideMenuContent.innerHTML = ''; // очищаем подменю
+};
 
 // --- Рендер категорий ---
 function renderSideMenuCategories() {
@@ -747,14 +764,18 @@ function renderSideMenuDiscounts() {
 }
 
 // --- Слушатели кнопок ---
-menuCatalogBtn.onclick = renderSideMenuCategories;
-menuShopsBtn.onclick = renderSideMenuShops;
-menuDiscountsBtn.onclick = renderSideMenuDiscounts;
-
-burgerBtn.addEventListener('click', () => {
-    burgerBtn.classList.toggle('open');
-    sideMenu.classList.toggle('-translate-x-full'); // скрыть/показать
-});
+menuCatalogBtn.onclick = () => {
+    renderSideMenuCategories();
+    openSubMenu('Каталог');
+};
+menuShopsBtn.onclick = () => {
+    renderSideMenuShops();
+    openSubMenu('Магазины');
+};
+menuDiscountsBtn.onclick = () => {
+    renderSideMenuDiscounts();
+    openSubMenu('Скидки');
+};
 
     </script>
 </body>
