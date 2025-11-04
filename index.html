@@ -701,8 +701,7 @@ const sideMenuHeader = document.getElementById('side-menu-header');
 const sideMenuBack = document.getElementById('side-menu-back');
 
 function openSubMenu(title) {
-    document.getElementById('side-menu-title').textContent = title;
-    sideMenuHeader.classList.remove('hidden'); // показываем заголовок
+    sideMenuHeader.classList.add('hidden'); // полностью скрываем заголовок
     document.querySelector('.flex.flex-col.space-y-2.mb-4').classList.add('hidden'); // скрываем верхние кнопки
 }
 
