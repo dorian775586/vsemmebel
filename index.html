@@ -700,16 +700,29 @@ const menuDiscountsBtn = document.getElementById('menu-discounts');
 const sideMenuHeader = document.getElementById('side-menu-header');
 const sideMenuBack = document.getElementById('side-menu-back');
 
-function openSubMenu(title) {
-    sideMenuHeader.classList.add('hidden'); // полностью скрываем заголовок
-    document.querySelector('.flex.flex-col.space-y-2.mb-4').classList.add('hidden'); // скрываем верхние кнопки
+const topButtonsContainer = document.querySelector('.flex.flex-col.space-y-2.mb-4');
+
+function openSubMenu() {
+    sideMenuHeader.classList.remove('hidden'); // показываем заголовок с кнопкой "Назад"
+    topButtonsContainer.classList.add('hidden'); // скрываем верхние кнопки
 }
 
-sideMenuBack.onclick = () => {
+function backToMainMenu() {
     sideMenuHeader.classList.add('hidden'); // скрываем заголовок
-    document.querySelector('.flex.flex-col.space-y-2.mb-4').classList.remove('hidden'); // показываем верхние кнопки
+    topButtonsContainer.classList.remove('hidden'); // показываем верхние кнопки
     sideMenuContent.innerHTML = ''; // очищаем подменю
-};
+}
+
+// Назначаем обработчик кнопке "Назад"
+sideMenuBack.onclick = backToMainMenu;
+
+// Когда открываем боковое меню, показываем верхние кнопки по умолчанию
+burgerBtn.addEventListener('click', () => {
+    sideMenu.classList.toggle('-translate-x-full'); // показываем/скрываем меню
+    if (!sideMenu.classList.contains('-translate-x-full')) {
+        backToMainMenu(); // при открытии всегда показываем главное меню
+    }
+});
 
 // --- Рендер категорий ---
 function renderSideMenuCategories() {
