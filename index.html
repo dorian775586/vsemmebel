@@ -51,6 +51,19 @@
         }
         }
 
+                #menu-toggle span {
+        transition: all 0.3s ease;
+        }
+        #menu-toggle.active span:nth-child(1) {
+        transform: translateY(8px) rotate(45deg);
+        }
+        #menu-toggle.active span:nth-child(2) {
+        opacity: 0;
+        }
+        #menu-toggle.active span:nth-child(3) {
+        transform: translateY(-8px) rotate(-45deg);
+        }
+
     </style>
 </head>
 <body>
@@ -103,6 +116,29 @@
     </div>
   </div>
 </header>
+
+<!-- Кнопка бургер -->
+<button id="menu-toggle" class="md:hidden flex flex-col justify-between w-7 h-5 focus:outline-none ml-2">
+  <span class="block w-full h-0.5 bg-gray-800"></span>
+  <span class="block w-full h-0.5 bg-gray-800"></span>
+  <span class="block w-full h-0.5 bg-gray-800"></span>
+</button>
+
+<!-- Выезжающее меню -->
+<div id="side-menu" class="fixed inset-y-0 left-0 w-64 bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 z-40 flex flex-col">
+  <div class="flex items-center justify-between p-4 border-b">
+    <h2 id="side-menu-title" class="text-xl font-bold text-gray-800">Меню</h2>
+    <button id="side-menu-close" class="text-gray-500 hover:text-gray-700 text-2xl leading-none">&times;</button>
+  </div>
+  
+  <!-- Основной список -->
+  <div id="side-menu-content" class="flex-1 overflow-y-auto p-4 space-y-3">
+    <!-- Здесь JS подставит контент -->
+  </div>
+</div>
+
+<!-- Полупрозрачный фон -->
+<div id="menu-overlay" class="fixed inset-0 bg-black/40 hidden z-30"></div>
 
     <!-- ОСНОВНОЙ КОНТЕЙНЕР ДЛЯ СПИСКА ТОВАРОВ (Единственный видимый вид) -->
     <div id="main-view-container">
@@ -178,7 +214,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, query, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         // Устанавливаем режим отладки для Firestore
         setLogLevel('Debug');
 
