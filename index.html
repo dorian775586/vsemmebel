@@ -78,17 +78,13 @@
   <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
     
     <!-- Логотип -->
-    <h1 class="text-3xl font-black text-gray-900 tracking-tight cursor-pointer" onclick="window.scrollTo(0, 0)">Mebel.by</h1>
+    <h1 class="text-3xl font-black text-gray-900 tracking-tight cursor-pointer" onclick="window.scrollTo(0, 0)">
+      Mebel.by
+    </h1>
 
-    <!-- Бургер + кнопки -->
+    <!-- Кнопки справа -->
     <div class="flex items-center space-x-4">
-      <!-- Бургер-меню -->
-      <button id="menu-toggle" class="flex flex-col justify-between w-8 h-6 focus:outline-none hover:scale-110 transition-transform">
-        <span class="block w-full h-0.5 bg-gray-800"></span>
-        <span class="block w-full h-0.5 bg-gray-800"></span>
-        <span class="block w-full h-0.5 bg-gray-800"></span>
-      </button>
-
+      
       <!-- Город -->
       <div class="flex items-center space-x-2 text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
         <span id="current-city" class="font-bold text-gray-700">Гомель</span>
@@ -110,16 +106,10 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 7V6a3 3 0 013-3h6a3 3 0 013 3v1m2 0a1 1 0 011 1v12a2 2 0 01-2 2H5a2 2 0 01-2-2V8a1 1 0 011-1h16z" />
         </svg>
       </a>
+
     </div>
   </div>
 </header>
-
-<!-- Кнопка бургер -->
-<button id="menu-toggle" class="flex flex-col justify-between w-7 h-5 focus:outline-none ml-2 hover:scale-110 transition-transform">
-  <span class="block w-full h-0.5 bg-gray-800"></span>
-  <span class="block w-full h-0.5 bg-gray-800"></span>
-  <span class="block w-full h-0.5 bg-gray-800"></span>
-</button>
 
 <!-- Выезжающее меню -->
 <div id="side-menu" class="fixed inset-y-0 left-0 w-64 bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 z-40 flex flex-col">
