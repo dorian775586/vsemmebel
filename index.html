@@ -64,10 +64,6 @@
         transform: translateY(-8px) rotate(-45deg);
         }
 
-    #side-menu { width: 20rem; } 
-    #side-menu-title { font-size: 1.5rem; font-weight: 800; color: #1f2937; } 
-    #side-menu-content button { font-weight: 600; font-size: 1rem; padding: 0.75rem 1rem; border-radius: 0.75rem; transition: all 0.3s ease; } 
-    #side-menu-content button:hover { background-color: #f97316; color: white; }
     </style>
 </head>
 <body>
@@ -76,19 +72,12 @@
 <!-- Верхняя навигация -->
 <header class="sticky top-0 header-bg z-20">
   <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-    
-    <!-- Логотип -->
+    <!-- Скрытая кнопка админа -->
+    <div id="hidden-admin-btn" style="width:20px;height:20px;opacity:0;cursor:pointer;margin-right:8px;"></div>
+
     <h1 class="text-3xl font-black text-gray-900 tracking-tight cursor-pointer" onclick="window.scrollTo(0, 0)">Mebel.by</h1>
 
-    <!-- Бургер + кнопки -->
     <div class="flex items-center space-x-4">
-      <!-- Бургер-меню -->
-      <button id="menu-toggle" class="flex flex-col justify-between w-8 h-6 focus:outline-none hover:scale-110 transition-transform">
-        <span class="block w-full h-0.5 bg-gray-800"></span>
-        <span class="block w-full h-0.5 bg-gray-800"></span>
-        <span class="block w-full h-0.5 bg-gray-800"></span>
-      </button>
-
       <!-- Город -->
       <div class="flex items-center space-x-2 text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
         <span id="current-city" class="font-bold text-gray-700">Гомель</span>
@@ -98,21 +87,42 @@
       </div>
 
       <!-- Избранное -->
-      <a href="favorites.html" class="group relative flex items-center justify-center w-12 h-12 rounded-full hover:bg-orange-100 transition" title="Избранное">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-gray-700 group-hover:text-orange-500 transition">
+      <a href="favorites.html"
+         class="group relative flex items-center justify-center w-12 h-12 rounded-full hover:bg-orange-100 transition"
+         title="Избранное">
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             fill="none" 
+             viewBox="0 0 24 24" 
+             stroke-width="2" 
+             stroke="currentColor" 
+             class="w-6 h-6 text-gray-700 group-hover:text-orange-500 transition">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 21C12 21 6 16 4 11C2 6 4 2 8 3C10 4 12 6 12 6C12 6 14 4 16 3C20 2 22 6 20 11C18 16 12 21 12 21Z" />
         </svg>
+        <span class="sr-only">Избранное</span>
       </a>
 
-      <!-- Корзина -->
-      <a href="order.html" class="group relative flex items-center justify-center w-12 h-12 rounded-full hover:bg-orange-100 transition" title="Корзина">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-gray-700 group-hover:text-orange-500 transition">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 7V6a3 3 0 013-3h6a3 3 0 013 3v1m2 0a1 1 0 011 1v12a2 2 0 01-2 2H5a2 2 0 01-2-2V8a1 1 0 011-1h16z" />
+      <!-- Корзина (новый значок) -->
+      <a href="order.html" 
+         class="group relative flex items-center justify-center w-12 h-12 rounded-full hover:bg-orange-100 transition"
+         title="Корзина">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+             class="w-6 h-6 text-gray-700 group-hover:text-orange-500 transition">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M6 7V6a3 3 0 013-3h6a3 3 0 013 3v1m2 0a1 1 0 011 1v12a2 2 0 01-2 2H5a2 2 0 01-2-2V8a1 1 0 011-1h16z" />
         </svg>
+        <span class="sr-only">Корзина</span>
       </a>
     </div>
   </div>
 </header>
+
+<!-- Кнопка бургер -->
+<button id="menu-toggle" class="md:hidden flex flex-col justify-between w-7 h-5 focus:outline-none ml-2">
+  <span class="block w-full h-0.5 bg-gray-800"></span>
+  <span class="block w-full h-0.5 bg-gray-800"></span>
+  <span class="block w-full h-0.5 bg-gray-800"></span>
+</button>
 
 <!-- Выезжающее меню -->
 <div id="side-menu" class="fixed inset-y-0 left-0 w-64 bg-white shadow-2xl transform -translate-x-full transition-transform duration-300 z-40 flex flex-col">
@@ -204,6 +214,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, query, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         // Устанавливаем режим отладки для Firestore
         setLogLevel('Debug');
 
@@ -660,132 +671,6 @@ function loadCarouselFromFirestore() {
                 alert("Неверный пароль!");
             }
         };
-        // --- ЛОГИКА БОКОВОГО МЕНЮ --- 
-const menuToggle = document.getElementById('menu-toggle');
-const sideMenu = document.getElementById('side-menu');
-const menuOverlay = document.getElementById('menu-overlay');
-const sideMenuClose = document.getElementById('side-menu-close');
-const sideMenuContent = document.getElementById('side-menu-content');
-const sideMenuTitle = document.getElementById('side-menu-title');
-
-// Функции открытия/закрытия
-function openMenu() {
-  sideMenu.classList.remove('-translate-x-full');
-  menuOverlay.classList.remove('hidden');
-  menuToggle.classList.add('active');
-}
-function closeMenu() {
-  sideMenu.classList.add('-translate-x-full');
-  menuOverlay.classList.add('hidden');
-  menuToggle.classList.remove('active');
-}
-
-menuToggle.addEventListener('click', openMenu);
-sideMenuClose.addEventListener('click', closeMenu);
-menuOverlay.addEventListener('click', closeMenu);
-
-// Главное меню
-function renderMainMenu() {
-  sideMenuTitle.textContent = 'Меню';
-  sideMenuContent.innerHTML = `
-    <button class="w-full text-left py-3 px-4 rounded-lg hover:bg-orange-100 font-semibold text-gray-700" onclick="showCatalogMenu()">📁 Каталог</button>
-    <button class="w-full text-left py-3 px-4 rounded-lg hover:bg-orange-100 font-semibold text-gray-700" onclick="showStoresMenu()">🏬 Магазины</button>
-    <button class="w-full text-left py-3 px-4 rounded-lg hover:bg-orange-100 font-semibold text-gray-700" onclick="showDiscountsMenu()">💸 Скидки</button>
-  `;
-}
-renderMainMenu();
-
-// Кнопка "Назад"
-function backButtonHTML() {
-  return `<button onclick="renderMainMenu()" class="flex items-center text-gray-600 hover:text-orange-500 mb-4">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-    </svg>
-    Назад
-  </button>`;
-}
-
-// --- Каталог ---
-function showCatalogMenu() {
-  sideMenuTitle.textContent = 'Каталог';
-  let html = backButtonHTML();
-  CATEGORIES.forEach(cat => {
-    html += `<button class="block w-full text-left py-2 px-4 rounded-lg hover:bg-orange-100 text-gray-800" onclick="selectCategoryFromMenu('${cat}')">${cat}</button>`;
-  });
-  sideMenuContent.innerHTML = html;
-}
-
-function selectCategoryFromMenu(category) {
-  closeMenu();
-  setActiveCategory(category); // устанавливаем категорию и рендерим товары
-  window.scrollTo(0, 0);
-}
-
-// --- Магазины ---
-function showStoresMenu() {
-  sideMenuTitle.textContent = 'Магазины';
-  sideMenuContent.innerHTML = backButtonHTML() + `<p class="text-gray-500 text-sm mb-2">Загрузка магазинов...</p>`;
-  const storesRef = collection(db, `artifacts/default-app-id/public/data/shops`);
-  getDocs(storesRef).then(snapshot => {
-    let html = backButtonHTML();
-    if (snapshot.empty) html += `<p class="text-gray-500 text-center mt-6">Магазины не найдены.</p>`;
-    else snapshot.forEach(doc => {
-      const store = doc.data();
-      html += `<button class="block w-full text-left py-2 px-4 rounded-lg hover:bg-orange-100 text-gray-800" onclick="filterByStore('${store.name}')">${store.name}</button>`;
-    });
-    sideMenuContent.innerHTML = html;
-  });
-}
-
-// --- Фильтр по магазину ---
-function filterByStore(storeName) {
-  closeMenu();
-  currentCategory = "Все товары";
-  searchTerm = "";
-  renderCategories();
-  const filtered = allOffers.filter(o => o.storeName === storeName);
-  offersListDiv.innerHTML = '';
-  if (filtered.length === 0) offersListDiv.innerHTML = `<div class='col-span-full text-center text-gray-500 p-8'>Нет товаров из магазина ${storeName}.</div>`;
-  else filtered.forEach(offer => offersListDiv.appendChild(createOfferCard(offer)));
-}
-
-// --- Скидки ---
-function showDiscountsMenu() {
-  sideMenuTitle.textContent = 'Скидки';
-  sideMenuContent.innerHTML = backButtonHTML();
-  closeMenu();
-  const discounted = allOffers.filter(o => o.discount > 0);
-  offersListDiv.innerHTML = '';
-  if (discounted.length === 0) offersListDiv.innerHTML = `<div class='col-span-full text-center text-gray-500 p-8'>Нет активных скидок.</div>`;
-  else discounted.forEach(offer => offersListDiv.appendChild(createOfferCard(offer)));
-}
-
-// Хелпер для карточек (использует ту же верстку)
-function createOfferCard(offer) {
-  const card = document.createElement('div');
-  card.className = 'offer-card flex flex-col cursor-pointer';
-  card.onclick = () => showProductDetails(offer.id);
-  const activeCombo = offer.combinations?.find(c => c.isActive) || offer.combinations?.[0] || { price: 0 };
-  const price = activeCombo.price || 0;
-  const finalPrice = price * (1 - (offer.discount || 0) / 100);
-  const image = offer.images?.[0] || `https://placehold.co/400x300?text=${encodeURIComponent(offer.title || '')}`;
-  const priceHTML = offer.discount > 0
-    ? `<p class="text-xl font-extrabold text-red-600">${Math.round(finalPrice)} BYN</p><p class="text-sm text-gray-400 line-through">${Math.round(price)} BYN</p>`
-    : `<p class="text-xl font-extrabold text-gray-900">${Math.round(finalPrice)} BYN</p>`;
-  card.innerHTML = `
-    <div class="h-48 overflow-hidden relative">
-      <img src="${image}" class="w-full h-full object-cover" alt="">
-      ${offer.discount > 0 ? `<div class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">- ${offer.discount}%</div>` : ''}
-    </div>
-    <div class="p-5 flex flex-col flex-grow">
-      <p class="text-sm font-semibold text-orange-600 mb-1">${offer.category || 'Прочее'}</p>
-      <h4 class="text-lg font-bold text-gray-900 mb-3 flex-grow">${offer.title || 'Без названия'}</h4>
-      <div class="flex items-end justify-between mt-auto">
-        <div>${priceHTML}</div>
-      </div>
-    </div>`;
-  return card;
-}
 
     </script>
 </body>
