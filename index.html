@@ -61,6 +61,22 @@
     transform: rotate(-45deg) translate(5px, -5px);
 }
 
+/* Верхние кнопки бокового меню */
+#side-menu .flex.flex-col.space-y-2.mb-4 button {
+    font-size: 1.25rem;       /* крупный текст */
+    font-weight: 600;          /* полужирный */
+    padding: 1rem 1.5rem;      /* внутренние отступы сверху/снизу и слева/справа */
+    border-radius: 0.75rem;    /* закругление углов */
+    text-align: left;          /* выравнивание текста влево */
+    transition: all 0.3s ease; /* плавное изменение при hover */
+}
+
+/* Hover эффект */
+#side-menu .flex.flex-col.space-y-2.mb-4 button:hover {
+    background-color: #ffedd5; /* светло-оранжевый фон при наведении */
+    color: #f97316;            /* яркий оранжевый текст */
+}
+
     </style>
 </head>
 <body>
