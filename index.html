@@ -121,12 +121,18 @@
 <div id="side-menu" class="fixed inset-y-0 left-0 w-64 bg-white shadow-lg transform -translate-x-full transition-transform z-30">
     <div class="p-6">
         <h2 class="text-xl font-bold mb-4">Меню</h2>
-        <ul class="space-y-3">
-            <li><a href="#" class="text-gray-700 hover:text-orange-500">Главная</a></li>
-            <li><a href="#" class="text-gray-700 hover:text-orange-500">Каталог</a></li>
-            <li><a href="favorites.html" class="text-gray-700 hover:text-orange-500">Избранное</a></li>
-            <li><a href="order.html" class="text-gray-700 hover:text-orange-500">Корзина</a></li>
-        </ul>
+
+        <!-- Верхние кнопки -->
+        <div class="flex flex-col space-y-2 mb-4">
+            <button id="menu-catalog" class="text-gray-700 hover:text-orange-500 font-semibold text-left">Каталог</button>
+            <button id="menu-shops" class="text-gray-700 hover:text-orange-500 font-semibold text-left">Магазины</button>
+            <button id="menu-discounts" class="text-gray-700 hover:text-orange-500 font-semibold text-left">Скидки</button>
+        </div>
+
+        <!-- Динамический контент -->
+        <div id="side-menu-content" class="space-y-2">
+            <!-- Сюда будут загружаться категории, магазины или товары со скидкой -->
+        </div>
     </div>
 </div>
 
@@ -664,6 +670,89 @@ function loadCarouselFromFirestore() {
 
         const burgerBtn = document.getElementById('burger-btn');
 const sideMenu = document.getElementById('side-menu');
+
+// DOM элементы бокового меню
+const sideMenuContent = document.getElementById('side-menu-content');
+const menuCatalogBtn = document.getElementById('menu-catalog');
+const menuShopsBtn = document.getElementById('menu-shops');
+const menuDiscountsBtn = document.getElementById('menu-discounts');
+
+// --- Рендер категорий ---
+function renderSideMenuCategories() {
+    sideMenuContent.innerHTML = '';
+    CATEGORIES.forEach(category => {
+        const btn = document.createElement('button');
+        btn.className = 'w-full text-left px-2 py-1 rounded hover:bg-orange-100';
+        btn.textContent = category;
+        btn.onclick = () => {
+            setActiveCategory(category); // выбираем категорию на главной
+            sideMenu.classList.add('-translate-x-full'); // закрыть меню
+        };
+        sideMenuContent.appendChild(btn);
+    });
+}
+
+// --- Рендер магазинов из Firestore ---
+async function renderSideMenuShops() {
+    sideMenuContent.innerHTML = '';
+    if (!db) return;
+
+    try {
+        const shopsRef = collection(db, 'artifacts/default-app-id/public/data/shops');
+        const snapshot = await getDocs(shopsRef);
+
+        if (snapshot.empty) {
+            sideMenuContent.innerHTML = '<p class="text-gray-500">Магазины не найдены.</p>';
+            return;
+        }
+
+        snapshot.forEach(doc => {
+            const shop = doc.data();
+            const btn = document.createElement('button');
+            btn.className = 'w-full text-left px-2 py-1 rounded hover:bg-orange-100';
+            btn.textContent = shop.name || 'Без названия';
+            btn.onclick = () => {
+                console.log('Выбран магазин:', shop.name);
+                sideMenu.classList.add('-translate-x-full'); // закрыть меню
+                // TODO: добавить фильтр товаров по магазину
+            };
+            sideMenuContent.appendChild(btn);
+        });
+    } catch (err) {
+        console.error('Ошибка загрузки магазинов:', err);
+        sideMenuContent.innerHTML = '<p class="text-red-500">Ошибка загрузки магазинов.</p>';
+    }
+}
+
+// --- Рендер товаров со скидкой ---
+function renderSideMenuDiscounts() {
+    sideMenuContent.innerHTML = '';
+    const discountedOffers = allOffers.filter(offer => offer.discount && offer.discount > 0);
+
+    if (discountedOffers.length === 0) {
+        sideMenuContent.innerHTML = '<p class="text-gray-500">Товаров со скидкой нет.</p>';
+        return;
+    }
+
+    discountedOffers.forEach(offer => {
+        const btn = document.createElement('button');
+        btn.className = 'w-full text-left px-2 py-1 rounded hover:bg-orange-100';
+        btn.textContent = offer.title || 'Без названия';
+        btn.onclick = () => {
+            showProductDetails(offer.id); // переход на страницу товара
+            sideMenu.classList.add('-translate-x-full'); // закрыть меню
+        };
+        sideMenuContent.appendChild(btn);
+    });
+}
+
+// --- Слушатели кнопок ---
+menuCatalogBtn.onclick = renderSideMenuCategories;
+menuShopsBtn.onclick = renderSideMenuShops;
+menuDiscountsBtn.onclick = renderSideMenuDiscounts;
+
+// --- Изначально показываем категории ---
+renderSideMenuCategories();
 
 burgerBtn.addEventListener('click', () => {
     burgerBtn.classList.toggle('open');
