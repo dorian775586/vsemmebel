@@ -64,6 +64,10 @@
         transform: translateY(-8px) rotate(-45deg);
         }
 
+    #side-menu { width: 20rem; } 
+    #side-menu-title { font-size: 1.5rem; font-weight: 800; color: #1f2937; } 
+    #side-menu-content button { font-weight: 600; font-size: 1rem; padding: 0.75rem 1rem; border-radius: 0.75rem; transition: all 0.3s ease; } 
+    #side-menu-content button:hover { background-color: #f97316; color: white; }
     </style>
 </head>
 <body>
@@ -72,12 +76,19 @@
 <!-- Верхняя навигация -->
 <header class="sticky top-0 header-bg z-20">
   <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-    <!-- Скрытая кнопка админа -->
-    <div id="hidden-admin-btn" style="width:20px;height:20px;opacity:0;cursor:pointer;margin-right:8px;"></div>
-
+    
+    <!-- Логотип -->
     <h1 class="text-3xl font-black text-gray-900 tracking-tight cursor-pointer" onclick="window.scrollTo(0, 0)">Mebel.by</h1>
 
+    <!-- Бургер + кнопки -->
     <div class="flex items-center space-x-4">
+      <!-- Бургер-меню -->
+      <button id="menu-toggle" class="flex flex-col justify-between w-8 h-6 focus:outline-none hover:scale-110 transition-transform">
+        <span class="block w-full h-0.5 bg-gray-800"></span>
+        <span class="block w-full h-0.5 bg-gray-800"></span>
+        <span class="block w-full h-0.5 bg-gray-800"></span>
+      </button>
+
       <!-- Город -->
       <div class="flex items-center space-x-2 text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
         <span id="current-city" class="font-bold text-gray-700">Гомель</span>
@@ -87,31 +98,17 @@
       </div>
 
       <!-- Избранное -->
-      <a href="favorites.html"
-         class="group relative flex items-center justify-center w-12 h-12 rounded-full hover:bg-orange-100 transition"
-         title="Избранное">
-        <svg xmlns="http://www.w3.org/2000/svg" 
-             fill="none" 
-             viewBox="0 0 24 24" 
-             stroke-width="2" 
-             stroke="currentColor" 
-             class="w-6 h-6 text-gray-700 group-hover:text-orange-500 transition">
+      <a href="favorites.html" class="group relative flex items-center justify-center w-12 h-12 rounded-full hover:bg-orange-100 transition" title="Избранное">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-gray-700 group-hover:text-orange-500 transition">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 21C12 21 6 16 4 11C2 6 4 2 8 3C10 4 12 6 12 6C12 6 14 4 16 3C20 2 22 6 20 11C18 16 12 21 12 21Z" />
         </svg>
-        <span class="sr-only">Избранное</span>
       </a>
 
-      <!-- Корзина (новый значок) -->
-      <a href="order.html" 
-         class="group relative flex items-center justify-center w-12 h-12 rounded-full hover:bg-orange-100 transition"
-         title="Корзина">
-        <svg xmlns="http://www.w3.org/2000/svg"
-             fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-             class="w-6 h-6 text-gray-700 group-hover:text-orange-500 transition">
-          <path stroke-linecap="round" stroke-linejoin="round"
-                d="M6 7V6a3 3 0 013-3h6a3 3 0 013 3v1m2 0a1 1 0 011 1v12a2 2 0 01-2 2H5a2 2 0 01-2-2V8a1 1 0 011-1h16z" />
+      <!-- Корзина -->
+      <a href="order.html" class="group relative flex items-center justify-center w-12 h-12 rounded-full hover:bg-orange-100 transition" title="Корзина">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-gray-700 group-hover:text-orange-500 transition">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 7V6a3 3 0 013-3h6a3 3 0 013 3v1m2 0a1 1 0 011 1v12a2 2 0 01-2 2H5a2 2 0 01-2-2V8a1 1 0 011-1h16z" />
         </svg>
-        <span class="sr-only">Корзина</span>
       </a>
     </div>
   </div>
@@ -715,43 +712,39 @@ function backButtonHTML() {
   </button>`;
 }
 
-// Каталог
+// --- Каталог ---
 function showCatalogMenu() {
   sideMenuTitle.textContent = 'Каталог';
   let html = backButtonHTML();
   CATEGORIES.forEach(cat => {
-    html += `<button class="block w-full text-left py-2 px-4 rounded-lg hover:bg-orange-100 text-gray-800" 
-              onclick="selectCategoryFromMenu('${cat}')">${cat}</button>`;
+    html += `<button class="block w-full text-left py-2 px-4 rounded-lg hover:bg-orange-100 text-gray-800" onclick="selectCategoryFromMenu('${cat}')">${cat}</button>`;
   });
   sideMenuContent.innerHTML = html;
 }
+
 function selectCategoryFromMenu(category) {
   closeMenu();
-  setActiveCategory(category);
+  setActiveCategory(category); // устанавливаем категорию и рендерим товары
   window.scrollTo(0, 0);
 }
 
-// Магазины
+// --- Магазины ---
 function showStoresMenu() {
   sideMenuTitle.textContent = 'Магазины';
-  let html = backButtonHTML() + `<p class="text-gray-500 text-sm mb-2">Загрузка магазинов...</p>`;
-  sideMenuContent.innerHTML = html;
-
-  const storesRef = collection(db, `artifacts/${appId}/public/data/stores`);
+  sideMenuContent.innerHTML = backButtonHTML() + `<p class="text-gray-500 text-sm mb-2">Загрузка магазинов...</p>`;
+  const storesRef = collection(db, `artifacts/default-app-id/public/data/shops`);
   getDocs(storesRef).then(snapshot => {
     let html = backButtonHTML();
-    if (snapshot.empty) {
-      html += `<p class="text-gray-500 text-center mt-6">Магазины не найдены.</p>`;
-    } else {
-      snapshot.forEach(doc => {
-        const store = doc.data();
-        html += `<button class="block w-full text-left py-2 px-4 rounded-lg hover:bg-orange-100 text-gray-800" 
-                  onclick="filterByStore('${store.name}')">${store.name}</button>`;
-      });
-    }
+    if (snapshot.empty) html += `<p class="text-gray-500 text-center mt-6">Магазины не найдены.</p>`;
+    else snapshot.forEach(doc => {
+      const store = doc.data();
+      html += `<button class="block w-full text-left py-2 px-4 rounded-lg hover:bg-orange-100 text-gray-800" onclick="filterByStore('${store.name}')">${store.name}</button>`;
+    });
     sideMenuContent.innerHTML = html;
   });
 }
+
+// --- Фильтр по магазину ---
 function filterByStore(storeName) {
   closeMenu();
   currentCategory = "Все товары";
@@ -759,26 +752,19 @@ function filterByStore(storeName) {
   renderCategories();
   const filtered = allOffers.filter(o => o.storeName === storeName);
   offersListDiv.innerHTML = '';
-  if (filtered.length === 0) {
-    offersListDiv.innerHTML = `<div class='col-span-full text-center text-gray-500 p-8'>Нет товаров из магазина ${storeName}.</div>`;
-  } else {
-    filtered.forEach(offer => offersListDiv.appendChild(createOfferCard(offer)));
-  }
+  if (filtered.length === 0) offersListDiv.innerHTML = `<div class='col-span-full text-center text-gray-500 p-8'>Нет товаров из магазина ${storeName}.</div>`;
+  else filtered.forEach(offer => offersListDiv.appendChild(createOfferCard(offer)));
 }
 
-// Скидки
+// --- Скидки ---
 function showDiscountsMenu() {
   sideMenuTitle.textContent = 'Скидки';
-  let html = backButtonHTML();
-  sideMenuContent.innerHTML = html;
+  sideMenuContent.innerHTML = backButtonHTML();
   closeMenu();
   const discounted = allOffers.filter(o => o.discount > 0);
   offersListDiv.innerHTML = '';
-  if (discounted.length === 0) {
-    offersListDiv.innerHTML = `<div class='col-span-full text-center text-gray-500 p-8'>Нет активных скидок.</div>`;
-  } else {
-    discounted.forEach(offer => offersListDiv.appendChild(createOfferCard(offer)));
-  }
+  if (discounted.length === 0) offersListDiv.innerHTML = `<div class='col-span-full text-center text-gray-500 p-8'>Нет активных скидок.</div>`;
+  else discounted.forEach(offer => offersListDiv.appendChild(createOfferCard(offer)));
 }
 
 // Хелпер для карточек (использует ту же верстку)
